@@ -126,17 +126,22 @@ export class TaskService {
     }
 
     async updateTask(id: string, data: Partial<Task> | UpdateQuery<Task>): Promise<Task | null> {
-        const tags = this.normalizeTags((data as Partial<Task>)?.tags);
+        // Operator updates ($push, $pull, etc.) — pass through directly.
+        const hasOperators = Object.keys(data as object).some(k => k.startsWith("$"));
+        if (hasOperators) {
+            return Task.findByIdAndUpdate(id, data).lean<Task>().exec();
+        }
 
-        const update: Partial<Task> | UpdateQuery<Task> = {
-            ...(data as Partial<Task>),
-            ...(tags ? { tags } : {}),
-        };
+        const payload = data as Partial<Task>;
+        const tags = this.normalizeTags(payload.tags);
+        const { subtasks: _drop, ...rest } = payload as any;
 
-        // Explicitly drop any subtasks payloads
-        (update as any).subtasks = undefined;
-
-        return Task.findByIdAndUpdate(id, update).lean<Task>().exec();
+        return Task.findByIdAndUpdate(id, {
+            $set: {
+                ...rest,
+                ...(tags !== undefined ? { tags } : {}),
+            },
+        }).lean<Task>().exec();
     }
 
     async getTasksByUserId(userId: string, tags: string[] = []): Promise<Task[]> {
