@@ -153,16 +153,16 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
             }}
           />
           <div className="w-full">
-            <div className="w-full flex flex-row items-center justify-between">
-              <TaskItemTitle text={item.title} />
-              {!!item.priority && item.priority > 0 && (
-                <span className="ml-1 flex-shrink-0 text-xs font-bold text-red-500">
-                  {"!".repeat(item.priority)}
-                </span>
-              )}
-            </div>
-            <div className="w-fit flex flex-row flex-end items-center justify-start px-2">
-              <div className="w-full h-full flex items-center justify-evenly">
+            <div className="w-full flex flex-row items-center justify-between gap-2">
+              <div className="flex flex-row items-center min-w-0 flex-1">
+                <TaskItemTitle text={item.title} />
+                {!!item.priority && item.priority > 0 && (
+                  <span className="ml-1 flex-shrink-0 text-xs font-bold text-red-500">
+                    {"!".repeat(item.priority)}
+                  </span>
+                )}
+              </div>
+              <div className="flex-shrink-0 w-20">
                 <TaskItemDate task={item} />
               </div>
             </div>

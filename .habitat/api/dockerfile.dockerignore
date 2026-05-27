@@ -1,6 +1,26 @@
+# Node modules and build outputs
 node_modules
 .next
 dist
+
+# Git
 .git
 .gitignore
+
+# Logs
 npm-debug.log
+yarn-debug.log
+yarn-error.log
+pnpm-debug.log
+
+# OS / IDE files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode
+.idea
+
+# Temporary files
+*.log
+*.tmp

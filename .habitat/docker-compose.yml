@@ -1,19 +1,33 @@
 services:
-  app:
-    build:
-      context: ..
-      dockerfile: .habitat/app/dockerfile
-    container_name: app
-    ports:
-      - 3000
-    env_file:
-      - app/.env
   api:
     build:
       context: ..
       dockerfile: .habitat/api/dockerfile
     container_name: api
+    image: tidaltask/api
     ports:
-      - 3001
-    env_file:
-      - api/.env
+      - 3000:3000
+  app:
+    build:
+      context: ..
+      dockerfile: .habitat/app/dockerfile
+    container_name: app
+    image: tidaltask/app
+    ports:
+      - 3001:3001
+
+  nginx:
+    image: nginx:1.27-alpine
+    platform: linux/amd64
+    depends_on:
+      - app
+      - api
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - /var/www/letsencrypt:/var/www/letsencrypt:ro
+volumes: {}

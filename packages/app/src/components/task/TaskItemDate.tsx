@@ -47,7 +47,7 @@ export default function TaskItemDate({ task }: { task: Task }) {
   };
 
   return (
-    <div className="w-full h-full flex flex-row gap-2 justify-center items-center">
+    <div className="w-full flex flex-row gap-2 justify-end items-center">
       {checkRelative(date) != undefined && (
         <>
           <div

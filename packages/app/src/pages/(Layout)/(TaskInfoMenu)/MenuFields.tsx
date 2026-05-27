@@ -120,9 +120,9 @@ export default function MenuFields({
                         </span>
                     )}
 
-                    {/* Description — full width */}
+                    {/* Details — full width */}
                     <ExpandableTextarea
-                        name="Description"
+                        name="Details"
                         value={tempData.description ?? ""}
                         onChange={(val) => setTempData({ ...tempData, description: val })}
                     />
