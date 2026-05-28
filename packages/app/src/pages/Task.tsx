@@ -121,7 +121,7 @@ export default function Task() {
                   type="text"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search tasks by title, description, or tag..."
+                  placeholder="Search tasks by title, details, or tag..."
                   className="w-full bg-transparent text-sm text-primary outline-hidden placeholder:text-slate-400"
                 />
               </div>

@@ -18,6 +18,7 @@ RUN npm run build:docker --workspace packages/app
 # Runtime stage - serve static assets with nginx
 FROM nginx:1.27-alpine AS runner
 COPY --from=builder /app/packages/app/dist /usr/share/nginx/html
+COPY packages/app/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]

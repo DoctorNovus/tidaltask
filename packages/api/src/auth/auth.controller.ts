@@ -150,6 +150,21 @@ export class AuthController {
         return { success: true };
     }
 
+    @Get("/reset-password")
+    async validateResetToken(req: Request): Promise<{ valid: boolean }> {
+        const token = typeof req.query?.token === "string" ? req.query.token.trim() : "";
+        if (!token) return { valid: false };
+
+        const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+        const resetRequest = await PasswordReset.findOne({ tokenHash, used: false }).lean<PasswordReset>().exec();
+
+        if (!resetRequest || !resetRequest.user || resetRequest.expiresAt < new Date()) {
+            return { valid: false };
+        }
+
+        return { valid: true };
+    }
+
     @Post("/reset-password")
     async resetPassword(req: Request): Promise<{ success: true }> {
         const token = typeof req.body?.token === "string" ? req.body.token.trim() : "";
@@ -171,7 +186,7 @@ export class AuthController {
         }
 
         await this.userService.updateUser(resetRequest.user as any, { password });
-        await PasswordReset.updateOne({ _id: resetRequest._id }, { used: true }).exec();
+        await PasswordReset.deleteOne({ _id: resetRequest._id }).exec();
 
         return { success: true };
     }

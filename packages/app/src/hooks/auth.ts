@@ -130,6 +130,19 @@ export function useRequestPasswordReset() {
     });
 }
 
+export function useValidateResetToken(token: string) {
+    return useQuery<{ valid: boolean }>({
+        queryKey: ["reset-token", token],
+        queryFn: async () => {
+            const response = await fetchData(`/auth/reset-password?token=${encodeURIComponent(token)}`, {});
+            return response.json();
+        },
+        enabled: Boolean(token),
+        staleTime: Infinity,
+        retry: false,
+    });
+}
+
 export function useCompletePasswordReset() {
     return useMutation({
         mutationFn: async (body: { token: string; password: string }) => {

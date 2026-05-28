@@ -45,7 +45,7 @@ export default function TaskContainer({
   if (skeleton) {
     return (
       <div className="group flex flex-col items-center w-full h-full my-2">
-        <div className="w-full flex flex-row items-center rounded-2xl surface-card border px-3 py-3 text-primary shadow-sm">
+        <div className="w-full flex flex-row items-center rounded-2xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-3 text-primary shadow-sm">
           <div className="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-row items-center py-1">
               <ChevronRightIcon
@@ -53,7 +53,7 @@ export default function TaskContainer({
                 width="32"
               />
               <div className="flex flex-row gap-2">
-                <h1 className="text-xl font-semibold">{title}</h1>
+                <h1 className="text-xl font-semibold dark:font-bold text-slate-950 dark:text-white">{title}</h1>
                 <h1 className="text-xl text-accent-blue-700">(0/0)</h1>
               </div>
             </div>
@@ -501,7 +501,7 @@ export default function TaskContainer({
               <Disclosure.Button
                 onClick={async () => await handleClick(open)}
                 as="div"
-                className="w-full flex flex-row items-center rounded-2xl surface-card border px-3 py-3 text-primary shadow-sm"
+                className="w-full flex flex-row items-center rounded-2xl bg-white dark:bg-slate-700 border border-slate-200 dark:border-slate-600 px-3 py-3 text-primary shadow-sm"
               >
                 <div className="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-row items-center py-1">
@@ -510,7 +510,7 @@ export default function TaskContainer({
                       width="32"
                     />
                     <div className="flex flex-row gap-2">
-                      <h1 className="text-xl font-semibold">{title}</h1>
+                      <h1 className="text-xl font-semibold dark:font-bold text-slate-950 dark:text-white">{title}</h1>
                       {baseTasks.filter((task) => !task.done).length > 0 && (
                         <h1 className="text-xl text-accent-blue-700">
                           ({baseTasks.filter((task) => !task.done).length}/

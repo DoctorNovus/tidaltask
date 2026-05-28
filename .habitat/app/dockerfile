@@ -16,7 +16,19 @@ WORKDIR /app
 
 # reuse installed dependencies
 COPY --from=deps /app/node_modules ./node_modules
-COPY . .
+COPY --from=deps /app/package.json ./package.json
+COPY --from=deps /app/packages/app/package.json ./packages/app/package.json
+COPY packages/app/src ./packages/app/src
+COPY packages/app/public ./packages/app/public
+COPY packages/app/.env ./packages/app/.env
+COPY packages/app/index.html ./packages/app/index.html
+COPY packages/app/vite.config.ts ./packages/app/vite.config.ts
+COPY packages/app/tsconfig.json ./packages/app/tsconfig.json
+COPY packages/app/eslint.config.js ./packages/app/eslint.config.js
+COPY packages/app/capacitor.config.ts ./packages/app/capacitor.config.ts
+
+# configure environment variables
+ENV NODE_ENV=production
 
 # build the project workspace
 RUN npm run build --workspace=app
@@ -29,8 +41,8 @@ WORKDIR /app
 ENV NODE_ENV=production
 
 # copy only what is needed at runtime
-COPY --from=build /app/node_modules ./node_modules
-COPY --from=build /app/packages/app/package.json ./package.json
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/packages/app/package.json ./package.json
 COPY --from=build /app/packages/app/dist ./dist
 COPY --from=build /app/packages/app/public ./public
 

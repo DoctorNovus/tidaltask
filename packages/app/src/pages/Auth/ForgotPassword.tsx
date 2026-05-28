@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import ArrowBack from "../(Login)/ArrowBack";
-import { useCompletePasswordReset, useRequestPasswordReset } from "@/hooks/auth";
+import { useCompletePasswordReset, useRequestPasswordReset, useValidateResetToken } from "@/hooks/auth";
 
 export default function ForgotPassword() {
   const navigate = useNavigate();
@@ -16,6 +16,9 @@ export default function ForgotPassword() {
 
   const requestReset = useRequestPasswordReset();
   const completeReset = useCompletePasswordReset();
+  const validateToken = useValidateResetToken(token);
+
+  const tokenInvalid = validateToken.isSuccess && !validateToken.data?.valid;
 
   const handleRequest = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -47,9 +50,8 @@ export default function ForgotPassword() {
 
     try {
       await completeReset.mutateAsync({ token, password });
-      setStatus("Password updated. You can now sign in.");
-      setPassword("");
-      setConfirm("");
+      setStatus("Your password has been reset. You can login now.");
+      setTimeout(() => navigate("/auth/login", { state: { status: "Your password has been reset. You can login now." } }), 3000);
     } catch (err: any) {
       setError(err?.message || "Unable to reset password.");
     }
@@ -107,7 +109,20 @@ export default function ForgotPassword() {
           </form>
         )}
 
-        {isResetMode && (
+        {isResetMode && tokenInvalid && (
+          <div className="flex flex-col items-center gap-4 py-4 text-center">
+            <p className="text-sm text-red-500">This reset link is invalid or has expired.</p>
+            <button
+              type="button"
+              onClick={() => navigate("/auth/forgotPassword")}
+              className="w-full rounded-xl bg-linear-to-r from-accent-blue-700 to-accent-blue-500 py-3 text-lg font-semibold text-white shadow-lg shadow-accent-blue/25 ring-1 ring-accent-blue/20 transition hover:-translate-y-px"
+            >
+              Request a new link
+            </button>
+          </div>
+        )}
+
+        {isResetMode && !tokenInvalid && (
           <form className="flex flex-col gap-5 text-primary" onSubmit={handleReset}>
             <p className="text-sm text-muted">
               Create a new password for your TidalTask account.

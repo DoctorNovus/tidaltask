@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router";
+import { useNavigate, useLocation } from "react-router";
 import ArrowBack from "../(Login)/ArrowBack";
 import { reloadAuth, useLogin } from "@/hooks/auth";
 import { useState } from "react";
@@ -10,8 +10,10 @@ export default function LoginUser() {
     const [app, setApp] = useApp();
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [status, setStatus] = useState("");
+    const successMessage = (location.state as { status?: string } | null)?.status ?? "";
 
     const loginUser = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -53,6 +55,7 @@ export default function LoginUser() {
                     <span className="text-lg font-semibold">Login</span>
                     <div className="w-10" />
                 </div>
+                {successMessage && <p className="text-green-600 text-sm mb-1">{successMessage}</p>}
                 <form className="flex flex-col gap-5 text-primary" onSubmit={(e) => loginUser(e)}>
                     <div className="flex flex-col gap-4">
                         <label className="flex flex-col text-left text-sm font-semibold text-muted">
