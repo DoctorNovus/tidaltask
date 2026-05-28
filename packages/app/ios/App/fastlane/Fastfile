@@ -20,7 +20,7 @@ platform :ios do
       UI.user_error!("Missing required App Store Connect credentials: #{missing.join(', ')}")
     end
 
-    if !expanded_key_path.empty? && !File.exist?(expanded_key_path)
+    if key_content.to_s.empty? && !expanded_key_path.empty? && !File.exist?(expanded_key_path)
       UI.user_error!("ASC_KEY_PATH does not exist: #{expanded_key_path}")
     end
 
@@ -141,6 +141,20 @@ platform :ios do
       build_number: next_build.to_s
     )
 
+    key_id = ENV["ASC_KEY_ID"]&.strip
+    issuer_id = ENV["ASC_ISSUER_ID"]&.strip
+    key_content = ENV["ASC_KEY_CONTENT"]&.strip
+    xcargs_val = "-allowProvisioningUpdates"
+    asc_key_tmp = nil
+    unless key_content.to_s.empty?
+      require 'base64'
+      require 'tempfile'
+      asc_key_tmp = Tempfile.new(["AuthKey_#{key_id}", ".p8"])
+      asc_key_tmp.write(Base64.decode64(key_content))
+      asc_key_tmp.flush
+      xcargs_val += " -authenticationKeyPath #{asc_key_tmp.path} -authenticationKeyID #{key_id} -authenticationKeyIssuerID #{issuer_id}"
+    end
+
     build_ios_app(
       workspace: "App.xcworkspace",
       scheme: "App",
@@ -148,7 +162,12 @@ platform :ios do
       export_method: "app-store",
       clean: true,
       destination: "generic/platform=iOS",
-      sdk: "iphoneos"
+      sdk: "iphoneos",
+      export_options: {
+        signingStyle: "automatic",
+        method: "app-store-connect"
+      },
+      xcargs: xcargs_val
     )
 
     upload_to_testflight(

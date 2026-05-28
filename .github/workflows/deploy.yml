@@ -68,15 +68,6 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
           rm -f certificate.p12
 
-      # Install the App Store distribution provisioning profile
-      - name: Install provisioning profile
-        env:
-          PROFILE_BASE64: ${{ secrets.IOS_PROVISIONING_PROFILE_BASE64 }}
-        run: |
-          echo "$PROFILE_BASE64" | tr -d ' \n\r' | base64 --decode > profile.mobileprovision
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          mv profile.mobileprovision ~/Library/MobileDevice/Provisioning\ Profiles/
-
       - name: Set up Ruby + Bundler
         uses: ruby/setup-ruby@v1
         with:
