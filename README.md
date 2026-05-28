@@ -27,9 +27,9 @@ sequenced/
 ├── packages/
 │   ├── app/          # React + Vite + Capacitor frontend
 │   └── api/          # Node/Express backend
+├── .habitat/         # Habitat deployment config (docker-compose + dockerfiles)
 ├── docker/           # Nginx config for production
-├── docker-compose.yml
-└── .env              # Root env vars for Docker Compose
+└── .env              # Root env vars (picked up by Habitat/Docker Compose)
 ```
 
 ---
@@ -92,7 +92,7 @@ The frontend auto-detects `DEV` mode and points to `http://localhost:8080`.
 
 ---
 
-## Production deployment (Docker)
+## Production deployment
 
 ### Prerequisites
 
@@ -105,6 +105,7 @@ The frontend auto-detects `DEV` mode and points to `http://localhost:8080`.
 ```bash
 git clone https://github.com/DoctorNovus/sequenced.git /root/sequenced
 cd /root/sequenced
+npm install
 ```
 
 ### 2. Configure environment
@@ -131,22 +132,36 @@ WELCOME_EMAIL_SUBJECT=Welcome to TidalTask
 
 ### 3. Configure Nginx
 
-Edit `docker/nginx/conf.d/` to match your domain and certificate paths. The compose stack includes an Nginx reverse proxy that routes:
+Edit `docker/nginx/conf.d/` to match your domain and certificate paths. The stack includes an Nginx reverse proxy that routes:
 
-- `yourdomain.com` → frontend (port 4173 internally)
+- `yourdomain.com` → frontend (port 80 internally)
 - `api.yourdomain.com` → API (port 8080 internally)
 
-### 4. Build and start
+### 4. Deploy
 
 ```bash
-export DOCKER_BUILDKIT=1
-docker compose build
-docker compose up -d
+npm run deploy
+```
+
+This runs `habitat build && habitat start` — builds the Docker images and starts all containers (API, frontend, MongoDB, Nginx) in one step.
+
+For subsequent deployments, pull and redeploy:
+
+```bash
+git pull && npm run deploy
+```
+
+### Individual habitat commands
+
+```bash
+npm run habitat:build   # build images only
+npm run habitat:start   # start containers
+npm run habitat:stop    # stop containers
 ```
 
 ### Continuous deployment (GitHub Actions)
 
-Push to `main` to trigger the `deploy.yml` workflow. It SSHs into the server, pulls the latest code, and selectively rebuilds only the changed service (frontend or API). Required GitHub secrets:
+Push to `main` to trigger the `deploy.yml` workflow. It SSHs into the server, pulls the latest code, and redeploys. Required GitHub secrets:
 
 | Secret | Description |
 |---|---|

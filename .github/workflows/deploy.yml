@@ -26,7 +26,8 @@ jobs:
             git fetch origin main
             git checkout main
             git pull --rebase origin main
-            docker compose -f .habitat/docker-compose.yml up -d --build
+            npm install
+            npm run deploy
             docker image prune -f
 
   # ── iOS build + App Store submission ────────────────────────────────────────

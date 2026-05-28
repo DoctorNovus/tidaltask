@@ -1,26 +1,57 @@
+name: tidaltask
 services:
+  mongo:
+    image: mongo:7
+    platform: linux/amd64
+    command: ["mongod", "--auth"]
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:27017:27017"
+
   api:
     build:
       context: ..
-      dockerfile: .habitat/api/dockerfile
+      dockerfile: packages/api/Dockerfile
     container_name: api
     image: tidaltask/api
+    platform: linux/amd64
+    environment:
+      APP_URL: ${APP_URL}
+      SESSION_SECRET: ${SESSION_SECRET}
+      DATABASE_URL: ${DATABASE_URL}
+      PORT: ${PORT}
+      RESEND_API_KEY: ${RESEND_API_KEY}
+      RESEND_AUDIENCE_ID: ${RESEND_AUDIENCE_ID}
+      FRONTEND_URL: ${FRONTEND_URL}
+      RESET_FROM_EMAIL: ${RESET_FROM_EMAIL}
+      WELCOME_FROM_EMAIL: ${WELCOME_FROM_EMAIL}
+      WELCOME_EMAIL_SUBJECT: ${WELCOME_EMAIL_SUBJECT}
+    depends_on:
+      - mongo
+    restart: unless-stopped
     ports:
-      - 3000:3000
-  app:
+      - "127.0.0.1:8080:8080"
+
+  frontend:
     build:
       context: ..
-      dockerfile: .habitat/app/dockerfile
-    container_name: app
-    image: tidaltask/app
+      dockerfile: packages/app/Dockerfile
+    container_name: frontend
+    image: tidaltask/frontend
+    platform: linux/amd64
+    depends_on:
+      - api
+    restart: unless-stopped
     ports:
-      - 3001:3001
+      - "127.0.0.1:4173:80"
 
   nginx:
     image: nginx:1.27-alpine
     platform: linux/amd64
     depends_on:
-      - app
+      - frontend
       - api
     restart: unless-stopped
     ports:
@@ -30,4 +61,6 @@ services:
       - ./docker/nginx/conf.d:/etc/nginx/conf.d:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - /var/www/letsencrypt:/var/www/letsencrypt:ro
-volumes: {}
+
+volumes:
+  mongo-data:
