@@ -134,7 +134,8 @@ export class TaskService {
 
         const payload = data as Partial<Task>;
         const tags = this.normalizeTags(payload.tags);
-        const { subtasks: _, ...rest } = payload as any;
+        const rest: any = { ...payload };
+        delete rest.subtasks;
 
         return Task.findByIdAndUpdate(id, {
             $set: {
