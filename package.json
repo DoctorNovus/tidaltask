@@ -9,19 +9,12 @@
 		"dev:app": "npm --workspace packages/app run dev",
 		"dev:api": "npm --workspace packages/api run dev",
 		"dev:all": "npm run dev:api & npm run dev:app",
-		"buildx:init": "docker buildx create --use --name amd64builder 2>/dev/null || docker buildx use amd64builder && docker buildx inspect --bootstrap",
-		"build": "npm run build:app && npm run build:api",
-		"build:app": "npm run buildx:init && docker buildx build --no-cache --platform linux/amd64 -t registry.digitalocean.com/tidaltask-registry/tidaltask-frontend:latest -f packages/app/Dockerfile --push .",
-		"build:api": "npm run buildx:init && docker buildx build --no-cache --platform linux/amd64 -t registry.digitalocean.com/tidaltask-registry/tidaltask-api:latest -f packages/api/Dockerfile --push .",
-		"build:local": "npm run build:app:local && npm run build:api:local",
-		"build:app:local": "docker build -t tidaltask-frontend:local -f packages/app/Dockerfile .",
-		"build:api:local": "docker build -t tidaltask-api:local -f packages/api/Dockerfile .",
-		"build:habitat": "habitat build",
+		"deploy": "habitat build && habitat start",
 		"habitat:build": "habitat build",
 		"habitat:start": "habitat start",
 		"habitat:stop": "habitat stop"
 	},
 	"dependencies": {
-		"@outwalk/habitat": "file:outwalk-habitat-0.0.1.tgz"
+		"@outwalk/habitat": "^0.1.0"
 	}
 }
