@@ -53,3 +53,5 @@ services:
 
 volumes:
   mongo-data:
+    external: true
+    name: sequenced_mongo-data
