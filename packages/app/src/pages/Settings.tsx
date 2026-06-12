@@ -369,7 +369,7 @@ export default function SettingsPage() {
     <button
       type="button"
       onClick={() => toggleSection(id)}
-      className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left bg-silver-200 dark:bg-vulcan-800 hover:bg-silver-300 dark:hover:bg-vulcan-700 transition-colors"
+      className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left bg-silver-200 dark:bg-(--surface-raised) hover:bg-silver-300 dark:hover:bg-(--surface-card) transition-colors"
     >
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <div className="flex items-center gap-2">
@@ -426,7 +426,7 @@ export default function SettingsPage() {
                 type="text"
                 value={profileForm.first}
                 onChange={(e) => setProfileForm({ ...profileForm, first: e.target.value })}
-                className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-vulcan-950 px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+                className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
               />
             </label>
             <label className="flex flex-col gap-1 text-sm text-primary">
@@ -435,7 +435,7 @@ export default function SettingsPage() {
                 type="text"
                 value={profileForm.last}
                 onChange={(e) => setProfileForm({ ...profileForm, last: e.target.value })}
-                className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-vulcan-950 px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+                className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
               />
             </label>
             <label className="flex flex-col gap-1 text-sm text-primary md:col-span-2">
@@ -444,7 +444,7 @@ export default function SettingsPage() {
                 type="email"
                 value={profileForm.email}
                 onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
-                className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-vulcan-950 px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+                className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
               />
             </label>
             <div className="flex flex-wrap items-center gap-2 md:col-span-2">
@@ -458,7 +458,7 @@ export default function SettingsPage() {
               <button
                 type="button"
                 onClick={() => { setShowChangePassword(true); setPasswordMessage(""); }}
-                className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-vulcan-800 px-3 py-2 text-sm font-semibold text-primary hover:-translate-y-px transition"
+                className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm font-semibold text-primary hover:-translate-y-px transition"
               >
                 Change password
               </button>
@@ -489,7 +489,7 @@ export default function SettingsPage() {
                       type="password"
                       value={passwordForm.current}
                       onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
-                      className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-vulcan-950 px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+                      className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
                     />
                   </label>
                   <label className="flex flex-col gap-1 text-sm text-primary">
@@ -498,7 +498,7 @@ export default function SettingsPage() {
                       type="password"
                       value={passwordForm.next}
                       onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })}
-                      className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-vulcan-950 px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+                      className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
                     />
                   </label>
                   <label className="flex flex-col gap-1 text-sm text-primary">
@@ -507,7 +507,7 @@ export default function SettingsPage() {
                       type="password"
                       value={passwordForm.confirm}
                       onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
-                      className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-vulcan-950 px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+                      className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
                     />
                   </label>
                   <div className="flex items-center gap-2">
@@ -557,7 +557,7 @@ export default function SettingsPage() {
                       value={deleteInput}
                       onChange={(e) => setDeleteInput(e.target.value)}
                       placeholder="DELETE"
-                      className="w-full rounded-lg border border-red-300 bg-silver-200 px-2 py-2 text-sm focus:border-red-500 focus:outline-hidden dark:border-red-500/60 dark:bg-vulcan-950 dark:text-white"
+                      className="w-full rounded-lg border border-red-300 bg-silver-200 px-2 py-2 text-sm focus:border-red-500 focus:outline-hidden dark:border-red-500/60 dark:bg-(--surface-raised) dark:text-white"
                     />
                     <button
                       type="button"
@@ -591,7 +591,7 @@ export default function SettingsPage() {
           />
           {!isClosed("appearance") && (
           <div className="px-4 py-4 border-t border-(--surface-border)">
-            <div className="inline-flex items-center gap-1 rounded-xl bg-silver-200 dark:bg-vulcan-900 p-1">
+            <div className="inline-flex items-center gap-1 rounded-xl bg-silver-200 dark:bg-(--surface-card) p-1">
               {([
                 { id: "light", label: "Light", Icon: SunIcon },
                 { id: "dark",  label: "Dark",  Icon: MoonIcon },
@@ -669,7 +669,7 @@ export default function SettingsPage() {
                   onChange={(e) => setReviewMessage(e.target.value)}
                   rows={3}
                   placeholder="What’s working well? What should we improve?"
-                  className="w-full rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-vulcan-950 px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+                  className="w-full rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
                 />
               </label>
               <div className="flex items-center gap-2">
@@ -710,7 +710,7 @@ export default function SettingsPage() {
                 value={apiKeyName}
                 onChange={(e) => setApiKeyName(e.target.value)}
                 placeholder="Key name (e.g. OpenAI)"
-                className="flex-1 rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-vulcan-950 px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+                className="flex-1 rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
               />
               <button
                 type="button"
@@ -761,7 +761,7 @@ export default function SettingsPage() {
                 {Object.entries(tempSettings.apiKeys).map(([name, value]) => (
                   <div
                     key={name}
-                    className="flex items-center justify-between gap-3 rounded-xl bg-silver-200 dark:bg-vulcan-950 px-3 py-2 text-sm"
+                    className="flex items-center justify-between gap-3 rounded-xl bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm"
                   >
                     <div className="flex min-w-0 flex-1 flex-col">
                       <span className="font-semibold text-primary truncate">{name}</span>
@@ -805,7 +805,7 @@ export default function SettingsPage() {
           <div className="px-4 py-4 flex flex-col gap-3 border-t border-(--surface-border)">
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <select
-              className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-vulcan-950 px-2 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+              className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-2 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
               value={cleanupInterval}
               onChange={(e) => setCleanupInterval(e.target.value)}
             >
@@ -845,7 +845,7 @@ export default function SettingsPage() {
               href="https://discord.gg/qeKgAKVhXa"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-silver-300 dark:bg-vulcan-700 px-3 py-2 text-sm font-semibold text-primary shadow-xs hover:-translate-y-px transition"
+              className="inline-flex items-center gap-2 rounded-full bg-silver-300 dark:bg-(--surface-raised) px-3 py-2 text-sm font-semibold text-primary shadow-xs hover:-translate-y-px transition"
               aria-label="Ottegi on Discord"
             >
               <img src={discordIcon} alt="Discord logo" className="h-5 w-5 brightness-0 invert" />
@@ -854,7 +854,7 @@ export default function SettingsPage() {
               href="https://twitter.com/OttegiLLC"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-silver-300 dark:bg-vulcan-700 px-3 py-2 text-sm font-semibold text-primary shadow-xs hover:-translate-y-px transition"
+              className="inline-flex items-center gap-2 rounded-full bg-silver-300 dark:bg-(--surface-raised) px-3 py-2 text-sm font-semibold text-primary shadow-xs hover:-translate-y-px transition"
               aria-label="Ottegi on X"
             >
               <img src={xIcon} alt="X logo" className="h-5 w-5 brightness-0 invert" />
@@ -863,7 +863,7 @@ export default function SettingsPage() {
               href="https://www.instagram.com/OttegiLLC"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-silver-300 dark:bg-vulcan-700 px-3 py-2 text-sm font-semibold text-primary shadow-xs hover:-translate-y-px transition"
+              className="inline-flex items-center gap-2 rounded-full bg-silver-300 dark:bg-(--surface-raised) px-3 py-2 text-sm font-semibold text-primary shadow-xs hover:-translate-y-px transition"
               aria-label="Ottegi on Instagram"
             >
               <img src={instagramIcon} alt="Instagram logo" className="h-5 w-5 brightness-0 invert" />
@@ -872,7 +872,7 @@ export default function SettingsPage() {
               href="https://www.linkedin.com/company/ottegi"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-silver-300 dark:bg-vulcan-700 px-3 py-2 text-sm font-semibold text-primary shadow-xs hover:-translate-y-px transition"
+              className="inline-flex items-center gap-2 rounded-full bg-silver-300 dark:bg-(--surface-raised) px-3 py-2 text-sm font-semibold text-primary shadow-xs hover:-translate-y-px transition"
               aria-label="Ottegi on LinkedIn"
             >
               <span className="text-sm font-semibold text-white">in</span>
@@ -881,7 +881,7 @@ export default function SettingsPage() {
               href="https://www.facebook.com/OttegiLLC"
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-2 rounded-full bg-silver-300 dark:bg-vulcan-700 px-3 py-2 text-sm font-semibold text-primary shadow-xs hover:-translate-y-px transition"
+              className="inline-flex items-center gap-2 rounded-full bg-silver-300 dark:bg-(--surface-raised) px-3 py-2 text-sm font-semibold text-primary shadow-xs hover:-translate-y-px transition"
               aria-label="Ottegi on Facebook"
             >
               <img src={facebookIcon} alt="Facebook logo" className="h-5 w-5 brightness-0 invert" />

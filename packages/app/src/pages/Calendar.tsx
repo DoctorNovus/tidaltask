@@ -228,17 +228,17 @@ export default function CalendarPage() {
       key={task.id ?? task.title}
       type="button"
       onClick={() => openTask(task, day)}
-      className="flex flex-col rounded-xl surface-card border px-3 py-2 text-left shadow-xs transition hover:border-accent-blue/40"
+      className="flex flex-col rounded-xl surface-card border px-3 py-2 xl:px-2 xl:py-1.5 text-left shadow-xs transition hover:border-accent-blue/40"
     >
-      <div className="flex items-center justify-between">
-        <span className="text-sm font-semibold text-primary">{task.title}</span>
-        {task.priority ? <span className="text-[11px] font-semibold text-amber-600">P{task.priority}</span> : null}
+      <div className="flex items-center justify-between gap-1">
+        <span className="text-sm xl:text-xs font-semibold text-primary xl:truncate">{task.title}</span>
+        {task.priority ? <span className="text-[11px] font-semibold text-amber-600 shrink-0">P{task.priority}</span> : null}
       </div>
       {task.description ? (
-        <p className="mt-1 text-xs text-muted line-clamp-2">{task.description}</p>
+        <p className="mt-1 text-xs text-muted line-clamp-2 xl:hidden">{task.description}</p>
       ) : null}
       {Array.isArray(task.tags) && task.tags.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2">
+        <div className="mt-2 flex flex-wrap gap-2 xl:hidden">
           {task.tags.map((tag) => (
             <span key={String(tag)} className="rounded-full bg-accent-blue/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-blue-800 ring-1 ring-accent-blue/20">
               #{tag}
@@ -250,7 +250,7 @@ export default function CalendarPage() {
   );
 
   const renderWeek = () => (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-7 gap-3">
       {weekDays.map((day) => {
         const key = dayKey(day);
         const dayTasks = grouped[key] || [];
@@ -258,30 +258,28 @@ export default function CalendarPage() {
         return (
           <div
             key={key}
-            className="rounded-2xl surface-card border p-4 shadow-xs"
+            className="rounded-2xl surface-card border p-4 xl:p-3 shadow-xs"
           >
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
-                <div
-                  className={`flex h-10 w-10 items-center justify-center rounded-xl text-sm font-semibold ring-1 ${
-                    isToday
-                      ? "bg-accent-blue/90 text-white ring-white/60 shadow-xs shadow-accent-blue/25"
-                      : "bg-slate-100 text-primary ring-slate-200 dark:bg-slate-800 dark:text-white dark:ring-slate-700"
-                  }`}
-                >
-                  {formatLabel(day, { weekday: "short" })}
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-primary">
-                    {formatLabel(day, { month: "long", day: "numeric" })}
-                  </span>
-                  <span className="text-xs text-muted">{dayTasks.length} pending</span>
-                </div>
+            <div className="flex xl:flex-col items-center xl:items-start justify-between xl:justify-start mb-3 xl:mb-2 gap-2">
+              <div
+                className={`flex h-9 w-9 xl:h-8 xl:w-8 shrink-0 items-center justify-center rounded-xl text-xs font-semibold ring-1 ${
+                  isToday
+                    ? "bg-accent-blue/90 text-white ring-white/60 shadow-xs shadow-accent-blue/25"
+                    : "bg-slate-100 text-primary ring-slate-200 dark:bg-(--surface-raised) dark:text-primary dark:ring-(--surface-border)"
+                }`}
+              >
+                {formatLabel(day, { weekday: "short" })}
+              </div>
+              <div className="flex flex-col xl:mt-1.5">
+                <span className="text-sm xl:text-xs font-semibold text-primary">
+                  {formatLabel(day, { month: "short", day: "numeric" })}
+                </span>
+                <span className="text-xs text-muted xl:hidden">{dayTasks.length} pending</span>
               </div>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 xl:gap-1.5">
               {dayTasks.length === 0 && (
-                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-muted dark:border-slate-700 dark:bg-slate-800/60">
+                <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2 xl:px-2 xl:py-1.5 text-xs text-muted dark:border-(--surface-border) dark:bg-(--surface-raised)">
                   Nothing due.
                 </div>
               )}
@@ -295,7 +293,7 @@ export default function CalendarPage() {
 
   const renderMonth = () => (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-center justify-center gap-3">
+      <div className="flex md:hidden flex-wrap items-center justify-center gap-3">
         <button
           type="button"
           onClick={() => changeMonth(-1)}
@@ -344,7 +342,7 @@ export default function CalendarPage() {
                   key={key}
                   className={`flex flex-col rounded-xl border p-1 sm:p-2 ${
                     isToday
-                      ? "border-accent-blue/50 ring-1 ring-accent-blue/20 bg-accent-blue-50/30 dark:bg-[rgba(99,102,241,0.1)]"
+                      ? "border-accent-blue/50 ring-1 ring-accent-blue/20 bg-accent-blue-50/30 dark:bg-(--accent-subtle)"
                       : "border-transparent"
                   }`}
                 >
@@ -366,7 +364,7 @@ export default function CalendarPage() {
                             e.stopPropagation();
                             openTask(task, day);
                           }}
-                          className="truncate rounded-lg bg-white/80 dark:bg-slate-800 px-1.5 py-0.5 text-[10px] font-semibold text-primary shadow-xs transition"
+                          className="truncate rounded-lg bg-white/80 dark:bg-(--surface-raised) px-1.5 py-0.5 text-[10px] font-semibold text-primary shadow-xs transition"
                         >
                           {task.title}
                         </button>
@@ -387,13 +385,62 @@ export default function CalendarPage() {
   );
 
   return (
-    <div className="w-full h-full flex flex-col px-3 md:px-6 lg:px-10 py-4 pb-28 gap-6">
-      <div className="flex w-full max-w-5xl flex-col gap-3 mx-auto">
+    <div className="w-full h-full flex flex-col px-3 md:px-0 py-4 pb-28 md:pb-4 gap-6">
+      <div className="flex w-full flex-col gap-3">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-col">
             <h1 className="text-2xl font-semibold text-primary">Calendar</h1>
-            <p className="text-sm text-muted">See what is coming up this week or month.</p>
+            <p className="text-sm text-muted md:hidden">See what is coming up this week or month.</p>
           </div>
+
+          {/* Desktop-only inline navigation */}
+          {view === "week" && (
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => changeWeek(-1)}
+                className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40"
+                aria-label="Previous week"
+              >
+                ←
+              </button>
+              <span className="min-w-[200px] text-center text-base font-semibold text-primary">
+                Week of {formatLabel(weekStart, { month: "long", day: "numeric" })}
+              </span>
+              <button
+                type="button"
+                onClick={() => changeWeek(1)}
+                className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40"
+                aria-label="Next week"
+              >
+                →
+              </button>
+            </div>
+          )}
+          {view === "month" && (
+            <div className="hidden md:flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => changeMonth(-1)}
+                className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40"
+                aria-label="Previous month"
+              >
+                ←
+              </button>
+              <span className="min-w-[180px] text-center text-base font-semibold text-primary">
+                {formatLabel(monthAnchor, { month: "long", year: "numeric" })}
+              </span>
+              <button
+                type="button"
+                onClick={() => changeMonth(1)}
+                className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40"
+                aria-label="Next month"
+              >
+                →
+              </button>
+            </div>
+          )}
+
           <div className="flex items-center gap-2">
             {(["week", "month"] as ViewMode[]).map((mode) => (
               <button
@@ -408,8 +455,9 @@ export default function CalendarPage() {
           </div>
         </div>
 
+        {/* Mobile-only week navigation row */}
         {view === "week" && (
-          <div className="flex flex-wrap items-center justify-center gap-3">
+          <div className="flex md:hidden flex-wrap items-center justify-center gap-3">
             <button
               type="button"
               onClick={() => changeWeek(-1)}

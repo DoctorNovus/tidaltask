@@ -15,6 +15,7 @@ interface TaskMenuProps {
   animatingIds?: string[];
   activeDate?: Date;
   onTaskComplete?: any;
+  disableGrouping?: boolean;
 }
 
 export default function TaskMenu({
@@ -27,7 +28,8 @@ export default function TaskMenu({
   toggleSelection,
   animatingIds = [],
   activeDate,
-  onTaskComplete
+  onTaskComplete,
+  disableGrouping = false,
 }: TaskMenuProps) {
   const [collapsedGroups, setCollapsedGroups] = useState<string[]>([]);
   const [orderedTasks, setOrderedTasks] = useState<any[]>([]);
@@ -63,6 +65,10 @@ export default function TaskMenu({
   }, [tasks, taskFilter, activeDate]);
 
   const { grouped, ungrouped } = useMemo(() => {
+    if (disableGrouping) {
+      return { grouped: {} as Record<string, any[]>, ungrouped: orderedTasks };
+    }
+
     const groupedTasks: Record<string, any[]> = {};
     const ungroupedTasks: any[] = [];
 
@@ -124,33 +130,49 @@ export default function TaskMenu({
     </div>
   );
 
-  return (
-    <div className="w-full h-full flex flex-col items-center ">
-      <div className="w-full h-full pb-4 flex flex-col gap-3 justify-start py-4">
-        {ungrouped.length > 0 && ungrouped.map(renderTask)}
+  const numGroups = groupedEntries.length;
+  const groupGridClass =
+    numGroups <= 1
+      ? "grid-cols-1"
+      : numGroups <= 4
+        ? "grid-cols-1 md:grid-cols-2"
+        : "grid-cols-1 md:grid-cols-3";
 
-        {groupedEntries.map(([groupName, list]) => {
-          const isCollapsed = collapsedGroups.includes(groupName);
-          return (
-            <div
-              key={groupName}
-              className="w-full"
-            >
-              <button
-                type="button"
-                onClick={() => toggleGroup(groupName)}
-                className="w-full text-left"
-              >
-                {renderGroupHeader(groupName, isCollapsed, list.length)}
-              </button>
-              {!isCollapsed && (
-                <div className="mt-2 flex flex-col gap-2">
-                  {list.map((task: any) => renderTask(task))}
+  return (
+    <div className="w-full h-full flex flex-col">
+      <div className="w-full h-full pb-4 flex flex-col gap-3 py-4">
+        {ungrouped.length > 0 && (
+          <div className="flex flex-col gap-2">
+            {ungrouped.map(renderTask)}
+          </div>
+        )}
+
+        {groupedEntries.length > 0 && (
+          <div className={`grid gap-3 ${groupGridClass}`}>
+            {groupedEntries.map(([groupName, list]) => {
+              const isCollapsed = collapsedGroups.includes(groupName);
+              return (
+                <div
+                  key={groupName}
+                  className="rounded-2xl surface-card border shadow-xs overflow-hidden flex flex-col"
+                >
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(groupName)}
+                    className="w-full px-3 pt-3 pb-2 text-left hover:bg-silver-100/60 dark:hover:bg-(--surface-raised) transition-colors"
+                  >
+                    {renderGroupHeader(groupName, isCollapsed, list.length)}
+                  </button>
+                  {!isCollapsed && (
+                    <div className="px-3 pb-3 flex flex-col gap-2">
+                      {list.map((task: any) => renderTask(task))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          );
-        })}
+              );
+            })}
+          </div>
+        )}
 
         {visibleTasks.length === 0 && (
           <h1 className="text-lg text-accent-blue text-center">No Tasks</h1>

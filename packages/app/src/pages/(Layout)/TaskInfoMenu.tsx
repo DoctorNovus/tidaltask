@@ -340,7 +340,12 @@ export default function TaskInfoMenu({
     <>
       <Transition
         show={isOpen}
-        enter="transition duration-500"
+        enter="transition-opacity duration-200 ease-out"
+        enterFrom="opacity-0"
+        enterTo="opacity-100"
+        leave="transition-opacity duration-150 ease-in"
+        leaveFrom="opacity-100"
+        leaveTo="opacity-0"
       >
         <Dialog
           onClose={() => resetForm()}
@@ -348,9 +353,13 @@ export default function TaskInfoMenu({
           ref={ref}
           className="fixed inset-0 z-50"
         >
-          <div className="fixed inset-0 md:left-56 flex h-full">
-            <DialogPanel className="flex flex-1 min-w-0 flex-col overflow-y-auto text-primary p-6 md:p-10 bg-silver-50 dark:bg-[#121720]">
-              <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto">
+          {/* Desktop backdrop */}
+          <div className="fixed inset-0 hidden md:block bg-slate-900/20 backdrop-blur-[1px]" aria-hidden="true" />
+
+          {/* Mobile: full screen. Desktop: right-side panel */}
+          <div className="fixed inset-0 md:inset-y-0 md:left-auto md:right-0 md:w-[520px] flex h-full z-10">
+            <DialogPanel className="flex flex-1 min-w-0 flex-col overflow-y-auto text-primary p-6 md:p-8 bg-silver-50 dark:bg-[#121720] md:border-l md:[box-shadow:-8px_0_40px_rgba(0,0,0,0.12)]" style={{ borderColor: "var(--surface-border)" }}>
+              <div className="flex flex-col gap-4 w-full max-w-2xl mx-auto md:max-w-none">
                 <MenuHeader
                   type={type!}
                   isDeleting={isDeleting}

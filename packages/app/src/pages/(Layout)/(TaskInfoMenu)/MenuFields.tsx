@@ -36,7 +36,7 @@ export default function MenuFields({
     return (
         <div className={`flex flex-col gap-4 ${isDeleting && "blur-xs"}`}>
             {type === "add" && (
-                <div className="flex flex-col gap-2 rounded-lg border border-accent-blue/15 bg-accent-blue-50/40 px-3 py-3 dark:bg-[rgba(99,102,241,0.12)]">
+                <div className="flex flex-col gap-2 rounded-lg border border-accent-blue/15 bg-accent-blue-50/40 px-3 py-3 dark:bg-(--accent-subtle)">
                     <div className="flex items-center justify-between">
                         <div className="flex flex-col">
                             <span className="text-sm font-semibold text-primary">Quick add</span>

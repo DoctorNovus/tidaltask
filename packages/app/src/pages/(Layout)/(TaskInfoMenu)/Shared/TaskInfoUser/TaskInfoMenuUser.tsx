@@ -45,7 +45,7 @@ export default function TaskInfoMenuUser({ data }: { data: Task }) {
                         const isSelf = host.data?.email === user.email;
 
                         return (
-                            <div key={key} className="flex flex-row items-center gap-2 rounded-xl border border-accent-blue/20 bg-accent-blue-50/50 px-3 py-2 dark:bg-[rgba(99,102,241,0.12)]">
+                            <div key={key} className="flex flex-row items-center gap-2 rounded-xl border border-accent-blue/20 bg-accent-blue-50/50 px-3 py-2 dark:bg-(--accent-subtle)">
                                 <div className="flex flex-col">
                                     <span className="text-sm font-semibold text-primary">{displayName}</span>
                                     <span className="text-xs text-muted">{user.email}</span>

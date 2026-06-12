@@ -6,6 +6,7 @@ import AuthProvider from "./Auth/AuthProvider";
 import HomeIntroduction from "./(Home)/HomeIntroduction";
 import HomeAgenda from "./(Home)/HomeAgenda";
 import HomeUpcoming from "./(Home)/HomeUpcoming";
+import HomeAnnouncements from "./(Home)/HomeAnnouncements";
 
 const Home = () => {
     const auth = useAuth();
@@ -20,22 +21,28 @@ const Home = () => {
 
     if (auth.isLoading)
         return (
-            <div className="w-full h-full flex flex-col px-2 md:px-4 lg:px-6 pb-20">
-                <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-                    <HomeIntroduction skeleton={true} />
-                    <HomeAgenda skeleton={true} />
-                    <HomeUpcoming skeleton={true} />
+            <div className="w-full flex flex-col pb-24 md:pb-4">
+                <div className="w-full flex flex-col gap-6 md:grid md:grid-cols-[1fr_300px] md:items-start">
+                    <div className="flex flex-col gap-6">
+                        <HomeIntroduction skeleton={true} />
+                        <HomeAgenda skeleton={true} />
+                        <HomeUpcoming skeleton={true} />
+                    </div>
+                    <div />
                 </div>
             </div>
         )
 
     return (
         <AuthProvider>
-            <div className="w-full h-full flex flex-col px-2 md:px-4 lg:px-6 pb-20">
-                <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
-                    <HomeIntroduction user={user} today={today} />
-                    <HomeAgenda />
-                    <HomeUpcoming />
+            <div className="w-full flex flex-col pb-24 md:pb-4">
+                <div className="w-full flex flex-col gap-6 md:grid md:grid-cols-[1fr_300px] md:items-start">
+                    <div className="flex flex-col gap-6">
+                        <HomeIntroduction user={user} today={today} />
+                        <HomeAgenda />
+                        <HomeUpcoming />
+                    </div>
+                    <HomeAnnouncements />
                 </div>
             </div>
         </AuthProvider>
