@@ -69,11 +69,8 @@ export default function HomeAgenda({ skeleton }: AgendaProps) {
 
     return (
         <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between px-1">
+            <div className="px-1">
                 <span className="text-xs font-semibold uppercase tracking-widest text-muted">Your Agenda</span>
-                <span className="rounded-full bg-accent-blue-50 px-2.5 py-0.5 text-xs font-semibold text-accent-blue-700 dark:bg-(--accent-subtle) dark:text-primary">
-                    Live sync
-                </span>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 <DueCapsule

@@ -56,7 +56,6 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
 
   if (!item) item = { title: "", date: new Date(), done: false, tags: [] };
 
-  const tags = Array.isArray(item.tags) ? item.tags.map((tag) => (typeof tag === "string" ? tag : null)).filter(Boolean) as string[] : [];
 
   const handleToggleSelect = () => {
     if (!onToggleSelect || !item?.id) return;
@@ -153,31 +152,19 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
             }}
           />
           <div className="w-full">
-            <div className="w-full flex flex-row items-center justify-between gap-2">
+            <div className="w-full flex flex-row items-center gap-2">
               <div className="flex flex-row items-center min-w-0 flex-1">
                 <TaskItemTitle text={item.title} />
-                {!!item.priority && item.priority > 0 && (
-                  <span className="ml-1 flex-shrink-0 text-xs font-bold text-red-500">
-                    {"!".repeat(item.priority)}
-                  </span>
-                )}
               </div>
               <div className="flex-shrink-0 w-20">
                 <TaskItemDate task={item} />
               </div>
+              {!!item.priority && item.priority > 0 && (
+                <span className="flex-shrink-0 ml-1 text-xs font-bold text-red-500">
+                  {"!".repeat(item.priority)}
+                </span>
+              )}
             </div>
-            {tags.length > 0 && isPending && (
-              <div className="mt-1 flex flex-wrap gap-2 px-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded-full bg-accent-blue/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-blue-800 ring-1 ring-accent-blue/20"
-                  >
-                    #{tag}
-                  </span>
-                ))}
-              </div>
-            )}
           </div>
         </div>
       </TaskItemShell>

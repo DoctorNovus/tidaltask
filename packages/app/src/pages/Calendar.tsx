@@ -291,19 +291,21 @@ export default function CalendarPage() {
                     key={task.id ?? task.title}
                     type="button"
                     onClick={() => openTask(task, day)}
-                    className="flex flex-col items-start w-full rounded-lg bg-(--surface-card) border border-(--surface-border) px-2 py-1.5 text-left transition hover:border-accent-blue/40"
+                    className="relative flex flex-col items-start w-full rounded-lg bg-(--surface-card) border border-(--surface-border) px-2 py-1.5 text-left transition hover:border-accent-blue/40"
                   >
+                    {task.priority ? (
+                      <span className="absolute top-1 right-1 text-[10px] font-bold text-amber-500 leading-none">
+                        {"!".repeat(task.priority)}
+                      </span>
+                    ) : null}
                     {hasTime(task) && (
                       <span className="text-[10px] font-bold text-accent-blue leading-none mb-0.5">
                         {formatTime(task)}
                       </span>
                     )}
-                    <span className="text-xs font-semibold text-primary leading-snug line-clamp-2">
+                    <span className="text-xs font-semibold text-primary leading-snug line-clamp-2 pr-3">
                       {task.title}
                     </span>
-                    {task.priority ? (
-                      <span className="text-[10px] font-bold text-amber-500 mt-0.5">P{task.priority}</span>
-                    ) : null}
                   </button>
                 ))}
                 {overflow > 0 && (

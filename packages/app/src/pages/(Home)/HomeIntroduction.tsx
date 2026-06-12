@@ -53,21 +53,16 @@ export default function HomeIntroduction({ skeleton, user, today }: Introduction
             </div>
 
             {/* Desktop: compact header */}
-            <div className="hidden md:flex items-center justify-between gap-4 pt-1 pb-2 border-b border-(--surface-border)">
-                <div className="flex flex-col">
-                    <h1 className="text-2xl font-semibold text-primary">
-                        Hello{hasName ? `, ${user.data.first}` : ""}!
-                    </h1>
-                    <a
-                        href={`/calendar?scope=today&view=week`}
-                        className="text-sm text-muted hover:text-primary transition-colors"
-                    >
-                        {getNameByDate(activeDay.getDay() as DaysAsNumbers)}, {getNameByMonth(activeDay.getMonth() as MonthsAsNumbers)} {getDateDD(activeDay)}
-                    </a>
-                </div>
-                <span className="shrink-0 rounded-full bg-accent-blue/10 px-3 py-1 text-xs font-semibold text-accent-blue-700 dark:bg-(--accent-subtle) dark:text-accent-blue-300">
-                    Live sync
-                </span>
+            <div className="hidden md:flex items-center justify-between pt-1 pb-2 border-b border-(--surface-border)">
+                <h1 className="text-2xl font-semibold text-primary">
+                    Hello{hasName ? `, ${user.data.first}` : ""}!
+                </h1>
+                <a
+                    href={`/calendar?scope=today&view=week`}
+                    className="text-sm text-muted hover:text-primary transition-colors"
+                >
+                    {getNameByDate(activeDay.getDay() as DaysAsNumbers)}, {getNameByMonth(activeDay.getMonth() as MonthsAsNumbers)} {getDateDD(activeDay)}
+                </a>
             </div>
         </>
     )
