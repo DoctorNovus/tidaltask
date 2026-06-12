@@ -1,4 +1,5 @@
 import { ChangeEventHandler } from "react";
+import DateTimePicker from "./DateTimePicker";
 
 export interface TaskInfoMenuItemOptions {
   type?: string;
@@ -42,15 +43,9 @@ export default function TaskInfoMenuItem({
     );
   } else if (type === "datetime-local") {
     inputPiece = (
-      <input
-        id={name.toLowerCase()}
-        name={name.toLowerCase()}
-        type={type}
-        className="text-base px-3 py-2 rounded-lg border border-accent-blue/30 bg-silver-200 text-primary shadow-inner focus:border-accent-blue focus:ring-2 focus:ring-accent-blue/30 focus:outline-hidden dark:bg-[#253350] dark:border-accent-blue/40"
-        placeholder={placeholder ?? `${name}...`}
-        value={value as any}
-        onChange={onChange}
-        autoFocus={false}
+      <DateTimePicker
+        value={value as string}
+        onChange={(val) => onChange?.({ target: { value: val } } as React.ChangeEvent<HTMLInputElement>)}
       />
     );
   }

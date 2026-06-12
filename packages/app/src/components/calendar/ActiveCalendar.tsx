@@ -1,5 +1,6 @@
 import { formatDate, generateWeek } from "@/utils/date";
 import CalendarItem from "./CalendarItem";
+import DateTimePicker from "@/pages/(Layout)/(TaskInfoMenu)/Shared/DateTimePicker";
 
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/16/solid";
 import { useApp } from "@/hooks/app";
@@ -24,15 +25,12 @@ export default function ActiveCalendar({ skeleton, searchSlot }: ActiveCalendarP
         <div className="p-1">
           <div className="flex items-center justify-between">
             <span className="text-lg font-semibold text-primary">This Week</span>
-            <div className="flex w-44 md:w-56 justify-end">
-              <div className="flex w-full items-center rounded-2xl border border-accent-blue/20 bg-accent-blue-50/60 px-2 py-1 shadow-inner dark:bg-(--accent-subtle)">
-                <input
-                  disabled
-                  value={formatDate(new Date())}
-                  type="date"
-                  className="w-full rounded-2xl border-none !bg-transparent text-center text-sm font-semibold text-muted focus:outline-hidden"
-                />
-              </div>
+            <div className="w-44 md:w-56">
+              <DateTimePicker
+                value={formatDate(new Date())}
+                onChange={() => {}}
+                dateOnly
+              />
             </div>
           </div>
           <div className="mt-4 flex items-center gap-2">
@@ -62,25 +60,6 @@ export default function ActiveCalendar({ skeleton, searchSlot }: ActiveCalendarP
 
   const dates = generateWeek(appData.activeDate || new Date(), 0);
 
-  function changeActiveMonth(e: React.ChangeEvent<HTMLInputElement>) {
-    let activeData = e.target.value.split("-");
-
-    let tempData = {
-      ...appData,
-    };
-
-    const tempYear = parseInt(activeData[0]);
-    const tempMonth = parseInt(activeData[1]) - 1;
-    const tempDay = parseInt(activeData[2]);
-
-    tempData.activeDate = new Date();
-    tempData.activeDate.setFullYear(tempYear);
-    tempData.activeDate.setMonth(tempMonth);
-    tempData.activeDate.setDate(tempDay);
-
-    setAppData(tempData);
-  }
-
   const checkDirection = () => {
     if (touchendX < touchstartX) return -1;
     if (touchendX > touchstartX) return 1;
@@ -104,15 +83,17 @@ export default function ActiveCalendar({ skeleton, searchSlot }: ActiveCalendarP
       <div className="p-1">
         <div className="flex items-center justify-between">
           <span className="text-lg font-semibold text-primary">This Week</span>
-          <div className="flex flex-row w-48 md:w-52">
-            <div className="flex justify-center w-full rounded-2xl border border-accent-blue/30 bg-white shadow-xs ring-1 ring-accent-blue/10 focus-within:ring-2 focus-within:ring-accent-blue/30 dark:bg-(--app-background) dark:border-accent-blue/40">
-              <input
-                type="date"
-                value={formatDate(appData.activeDate!)}
-                onChange={changeActiveMonth}
-                className="w-full h-full rounded-2xl border-none bg-transparent px-3 py-2 text-center text-sm font-semibold text-primary focus:outline-hidden"
-              />
-            </div>
+          <div className="w-48 md:w-52">
+            <DateTimePicker
+              value={formatDate(appData.activeDate!)}
+              onChange={(val) => {
+                const [y, m, d] = val.split("-").map(Number);
+                const next = new Date(appData.activeDate!);
+                next.setFullYear(y); next.setMonth(m - 1); next.setDate(d);
+                setAppData({ ...appData, activeDate: next });
+              }}
+              dateOnly
+            />
           </div>
         </div>
 
