@@ -21,7 +21,7 @@ export default function ActiveCalendar({ skeleton, searchSlot }: ActiveCalendarP
   if (skeleton) {
     return (
       <div className="w-full h-full">
-        <div className="rounded-3xl surface-card border p-4 shadow-sm">
+        <div className="p-1">
           <div className="flex items-center justify-between">
             <span className="text-lg font-semibold text-primary">This Week</span>
             <div className="flex w-44 md:w-56 justify-end">
@@ -30,7 +30,7 @@ export default function ActiveCalendar({ skeleton, searchSlot }: ActiveCalendarP
                   disabled
                   value={formatDate(new Date())}
                   type="date"
-                  className="w-full rounded-2xl border-none bg-transparent text-center text-sm font-semibold text-muted focus:outline-hidden"
+                  className="w-full rounded-2xl border-none !bg-transparent text-center text-sm font-semibold text-muted focus:outline-hidden"
                 />
               </div>
             </div>
@@ -101,7 +101,7 @@ export default function ActiveCalendar({ skeleton, searchSlot }: ActiveCalendarP
 
   return (
     <div className="w-full h-full">
-      <div className="rounded-3xl surface-card border p-4 shadow-sm">
+      <div className="p-1">
         <div className="flex items-center justify-between">
           <span className="text-lg font-semibold text-primary">This Week</span>
           <div className="flex flex-row w-48 md:w-52">
@@ -145,7 +145,7 @@ export default function ActiveCalendar({ skeleton, searchSlot }: ActiveCalendarP
         </div>
 
         {searchSlot && (
-          <div className="mt-3 pt-3 border-t border-(--surface-border)">
+          <div className="mt-3">
             {searchSlot}
           </div>
         )}
