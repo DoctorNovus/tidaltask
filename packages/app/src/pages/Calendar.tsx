@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
 import { useTasks, Task } from "@/hooks/tasks";
 import { occursOnDate, isTaskDone } from "@/utils/data";
@@ -189,6 +189,24 @@ export default function CalendarPage() {
     return weeks;
   }, [monthDays]);
 
+  const [windowH, setWindowH] = useState(() =>
+    typeof window !== "undefined" ? window.innerHeight : 932
+  );
+  useEffect(() => {
+    const handler = () => setWindowH(window.innerHeight);
+    window.addEventListener("resize", handler);
+    return () => window.removeEventListener("resize", handler);
+  }, []);
+
+  // ~300px accounts for: DataContainer top/bottom padding, Calendar py/pb, header row,
+  // month nav, day-name labels, and gaps. Keeps pill count accurate across device sizes.
+  const maxMobileTasks = useMemo(() => {
+    const gridH = windowH - 250;
+    const rowH = Math.max(40, gridH / monthWeeks.length);
+    // 34 = date number (18px) + overflow label (16px); 17 = pill (16px) + gap (1px)
+    return Math.max(1, Math.floor((rowH - 34) / 17));
+  }, [windowH, monthWeeks.length]);
+
   const overdueList = useMemo(() => {
     if (!tasks.data) return [];
     return tasks.data.filter((task) => isOverdue(task, today));
@@ -317,35 +335,51 @@ export default function CalendarPage() {
         })}
       </div>
 
-      {/* ── Mobile: stacked day cards ── */}
-      <div className="md:hidden flex flex-col gap-3">
-        {weekDays.map((day) => {
+      {/* ── Mobile: compact day list ── */}
+      <div className="md:hidden rounded-2xl surface-card border overflow-hidden shadow-xs">
+        {weekDays.map((day, idx) => {
           const key = dayKey(day);
-          const dayTasks = grouped[key] || [];
+          const dayTasks = sortByTime(grouped[key] || []);
           const isToday = dayKey(day) === dayKey(today);
+          const overflow = dayTasks.length - 3;
           return (
-            <div key={key} className="rounded-2xl surface-card border p-4 shadow-xs">
-              <div className="flex items-center justify-between mb-3">
-                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-xs font-semibold ring-1 ${
-                  isToday
-                    ? "bg-accent-blue/90 text-white ring-white/60 shadow-xs shadow-accent-blue/25"
-                    : "bg-slate-100 text-primary ring-slate-200 dark:bg-(--surface-raised) dark:ring-(--surface-border)"
-                }`}>
+            <div key={key} className={idx > 0 ? "border-t border-(--surface-border)" : ""}>
+              <div className={`flex items-center gap-3 px-4 py-2.5 ${isToday ? "bg-(--accent-subtle)" : ""}`}>
+                <span className={`shrink-0 w-8 text-xs font-bold ${isToday ? "text-accent-blue" : "text-muted"}`}>
                   {formatLabel(day, { weekday: "short" })}
-                </div>
-                <div className="flex flex-col text-right">
-                  <span className="text-sm font-semibold text-primary">{formatLabel(day, { month: "short", day: "numeric" })}</span>
-                  <span className="text-xs text-muted">{dayTasks.length} pending</span>
-                </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                {dayTasks.length === 0 && (
-                  <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-3 py-2 text-xs text-muted dark:border-(--surface-border) dark:bg-(--surface-raised)">
-                    Nothing due.
-                  </div>
+                </span>
+                <span className={`text-sm font-semibold ${isToday ? "text-accent-blue" : "text-primary"}`}>
+                  {formatLabel(day, { month: "short", day: "numeric" })}
+                </span>
+                {dayTasks.length > 0 && (
+                  <span className="ml-auto shrink-0 rounded-full bg-accent-blue/10 px-2 py-0.5 text-[11px] font-bold text-accent-blue-700 dark:bg-(--accent-subtle) dark:text-accent-blue-300">
+                    {dayTasks.length}
+                  </span>
                 )}
-                {dayTasks.map((task) => renderTask(task, day))}
               </div>
+              {dayTasks.length > 0 && (
+                <div className="flex flex-col px-4 pb-2.5 pt-0.5 gap-0.5">
+                  {dayTasks.slice(0, 3).map((task) => (
+                    <button
+                      key={task.id ?? task.title}
+                      type="button"
+                      onClick={() => openTask(task, day)}
+                      className="flex items-center gap-2 w-full py-0.5 text-left"
+                    >
+                      {hasTime(task) && (
+                        <span className="shrink-0 text-[10px] font-bold text-accent-blue">{formatTime(task)}</span>
+                      )}
+                      <span className="flex-1 min-w-0 text-sm text-primary truncate">{task.title}</span>
+                      {task.priority ? (
+                        <span className="shrink-0 text-xs font-bold text-amber-500">{"!".repeat(task.priority)}</span>
+                      ) : null}
+                    </button>
+                  ))}
+                  {overflow > 0 && (
+                    <span className="text-xs font-semibold text-accent-blue pt-0.5">+{overflow} more</span>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -416,41 +450,57 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* ── Mobile: compact dot grid ── */}
-      <div className="md:hidden flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-center gap-3">
+      {/* ── Mobile: full-height dot grid ── */}
+      <div className="md:hidden flex flex-col flex-1 min-h-0 gap-2 w-screen -ml-7 px-1.5">
+        <div className="flex flex-wrap items-center justify-center gap-3 shrink-0 px-7">
           <button type="button" onClick={() => changeMonth(-1)} className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40" aria-label="Previous month">←</button>
           <span className="text-lg font-semibold text-primary">{formatLabel(monthAnchor, { month: "long", year: "numeric" })}</span>
           <button type="button" onClick={() => changeMonth(1)} className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40" aria-label="Next month">→</button>
         </div>
-        <div className="grid grid-cols-7 border-b border-(--surface-border) pb-1">
+        <div className="grid grid-cols-7 shrink-0 border-b border-(--surface-border) pb-1">
           {DAY_NAMES.map((d) => (
             <div key={d} className="text-center text-[10px] font-bold text-muted py-1">{d.slice(0, 1)}</div>
           ))}
         </div>
-        <div className="flex flex-col gap-1">
+        <div
+          className="grid flex-1 min-h-0"
+          style={{ gridTemplateRows: `repeat(${monthWeeks.length}, 1fr)` }}
+        >
           {monthWeeks.map((week, idx) => (
-            <div key={idx} className="grid grid-cols-7 gap-1">
+            <div key={idx} className="flex flex-row">
               {week.map((day, dayIdx) => {
-                if (!day) return <div key={`empty-${idx}-${dayIdx}`} />;
+                if (!day) return <div key={`empty-${idx}-${dayIdx}`} className="flex-1" />;
                 const key = dayKey(day);
-                const dayTasks = grouped[key] || [];
+                const dayTasks = sortByTime(grouped[key] || []);
                 const isToday = dayKey(day) === dayKey(today);
                 const isCurrentMonth = day.getMonth() === monthAnchor.getMonth();
+                const overflow = dayTasks.length - maxMobileTasks;
                 return (
-                  <button
+                  <div
                     key={key}
-                    type="button"
-                    onClick={() => openTask(dayTasks[0] ?? { title: "", date: day, done: false, tags: [] } as Task, day)}
-                    className={`flex flex-col items-center rounded-xl border py-1.5 transition ${
-                      isToday ? "border-accent-blue/50 bg-(--accent-subtle)" : "border-transparent hover:bg-(--surface-raised)"
+                    className={`flex flex-col flex-1 overflow-hidden pt-1 ${
+                      isToday ? "bg-(--accent-subtle)" : ""
                     } ${!isCurrentMonth ? "opacity-40" : ""}`}
                   >
-                    <span className={`text-xs font-semibold ${isToday ? "text-accent-blue" : "text-primary"}`}>{day.getDate()}</span>
-                    {dayTasks.length > 0 && (
-                      <span className="text-[9px] font-bold text-muted leading-none">{dayTasks.length}</span>
-                    )}
-                  </button>
+                    <span className={`text-center text-xs font-semibold leading-none mb-1 shrink-0 block ${isToday ? "text-accent-blue" : "text-primary"}`}>
+                      {day.getDate()}
+                    </span>
+                    <div className="flex-1 flex flex-col gap-px px-0.5 min-h-0">
+                      {dayTasks.slice(0, maxMobileTasks).map((task) => (
+                        <button
+                          key={task.id ?? task.title}
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openTask(task, day); }}
+                          className="w-full shrink-0 text-left truncate rounded-sm bg-accent-blue px-1 text-[9px] font-bold text-white leading-[1.5] py-px"
+                        >
+                          {task.title}
+                        </button>
+                      ))}
+                      {overflow > 0 && (
+                        <span className="mt-auto text-[11px] font-bold text-accent-blue pl-0.5 pb-0.5 block">+{overflow} more</span>
+                      )}
+                    </div>
+                  </div>
                 );
               })}
             </div>
@@ -541,7 +591,7 @@ export default function CalendarPage() {
         </div>
       )}
       {tasks.isSuccess && (
-        <div className="flex flex-col flex-1 min-h-0 overflow-y-auto">
+        <div className="flex flex-col flex-1 min-h-0">
           {view === "week" ? renderWeek() : renderMonth()}
           <TaskInfoMenu type="edit" isOpen={isTaskMenuOpen} setIsOpen={setIsTaskMenuOpen} />
         </div>

@@ -174,7 +174,7 @@ export default function Task() {
 
         {/* Tag filter bar — always visible on mobile, toggled on desktop */}
         {tasks.isSuccess && (
-          <div className={showFilters || hasActiveFilters ? "block" : "block md:hidden"}>
+          <div className={showFilters || hasActiveFilters ? "block" : "hidden"}>
             <TagFilterBar tasks={filteredTasks ?? []} />
           </div>
         )}
