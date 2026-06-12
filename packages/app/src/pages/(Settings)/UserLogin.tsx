@@ -24,7 +24,7 @@ export default function UserLogin() {
                 <div className="flex flex-col gap-3">
                     <div className="flex items-center justify-between">
                         <h1 className="text-lg font-semibold text-primary">Sync Status</h1>
-                        <span className="text-xs rounded-full bg-accent-blue-50 px-2 py-1 text-accent-blue-700 dark:bg-[rgba(99,102,241,0.12)]">
+                        <span className="text-xs rounded-full bg-accent-blue-50 px-2 py-1 text-accent-blue-700 dark:bg-(--accent-subtle)">
                             {user.data?.id ? "Signed in" : "Signed out"}
                         </span>
                     </div>

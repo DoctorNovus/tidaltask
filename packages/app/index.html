@@ -19,6 +19,18 @@
 
   <link href="/site.webmanifest" rel="manifest">
 
+  <!-- Apply theme synchronously to prevent flash -->
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('tidaltask-theme');
+        var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        var isDark = saved === 'dark' || (saved !== 'light' && prefersDark);
+        if (isDark) document.documentElement.classList.add('dark');
+      } catch (_) {}
+    })();
+  </script>
+
 
   <!--  OpenGraph  -->
 

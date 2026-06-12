@@ -22,8 +22,8 @@ export default function NavItem({ to, title, children, disabled, sidebar }: NavI
                     disabled ? "pointer-events-none opacity-50" : ""
                 } ${
                     isActive
-                        ? "bg-accent-blue/10 text-accent-blue-700 fill-accent-blue-700 dark:bg-[rgba(99,102,241,0.18)]"
-                        : "text-muted fill-muted hover:text-primary hover:fill-primary hover:bg-silver-200 dark:hover:bg-vulcan-800"
+                        ? "bg-accent-blue/10 text-accent-blue-700 fill-accent-blue-700 dark:bg-(--accent-subtle)"
+                        : "text-muted fill-muted hover:text-primary hover:fill-primary hover:bg-silver-200 dark:hover:bg-(--surface-raised)"
                 }`}
             >
                 <div className="w-5 h-5 flex items-center justify-center flex-shrink-0">
@@ -47,8 +47,8 @@ export default function NavItem({ to, title, children, disabled, sidebar }: NavI
             <div
                 className={`flex items-center justify-center text-center w-11 h-11 rounded-2xl transition ${
                     isActive
-                        ? "bg-accent-blue-50/90 border border-accent-blue/30 shadow-[0_10px_24px_rgba(48,122,207,0.25)] dark:bg-[rgba(99,102,241,0.18)]"
-                        : "bg-transparent border border-transparent hover:border-accent-blue/20 hover:bg-accent-blue-50/60 dark:hover:bg-[rgba(99,102,241,0.12)]"
+                        ? "bg-accent-blue-50/90 border border-accent-blue/30 shadow-[0_10px_24px_rgba(48,122,207,0.25)] dark:bg-(--accent-subtle)"
+                        : "bg-transparent border border-transparent hover:border-accent-blue/20 hover:bg-accent-blue-50/60 dark:hover:bg-(--accent-subtle)"
                 }`}
             >
                 <div className="flex justify-center items-center w-full h-full p-1.5">

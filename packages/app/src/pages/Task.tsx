@@ -9,10 +9,15 @@ import TaskInfoMenu from "@/pages/(Layout)/TaskInfoMenu";
 import { Logger } from "@/utils/logger";
 import TagFilterBar from "@/components/tasks/TagFilterBar";
 
+function capitalize(s: string) {
+  return s.replace(/\b\w/g, (ch) => ch.toUpperCase());
+}
+
 export default function Task() {
   const [appData, setAppData] = useApp();
   const [isInspecting, setIsInspecting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
 
   const tasks = useTasks();
 
@@ -25,15 +30,11 @@ export default function Task() {
 
       if (appData.activeTask.date) {
         const targetDate = new Date(appData.activeTask.date);
-        setAppData({
-          ...appData,
-          activeDate: targetDate,
-        });
+        setAppData({ ...appData, activeDate: targetDate });
       }
     }
   }, [appData, isInspecting, setAppData]);
 
-  // Close the TaskInfoMenu if the active task no longer exists (e.g., after deletion).
   useEffect(() => {
     if (!isInspecting) return;
     if (!appData.activeTask?.id) return;
@@ -76,79 +77,150 @@ export default function Task() {
     });
   }, [tasks.isSuccess, tasks.data, searchTerm]);
 
+  // Split filteredTasks into ungrouped and named groups
+  const { ungroupedTasks, taskGroups } = useMemo(() => {
+    const ungrouped: typeof filteredTasks = [];
+    const groups: Record<string, typeof filteredTasks> = {};
+
+    filteredTasks.forEach((task) => {
+      const g = (task.group ?? "").trim();
+      if (!g) {
+        ungrouped.push(task);
+      } else {
+        if (!groups[g]) groups[g] = [];
+        groups[g].push(task);
+      }
+    });
+
+    const sortedGroups = Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
+    return { ungroupedTasks: ungrouped, taskGroups: sortedGroups };
+  }, [filteredTasks]);
+
   const tasksForDay = tasks.isSuccess ? { ...tasks, data: filteredTasks } : tasks;
+  const hasActiveFilters = (appData.activeTags ?? []).length > 0;
+
+  const searchBar = (
+    <div className="flex w-full items-center gap-2 rounded-xl bg-silver-200 dark:bg-(--app-background) border border-(--surface-border) px-3 py-2 shadow-xs">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        className="h-4 w-4 shrink-0 text-slate-400"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <line x1="16.65" y1="16.65" x2="21" y2="21" />
+      </svg>
+      <input
+        type="text"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Search tasks by title, details, or tag..."
+        className="w-full !bg-transparent text-sm text-primary outline-hidden placeholder:text-slate-400"
+      />
+      <button
+        type="button"
+        onClick={() => setShowFilters((v) => !v)}
+        aria-label="Toggle tag filters"
+        className={`shrink-0 rounded-lg p-0.5 transition ${
+          showFilters || hasActiveFilters
+            ? "text-accent-blue"
+            : "text-slate-400 hover:text-primary"
+        }`}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-4 w-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="4" y1="6" x2="20" y2="6" />
+          <line x1="8" y1="12" x2="16" y2="12" />
+          <line x1="11" y1="18" x2="13" y2="18" />
+        </svg>
+      </button>
+    </div>
+  );
 
   if (tasks.isLoading) {
     return (
       <div className="w-full h-full text-accent-black">
-        <div className="h-full">
-          <div className="flex flex-col items-center gap-6 px-3 md:px-6">
-            <ActiveCalendar skeleton={true} />
+        <div className="h-full pb-28 md:pb-4 flex flex-col gap-6">
+          <ActiveCalendar skeleton={true} searchSlot={searchBar} />
+          <div className="grid gap-6 md:grid-cols-2">
             <DayTasks skeleton={true} />
             <TaskContainer title="All Tasks" skeleton={true} />
           </div>
-          <div>
-            {/* <TaskInfoMenu skeleton="true" /> */}
-          </div>
         </div>
       </div>
-    )
+    );
   }
 
   return (
     <div className="w-full h-full text-accent-black">
-      <div className="h-full pb-28">
-        <div className="flex w-full justify-center">
-          <div className="flex w-full max-w-4xl flex-col items-center gap-6 px-3 md:px-6">
-            <ActiveCalendar />
-            <div className="w-full flex flex-col gap-2">
-              <div className="flex w-full items-center gap-2 rounded-xl bg-silver-200 dark:bg-[#253350] border border-(--surface-border) px-3 py-2 shadow-xs">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-4 w-4 text-slate-400"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="11" cy="11" r="7" />
-                  <line x1="16.65" y1="16.65" x2="21" y2="21" />
-                </svg>
-                <input
-                  type="text"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="Search tasks by title, details, or tag..."
-                  className="w-full bg-transparent text-sm text-primary outline-hidden placeholder:text-slate-400"
-                />
-              </div>
-              {tasks.isSuccess && (
-                <TagFilterBar tasks={filteredTasks ?? []} />
-              )}
-            </div>
-            <DayTasks
-              setIsInspecting={setIsInspecting}
-              tasks={tasksForDay}
-            />
-            <TaskContainer
-              identifier="all"
-              setIsInspecting={setIsInspecting}
-              title="All Tasks"
-              tasks={filteredTasks}
-              activeFilter="dailyTasks"
-            />
+      <div className="h-full pb-28 md:pb-4 flex flex-col gap-6">
+
+        {/* Full-width calendar strip with search integrated in the card */}
+        <ActiveCalendar searchSlot={searchBar} />
+
+        {/* Tag filter bar — always visible on mobile, toggled on desktop */}
+        {tasks.isSuccess && (
+          <div className={showFilters || hasActiveFilters ? "block" : "hidden"}>
+            <TagFilterBar tasks={filteredTasks ?? []} />
           </div>
-        </div>
-        <div>
-          <TaskInfoMenu
-            type="edit"
-            isOpen={isInspecting}
-            setIsOpen={setIsInspecting}
+        )}
+
+        {/*
+          Desktop: unified 2-col grid.
+          Slots: [DayTasks] [All Tasks (ungrouped)] [Group1] [Group2] [Group3] …
+          Mobile: stacked single column.
+        */}
+        <div className="grid gap-6 md:grid-cols-2">
+          <DayTasks
+            setIsInspecting={setIsInspecting}
+            tasks={tasksForDay}
           />
+
+          {ungroupedTasks.length > 0 && (
+            <TaskContainer
+              identifier="ungrouped"
+              title="All Tasks"
+              tasks={ungroupedTasks}
+              setIsInspecting={setIsInspecting}
+              activeFilter="dailyTasks"
+              disableGrouping
+            />
+          )}
+
+          {taskGroups.map(([groupName, groupTasks]) => (
+            <TaskContainer
+              key={groupName}
+              identifier={`group-${groupName}`}
+              title={capitalize(groupName)}
+              tasks={groupTasks}
+              setIsInspecting={setIsInspecting}
+              activeFilter="dailyTasks"
+              disableGrouping
+            />
+          ))}
         </div>
+      </div>
+
+      <div>
+        <TaskInfoMenu
+          type="edit"
+          isOpen={isInspecting}
+          setIsOpen={setIsInspecting}
+        />
       </div>
     </div>
   );

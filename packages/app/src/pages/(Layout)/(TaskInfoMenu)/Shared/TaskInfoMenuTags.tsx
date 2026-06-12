@@ -65,20 +65,20 @@ export default function TaskInfoMenuTags({
           </button>
         )}
       </div>
-      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-accent-blue/20 bg-silver-200 p-2 shadow-inner focus-within:border-accent-blue dark:bg-[#253350]">
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-accent-blue/20 bg-silver-200 p-2 shadow-inner focus-within:border-accent-blue dark:bg-(--surface-raised) dark:border-(--surface-border)">
         {tags.length === 0 && (
           <span className="text-sm text-muted px-1">No tags yet</span>
         )}
         {tags.map((tag) => (
           <span
             key={tag}
-            className="flex items-center gap-1 rounded-full bg-accent-blue/10 px-2 py-1 text-xs font-semibold text-accent-blue-800 ring-1 ring-accent-blue/20"
+            className="flex items-center gap-1 rounded-full bg-accent-blue/10 px-2 py-1 text-xs font-semibold text-accent-blue-800 ring-1 ring-accent-blue/20 dark:text-accent-blue-300 dark:ring-accent-blue/30"
           >
             <span>#{tag}</span>
             <button
               type="button"
               onClick={() => removeTag(tag)}
-              className="rounded-full p-0.5 text-accent-blue-700 hover:bg-accent-blue/20"
+              className="rounded-full p-0.5 text-accent-blue-700 hover:bg-accent-blue/20 dark:text-accent-blue-300"
             >
               <XMarkIcon className="h-4 w-4" />
             </button>
@@ -90,7 +90,7 @@ export default function TaskInfoMenuTags({
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={() => addTag(input)}
-          className="min-w-[120px] flex-1 border-none bg-transparent text-sm text-primary placeholder:text-slate-400 focus:outline-hidden"
+          className="min-w-[120px] flex-1 border-none !bg-transparent text-sm text-primary placeholder:text-slate-400 focus:outline-hidden"
           placeholder={tags.length === 0 ? "Add a tag…" : "Add another tag…"}
         />
       </div>

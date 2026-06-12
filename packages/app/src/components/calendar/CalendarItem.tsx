@@ -1,47 +1,59 @@
 import { useApp } from "@/hooks/app";
 
-export default function CalendarItem({ skeleton, date }: {skeleton?: boolean, date: Date}) {
-
+export default function CalendarItem({ skeleton, date }: { skeleton?: boolean; date: Date }) {
   const [appData, setAppData] = useApp();
+
+  const changeDate = (date: Date) => {
+    setAppData({ ...appData, activeDate: date });
+  };
 
   if (skeleton) {
     return (
-      <div className="hover:bg-accent-white p-3 rounded-full w-10 h-10 flex justify-center text-center items-center">
-        <span className="text-lg">Today</span>
+      <div className="flex-1">
+        <div className="w-full flex flex-col items-center justify-center rounded-2xl py-3 px-2 opacity-40">
+          <span className="text-sm font-semibold text-slate-400">—</span>
+        </div>
       </div>
-    )
-  }
-
-  const changeDate = (date: Date) => {
-    let tempData = {
-      ...appData,
-      activeDate: date
-    };
-
-    tempData.activeDate = date;
-
-    setAppData(tempData);
+    );
   }
 
   const today = new Date();
   const isToday = today.toDateString() === date.toDateString();
   const isActive = appData.activeDate?.toDateString?.() === date.toDateString();
 
-  const baseClasses =
-    "p-3 rounded-full w-10 h-10 flex justify-center text-center items-center transition focus-visible:outline-solid focus-visible:outline-2 focus-visible:outline-accent-blue-600 text-primary";
-  const activeClasses =
-    "bg-accent-blue-700 text-white ring-2 ring-accent-blue-300 shadow-md";
-  const todayClasses =
-    "bg-accent-blue-50 text-accent-blue-700 border border-accent-blue/30 dark:bg-[rgba(99,102,241,0.18)] dark:text-primary";
+  const dayName = date.toLocaleDateString(undefined, { weekday: "short" });
+
+  let btnClasses = "w-full flex flex-col items-center justify-center rounded-2xl py-3 px-2 gap-0.5 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue-600";
+  let textClasses = "text-sm font-semibold";
+  let numClasses = "text-lg font-semibold";
+
+  if (isActive) {
+    btnClasses += " bg-accent-blue-700 ring-2 ring-accent-blue-300 shadow-md";
+    textClasses += " text-white";
+    numClasses += " text-white";
+  } else if (isToday) {
+    btnClasses += " bg-accent-blue-50 border border-accent-blue/30 dark:bg-(--accent-subtle)";
+    textClasses += " text-accent-blue-600 dark:text-accent-blue-400";
+    numClasses += " text-accent-blue-600 dark:text-accent-blue-400";
+  } else {
+    btnClasses += " hover:bg-slate-100 dark:hover:bg-(--surface-raised)";
+    textClasses += " text-slate-700 dark:text-slate-200";
+    numClasses += " text-slate-700 dark:text-slate-200";
+  }
 
   return (
-    <button
-      type="button"
-      onClick={() => changeDate(date)}
-      aria-pressed={isActive}
-      className={`${baseClasses} ${isActive ? activeClasses : ""} ${!isActive && isToday ? todayClasses : ""}`}
-    >
-      <span className="text-lg font-semibold">{date.getDate()}</span>
-    </button>
-  )
+    <div className="flex-1">
+      <button
+        type="button"
+        onClick={() => changeDate(date)}
+        aria-pressed={isActive}
+        className={btnClasses}
+      >
+        {/* Desktop: day name (Mon, Tue…) */}
+        <span className={`max-md:hidden ${textClasses}`}>{dayName}</span>
+        {/* Mobile: date number */}
+        <span className={`md:hidden ${numClasses}`}>{date.getDate()}</span>
+      </button>
+    </div>
+  );
 }

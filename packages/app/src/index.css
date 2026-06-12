@@ -128,12 +128,18 @@
 }
 
 .dark {
-  --app-background: #121720;           /* vulcan-950 */
-  --app-text: #e7ebf3;
-  --muted-text: #a6b9d3;              /* vulcan-300 */
-  --surface-card: rgba(44, 58, 78, 0.96);   /* vulcan-900 */
-  --surface-border: rgba(54, 76, 110, 0.45); /* vulcan-700 */
-  --nav-border: rgba(54, 76, 110, 0.35);
+  --app-background:      #111319;
+  --surface-card:        #1a1d26;
+  --surface-raised:      #222630;
+  --surface-border:      #2d3244;
+  --nav-border:          #22263a;
+  --app-text:            #e2e5ee;
+  --secondary-text:      #9198ae;
+  --muted-text:          #52586e;
+  --accent:              #378bd9;
+  --accent-hover:        #307acf;
+  --accent-subtle:       rgba(55, 139, 217, 0.14);
+  --accent-subtle-hover: rgba(55, 139, 217, 0.22);
   color-scheme: dark;
 }
 
@@ -183,6 +189,10 @@ body {
 
 .text-primary {
   color: var(--app-text);
+}
+
+.text-secondary {
+  color: var(--secondary-text);
 }
 
 .text-muted {
@@ -252,13 +262,13 @@ select option {
 .dark input,
 .dark textarea,
 .dark select {
-  background-color: #253350;
+  background-color: var(--surface-raised);
   color: var(--app-text);
   border-color: var(--surface-border);
 }
 
 .dark select option {
-  background-color: #253350;
+  background-color: var(--surface-raised);
   color: var(--app-text);
 }
 
@@ -275,6 +285,3 @@ select option {
   padding-bottom: calc(env(safe-area-inset-bottom) / 2);
 }
 
-.hidden {
-  display: none;
-}

@@ -54,73 +54,46 @@ export default function HomeAgenda({ skeleton }: AgendaProps) {
             <div className="flex flex-col gap-3">
                 <div className="flex items-center justify-between px-1">
                     <span className="text-xs font-semibold uppercase tracking-widest text-muted">Your Agenda</span>
-                    <span className="rounded-full bg-accent-blue-50 px-2.5 py-0.5 text-xs font-semibold text-accent-blue-700 dark:bg-[rgba(99,102,241,0.12)] dark:text-primary">
+                    <span className="rounded-full bg-accent-blue-50 px-2.5 py-0.5 text-xs font-semibold text-accent-blue-700 dark:bg-(--accent-subtle) dark:text-primary">
                         Updating...
                     </span>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                     <DueCapsule skeleton category="today" />
                     <DueCapsule skeleton category="tomorrow" />
                     <DueCapsule skeleton category="this week" />
-                </div>
-                <div className="flex items-center justify-between rounded-2xl border border-dashed border-red-200 bg-red-50/60 px-4 py-3 text-red-600 dark:border-red-400/40 dark:bg-[rgba(248,113,113,0.12)] dark:text-red-200">
-                    <span className="text-base font-semibold">Overdue Tasks</span>
-                    <span className="text-3xl font-semibold">0</span>
+                    <DueCapsule skeleton category="overdue-clear" label="Overdue" />
                 </div>
             </div>
         )
 
     return (
         <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between px-1">
+            <div className="px-1">
                 <span className="text-xs font-semibold uppercase tracking-widest text-muted">Your Agenda</span>
-                <span className="rounded-full bg-accent-blue-50 px-2.5 py-0.5 text-xs font-semibold text-accent-blue-700 dark:bg-[rgba(99,102,241,0.12)] dark:text-primary">
-                    Live sync
-                </span>
             </div>
-            <div className="grid grid-cols-3 gap-2">
-                {tasks.isSuccess && (
-                    <DueCapsule
-                        count={counts.today}
-                        category="today"
-                        onClick={() => navigate("/calendar?scope=today&view=week")}
-                    />
-                )}
-                {tasks.isSuccess && (
-                    <DueCapsule
-                        count={counts.tomorrow}
-                        category="tomorrow"
-                        onClick={() => navigate("/calendar?scope=tomorrow&view=week")}
-                    />
-                )}
-                {tasks.isSuccess && (
-                    <DueCapsule
-                        count={counts.week}
-                        category="this week"
-                        onClick={() => navigate("/calendar?scope=week&view=week")}
-                    />
-                )}
-            </div>
-            <div
-                role="button"
-                tabIndex={0}
-                onClick={() => navigate("/calendar?scope=overdue&view=week")}
-                onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                        e.preventDefault();
-                        navigate("/calendar?scope=overdue&view=week");
-                    }
-                }}
-                className={`group flex items-center justify-between rounded-2xl border px-4 py-3 cursor-pointer transition hover:brightness-[0.97] dark:hover:brightness-110 ${
-                    tasks.isSuccess && counts.overdue > 0
-                        ? "border-red-200 bg-red-50/80 text-red-700 dark:border-red-400/40 dark:bg-[rgba(248,113,113,0.12)] dark:text-red-200"
-                        : "border-emerald-200/70 bg-emerald-50/80 text-emerald-700 dark:border-emerald-300/40 dark:bg-[rgba(52,211,153,0.12)] dark:text-emerald-200"
-                }`}
-            >
-                <span className="text-base font-semibold">Overdue Tasks</span>
-                <span className="text-3xl font-bold">
-                    {tasks.isSuccess ? counts.overdue : "—"}
-                </span>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                <DueCapsule
+                    count={tasks.isSuccess ? counts.today : 0}
+                    category="today"
+                    onClick={() => navigate("/calendar?scope=today&view=week")}
+                />
+                <DueCapsule
+                    count={tasks.isSuccess ? counts.tomorrow : 0}
+                    category="tomorrow"
+                    onClick={() => navigate("/calendar?scope=tomorrow&view=week")}
+                />
+                <DueCapsule
+                    count={tasks.isSuccess ? counts.week : 0}
+                    category="this week"
+                    onClick={() => navigate("/calendar?scope=week&view=week")}
+                />
+                <DueCapsule
+                    count={tasks.isSuccess ? counts.overdue : 0}
+                    category={tasks.isSuccess && counts.overdue > 0 ? "overdue-active" : "overdue-clear"}
+                    label="Overdue"
+                    onClick={() => navigate("/calendar?scope=overdue&view=week")}
+                />
             </div>
         </div>
     )

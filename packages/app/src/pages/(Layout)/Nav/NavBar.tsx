@@ -54,7 +54,7 @@ export function NavBar() {
   );
 
   const renderSidebar = (isInteractive: boolean) => (
-    <div className="flex max-md:hidden fixed inset-y-0 left-0 w-56 flex-col z-40 border-r bg-silver-100 dark:bg-[#121720]" style={{ borderColor: "var(--surface-border)" }}>
+    <div className="flex max-md:hidden fixed inset-y-0 left-0 w-56 flex-col z-40 border-r bg-white dark:bg-(--surface-card)" style={{ borderColor: "var(--surface-border)" }}>
       {/* Logo */}
       <div className="flex items-center gap-3 px-4 py-5 border-b" style={{ borderColor: "var(--surface-border)" }}>
         <img src={icon} className="w-9 h-9 rounded-xl shadow-sm" />
