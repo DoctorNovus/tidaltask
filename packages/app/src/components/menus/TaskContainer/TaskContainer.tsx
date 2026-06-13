@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import TaskMenu from "../../tasks/TaskMenu";
-import { ChevronRightIcon, PencilSquareIcon, CheckIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import { ChevronRightIcon, PencilSquareIcon } from "@heroicons/react/20/solid";
+import GroupEditDialog from "@/pages/(Layout)/(TaskInfoMenu)/Shared/GroupEditDialog";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { matchDate, formatDateTime } from "@/utils/date";
 import { sortByDate, sortByPriority } from "@/utils/data";
@@ -43,41 +44,13 @@ export default function TaskContainer({
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
   const [bulkAction, setBulkAction] = useState<"" | "group" | "tags" | "date" | "priority">("");
   const [completionToast, setCompletionToast] = useState<string | null>(null);
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editTitleValue, setEditTitleValue] = useState("");
-  const titleInputRef = useRef<HTMLInputElement>(null);
+  const [groupEditOpen, setGroupEditOpen] = useState(false);
   const { mutate: setSettings } = useUpdateSettings();
   const settings = useSettings();
   const { mutateAsync: updateTask } = useUpdateTask();
 
   const isGroupContainer = identifier?.startsWith("group-");
   const groupKey = isGroupContainer ? identifier!.replace(/^group-/, "") : null;
-
-  useEffect(() => {
-    if (isEditingTitle && titleInputRef.current) {
-      titleInputRef.current.focus();
-      titleInputRef.current.select();
-    }
-  }, [isEditingTitle]);
-
-  const startTitleEdit = () => {
-    setEditTitleValue(groupKey ?? "");
-    setIsEditingTitle(true);
-  };
-
-  const cancelTitleEdit = () => setIsEditingTitle(false);
-
-  const commitTitleEdit = async () => {
-    const newName = editTitleValue.trim().toLowerCase();
-    if (newName && newName !== groupKey && baseTasks.length > 0) {
-      await Promise.all(
-        baseTasks.map((task) =>
-          task.id ? updateTask({ id: task.id, data: { ...task, group: newName } }) : Promise.resolve()
-        )
-      );
-    }
-    setIsEditingTitle(false);
-  };
 
   if (skeleton) {
     return (
@@ -610,6 +583,14 @@ export default function TaskContainer({
 
   return (
     <div className="group flex flex-col items-center w-full h-full my-2 px-0 md:px-0">
+      {isGroupContainer && groupKey && (
+        <GroupEditDialog
+          open={groupEditOpen}
+          onClose={() => setGroupEditOpen(false)}
+          groupKey={groupKey}
+          tasks={baseTasks}
+        />
+      )}
       {/* Migrate to dynamic loading content */}
       {settings.isLoading && <span>Loading...</span>}
       {settings.isError && <span>Error: {settings.error.message}</span>}
@@ -630,49 +611,27 @@ export default function TaskContainer({
                       className={`shrink-0 ${open ? "rotate-90 transform" : ""}`}
                       width="32"
                     />
-                    {isEditingTitle ? (
-                      <div className="flex flex-1 items-center gap-2 min-w-0" onClick={(e) => e.stopPropagation()}>
-                        <input
-                          ref={titleInputRef}
-                          type="text"
-                          value={editTitleValue}
-                          onChange={(e) => setEditTitleValue(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") commitTitleEdit();
-                            if (e.key === "Escape") cancelTitleEdit();
-                          }}
-                          className="flex-1 min-w-0 text-xl font-semibold bg-transparent border-b border-accent-blue text-slate-950 dark:text-white focus:outline-none"
-                        />
-                        <button type="button" onClick={commitTitleEdit} className="shrink-0 rounded-lg p-1 text-accent-blue hover:bg-accent-blue/10 transition">
-                          <CheckIcon className="h-5 w-5" />
-                        </button>
-                        <button type="button" onClick={cancelTitleEdit} className="shrink-0 rounded-lg p-1 text-slate-400 hover:text-primary hover:bg-accent-blue/8 transition">
-                          <XMarkIcon className="h-5 w-5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="flex flex-row items-center gap-2 min-w-0">
-                        <div className="flex flex-row gap-2 min-w-0">
-                          <h1 className="text-xl font-semibold dark:font-bold text-slate-950 dark:text-white truncate">{title}</h1>
-                          {baseTasks.filter((task) => !task.done).length > 0 && (
-                            <h1 className="text-xl text-accent-blue-700">
-                              ({baseTasks.filter((task) => !task.done).length}/
-                              {baseTasks.length})
-                            </h1>
-                          )}
-                        </div>
-                        {isGroupContainer && (
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); startTitleEdit(); }}
-                            className="shrink-0 text-slate-300 dark:text-slate-600 hover:text-accent-blue opacity-0 group-hover/card:opacity-100 transition-all"
-                            title="Rename group"
-                          >
-                            <PencilSquareIcon className="h-4 w-4" />
-                          </button>
+                    <div className="flex flex-row items-center gap-2 min-w-0">
+                      <div className="flex flex-row gap-2 min-w-0">
+                        <h1 className="text-xl font-semibold dark:font-bold text-slate-950 dark:text-white truncate">{title}</h1>
+                        {baseTasks.filter((task) => !task.done).length > 0 && (
+                          <h1 className="text-xl text-accent-blue-700">
+                            ({baseTasks.filter((task) => !task.done).length}/
+                            {baseTasks.length})
+                          </h1>
                         )}
                       </div>
-                    )}
+                      {isGroupContainer && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); setGroupEditOpen(true); }}
+                          className="shrink-0 text-slate-300 dark:text-slate-600 hover:text-accent-blue opacity-0 group-hover/card:opacity-100 transition-all"
+                          title="Edit group"
+                        >
+                          <PencilSquareIcon className="h-4 w-4" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <div className="flex flex-row items-center sm:justify-end">
                     <div className="flex w-full flex-wrap items-center justify-start sm:justify-end gap-2">

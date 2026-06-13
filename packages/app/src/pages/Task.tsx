@@ -8,6 +8,7 @@ import { useApp } from "@/hooks/app";
 import TaskInfoMenu from "@/pages/(Layout)/TaskInfoMenu";
 import { Logger } from "@/utils/logger";
 import TagFilterBar from "@/components/tasks/TagFilterBar";
+import { useSettings } from "@/hooks/settings";
 
 function capitalize(s: string) {
   return s.replace(/\b\w/g, (ch) => ch.toUpperCase());
@@ -18,6 +19,7 @@ export default function Task() {
   const [isInspecting, setIsInspecting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [showFilters, setShowFilters] = useState(false);
+  const settings = useSettings();
 
   const tasks = useTasks();
 
@@ -197,21 +199,38 @@ export default function Task() {
           )}
         </div>
 
-        {taskGroups.length > 0 && (
-          <div className="grid gap-6 md:grid-cols-1">
-            {taskGroups.map(([groupName, groupTasks]) => (
-              <TaskContainer
-                key={groupName}
-                identifier={`group-${groupName}`}
-                title={capitalize(groupName)}
-                tasks={groupTasks}
-                setIsInspecting={setIsInspecting}
-                activeFilter="dailyTasks"
-                disableGrouping
-              />
-            ))}
-          </div>
-        )}
+        {taskGroups.length > 0 && (() => {
+          const groupConfig = settings.data?.groupConfig ?? {};
+          const visibleGroups = taskGroups
+            .filter(([groupName]) => groupConfig[groupName]?.visible !== false)
+            .sort(([a], [b]) => {
+              const oa = groupConfig[a]?.order ?? Infinity;
+              const ob = groupConfig[b]?.order ?? Infinity;
+              return oa !== ob ? oa - ob : a.localeCompare(b);
+            });
+
+          if (visibleGroups.length === 0) return null;
+
+          return (
+            <div className="grid gap-6 md:grid-cols-1">
+              {visibleGroups.map(([groupName, groupTasks]) => {
+                const cfg = groupConfig[groupName];
+                const displayName = cfg?.displayName || capitalize(groupName);
+                return (
+                  <TaskContainer
+                    key={groupName}
+                    identifier={`group-${groupName}`}
+                    title={displayName}
+                    tasks={groupTasks}
+                    setIsInspecting={setIsInspecting}
+                    activeFilter="dailyTasks"
+                    disableGrouping
+                  />
+                );
+              })}
+            </div>
+          );
+        })()}
       </div>
 
       <div>
