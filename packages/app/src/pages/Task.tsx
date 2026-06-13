@@ -202,7 +202,12 @@ export default function Task() {
         {taskGroups.length > 0 && (() => {
           const groupConfig = settings.data?.groupConfig ?? {};
           const visibleGroups = taskGroups
-            .filter(([groupName]) => groupConfig[groupName]?.visible !== false)
+            .filter(([groupName, groupTasks]) => {
+              if (groupConfig[groupName]?.visible === false) return false;
+              const hasIncomplete = groupTasks.some((t) => t.done !== true);
+              if (!hasIncomplete && !groupConfig[groupName]?.visibleWhenEmpty) return false;
+              return true;
+            })
             .sort(([a], [b]) => {
               const oa = groupConfig[a]?.order ?? Infinity;
               const ob = groupConfig[b]?.order ?? Infinity;
