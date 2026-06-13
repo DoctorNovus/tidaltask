@@ -2,6 +2,13 @@ import { fetchData } from "@/utils/data";
 import { Preferences } from "@capacitor/preferences";
 import { useQuery, useMutation, useQueryClient, UseQueryResult, UseMutationResult } from "@tanstack/react-query";
 
+export interface GroupConfig {
+  displayName?: string;
+  order?: number;
+  visible?: boolean;
+  visibleWhenEmpty?: boolean;
+}
+
 export interface Settings {
   lastNotification?: number;
   lastNoTasksDueNotificationAt?: number;
@@ -12,6 +19,7 @@ export interface Settings {
   deliveredServerNotificationIds?: string[];
   groupsActive?: string[];
   apiKeys?: Record<string, string>;
+  groupConfig?: Record<string, GroupConfig>;
 }
 
 /* Gets the settings from the database */

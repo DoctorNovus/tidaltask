@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { TaskItem } from "../task/TaskItem";
 import { isTaskDone } from "@/utils/data";
-import { ChevronRightIcon } from "@heroicons/react/20/solid";
-import { Task } from "@/hooks/tasks";
+import { ChevronRightIcon, PencilSquareIcon, CheckIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import { Task, useUpdateTask } from "@/hooks/tasks";
 
 interface TaskMenuProps {
   skeleton?: string;
@@ -33,6 +33,10 @@ export default function TaskMenu({
 }: TaskMenuProps) {
   const [collapsedGroups, setCollapsedGroups] = useState<string[]>([]);
   const [orderedTasks, setOrderedTasks] = useState<any[]>([]);
+  const [editingGroup, setEditingGroup] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+  const editInputRef = useRef<HTMLInputElement>(null);
+  const { mutate: updateTask } = useUpdateTask();
 
   if (skeleton) {
     return (
@@ -64,6 +68,13 @@ export default function TaskMenu({
     setOrderedTasks(sorted);
   }, [tasks, taskFilter, activeDate]);
 
+  useEffect(() => {
+    if (editingGroup && editInputRef.current) {
+      editInputRef.current.focus();
+      editInputRef.current.select();
+    }
+  }, [editingGroup]);
+
   const { grouped, ungrouped } = useMemo(() => {
     if (disableGrouping) {
       return { grouped: {} as Record<string, any[]>, ungrouped: orderedTasks };
@@ -92,6 +103,29 @@ export default function TaskMenu({
     );
   };
 
+  const startEditing = (groupName: string) => {
+    setEditingGroup(groupName);
+    setEditValue(groupName);
+  };
+
+  const cancelEditing = () => {
+    setEditingGroup(null);
+    setEditValue("");
+  };
+
+  const commitEditing = (oldName: string, list: Task[]) => {
+    const newName = editValue.trim().toLowerCase();
+    if (newName && newName !== oldName) {
+      list.forEach((task) => {
+        if (task.id) {
+          updateTask({ id: task.id, data: { ...task, group: newName } });
+        }
+      });
+    }
+    setEditingGroup(null);
+    setEditValue("");
+  };
+
   const renderTask = (task: any) => (
     <div key={task.id || task.title} className="w-full rounded-2xl">
       <TaskItem
@@ -116,27 +150,6 @@ export default function TaskMenu({
     return name.replace(/\b\w/g, (ch) => ch.toUpperCase());
   };
 
-  const renderGroupHeader = (groupName: string, isCollapsed: boolean, count: number) => (
-    <div className="flex w-full items-center gap-1 min-w-0">
-      {isCollapsed ? (
-        <ChevronRightIcon className="h-8 w-8 shrink-0 text-primary group-hover/header:text-accent-blue transition-colors" />
-      ) : (
-        <ChevronRightIcon className="h-8 w-8 shrink-0 rotate-90 text-primary group-hover/header:text-accent-blue transition-colors" />
-      )}
-      <span className="text-xl font-semibold text-slate-950 dark:text-white truncate group-hover/header:text-accent-blue transition-colors">
-        {formatGroupName(groupName)}
-      </span>
-      {count > 0 && (
-        <span className="text-xl text-accent-blue-700 shrink-0 group-hover/header:text-accent-blue transition-colors">
-          ({count})
-        </span>
-      )}
-    </div>
-  );
-
-  const numGroups = groupedEntries.length;
-  const groupGridClass = numGroups > 0 ? "grid-cols-1" : "grid-cols-1";
-
   return (
     <div className="w-full flex flex-col">
       <div className="w-full pb-4 flex flex-col gap-3 py-4">
@@ -147,18 +160,75 @@ export default function TaskMenu({
         )}
 
         {groupedEntries.length > 0 && (
-          <div className={`grid gap-3 ${groupGridClass}`}>
+          <div className="grid gap-3 grid-cols-1">
             {groupedEntries.map(([groupName, list]) => {
               const isCollapsed = collapsedGroups.includes(groupName);
+              const isEditing = editingGroup === groupName;
+
               return (
                 <div key={groupName} className="w-full min-w-0 flex flex-col gap-2">
-                  <button
-                    type="button"
-                    onClick={() => toggleGroup(groupName)}
-                    className="w-full overflow-hidden flex flex-row items-center rounded-2xl bg-white dark:bg-(--surface-card) border border-slate-200 dark:border-(--surface-border) px-3 py-3 text-primary shadow-sm group/header transition-colors text-left"
-                  >
-                    {renderGroupHeader(groupName, isCollapsed, list.length)}
-                  </button>
+                  {/* Header card */}
+                  <div className="w-full overflow-hidden flex flex-row items-center rounded-2xl bg-white dark:bg-(--surface-card) border border-slate-200 dark:border-(--surface-border) shadow-sm group/header transition-colors">
+                    {isEditing ? (
+                      /* Edit mode */
+                      <div className="flex flex-1 items-center gap-2 px-3 py-2.5 min-w-0">
+                        <ChevronRightIcon className="h-8 w-8 shrink-0 text-primary" />
+                        <input
+                          ref={editInputRef}
+                          type="text"
+                          value={editValue}
+                          onChange={(e) => setEditValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") commitEditing(groupName, list as Task[]);
+                            if (e.key === "Escape") cancelEditing();
+                          }}
+                          className="flex-1 min-w-0 text-xl font-semibold bg-transparent border-b border-accent-blue text-slate-950 dark:text-white focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => commitEditing(groupName, list as Task[])}
+                          className="shrink-0 rounded-lg p-1 text-accent-blue hover:bg-accent-blue/10 transition"
+                        >
+                          <CheckIcon className="h-5 w-5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEditing}
+                          className="shrink-0 rounded-lg p-1 text-slate-400 hover:text-primary hover:bg-accent-blue/8 transition"
+                        >
+                          <XMarkIcon className="h-5 w-5" />
+                        </button>
+                      </div>
+                    ) : (
+                      /* Normal mode */
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => toggleGroup(groupName)}
+                          className="flex flex-1 items-center gap-1 px-3 py-3 text-left min-w-0 overflow-hidden"
+                        >
+                          <ChevronRightIcon className={`h-8 w-8 shrink-0 text-primary group-hover/header:text-accent-blue transition-colors ${!isCollapsed ? "rotate-90" : ""}`} />
+                          <span className="text-xl font-semibold text-slate-950 dark:text-white truncate group-hover/header:text-accent-blue transition-colors">
+                            {formatGroupName(groupName)}
+                          </span>
+                          {list.length > 0 && (
+                            <span className="text-xl text-accent-blue-700 shrink-0 group-hover/header:text-accent-blue transition-colors">
+                              ({list.length})
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => startEditing(groupName)}
+                          className="shrink-0 px-3 py-3 text-slate-300 dark:text-slate-600 hover:text-accent-blue opacity-0 group-hover/header:opacity-100 transition-all"
+                          title="Rename group"
+                        >
+                          <PencilSquareIcon className="h-4 w-4" />
+                        </button>
+                      </>
+                    )}
+                  </div>
+
                   {!isCollapsed && (
                     <div className="flex flex-col gap-2">
                       {list.map((task: any) => renderTask(task))}

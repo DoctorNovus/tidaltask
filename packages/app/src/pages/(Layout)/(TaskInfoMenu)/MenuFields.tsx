@@ -5,6 +5,9 @@ import TaskInfoMenuUser from "./Shared/TaskInfoUser/TaskInfoMenuUser";
 import TaskInfoMenuTags from "./Shared/TaskInfoMenuTags";
 import TaskInfoMenuSelect from "./Shared/TaskInfoMenuSelect";
 import ExpandableTextarea from "./Shared/ExpandableTextarea";
+import { useTasks } from "@/hooks/tasks";
+import { useMemo } from "react";
+import GroupSelector from "./Shared/GroupSelector";
 
 
 interface MenuFieldsProps {
@@ -34,6 +37,18 @@ export default function MenuFields({
     setIsQuickAdd,
     validationError
 }: MenuFieldsProps) {
+    const tasks = useTasks();
+    const existingGroups = useMemo(() => {
+        if (!tasks.isSuccess) return [];
+        const seen = new Set<string>();
+        tasks.data.forEach((t) => {
+            const g = (t.group ?? "").trim().toLowerCase();
+            if (g) seen.add(g);
+        });
+        return Array.from(seen).sort();
+    }, [tasks.isSuccess, tasks.data]);
+
+
     return (
         <div className={`flex flex-col gap-4 ${isDeleting && "blur-xs"}`}>
             {type === "add" && (
@@ -78,13 +93,10 @@ export default function MenuFields({
                                     onChange={(val) => setTempData({ date: new Date(val) })}
                                 />
                             </div>
-                            <TaskInfoMenuItem
-                                name="Group"
-                                value={tempData.group || ""}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                    setTempData({ group: e.target.value.toLowerCase() })
-                                }
-                                placeholder="Optional group label"
+                            <GroupSelector
+                                value={tempData.group ?? ""}
+                                groups={existingGroups}
+                                onChange={(val) => setTempData({ group: val })}
                             />
                         </div>
                     )}
@@ -129,13 +141,10 @@ export default function MenuFields({
                     {/* Group + Due Date — side by side on desktop */}
                     <div className="md:grid md:grid-cols-2 md:gap-4 flex flex-col gap-4">
                         <div className="flex flex-col gap-1">
-                            <TaskInfoMenuItem
-                                name="Group"
-                                value={tempData?.group || ""}
-                                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                    setTempData({ ...tempData, group: e.target.value.toLowerCase() })
-                                }
-                                placeholder="Optional group label"
+                            <GroupSelector
+                                value={tempData.group ?? ""}
+                                groups={existingGroups}
+                                onChange={(val) => setTempData({ ...tempData, group: val })}
                             />
                             {tempData?.group?.trim() && (
                                 <label className="flex items-center gap-2 px-1 mt-1 cursor-pointer w-fit">
