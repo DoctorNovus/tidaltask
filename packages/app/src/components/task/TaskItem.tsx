@@ -151,7 +151,7 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
               if (selectionMode) handleToggleSelect();
             }}
           />
-          <div className="w-full">
+          <div className="min-w-0 flex-1">
             <div className="w-full flex flex-row items-center gap-2">
               <div className="flex flex-row items-center min-w-0 flex-1">
                 <TaskItemTitle text={item.title} />
