@@ -23,6 +23,7 @@ jobs:
           script: |
             set -euo pipefail
             cd /root/sequenced
+            git stash
             git fetch origin main
             git checkout main
             git pull --rebase origin main
