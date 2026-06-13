@@ -2,7 +2,7 @@ import { useState } from "react";
 import TaskMenu from "../../tasks/TaskMenu";
 import { ChevronRightIcon } from "@heroicons/react/20/solid";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
-import { matchDate } from "@/utils/date";
+import { matchDate, formatDateTime } from "@/utils/date";
 import { sortByDate, sortByPriority } from "@/utils/data";
 import { Task } from "@/hooks/tasks";
 import { useUpdateSettings, useSettings } from "@/hooks/settings";
@@ -10,6 +10,7 @@ import { useApp } from "@/hooks/app";
 import { UseQueryResult } from "@tanstack/react-query";
 import { useUpdateTask } from "@/hooks/tasks";
 import { EllipsisHorizontalIcon, CheckCircleIcon } from "@heroicons/react/24/solid";
+import DateTimePicker from "@/pages/(Layout)/(TaskInfoMenu)/Shared/DateTimePicker";
 
 interface ContainerSettings {
   skeleton?: boolean | string;
@@ -37,8 +38,10 @@ export default function TaskContainer({
   const [bulkGroup, setBulkGroup] = useState("");
   const [bulkTag, setBulkTag] = useState("");
   const [workingTags, setWorkingTags] = useState<string[]>([]);
+  const [bulkDate, setBulkDate] = useState("");
+  const [bulkPriority, setBulkPriority] = useState(0);
   const [isBulkUpdating, setIsBulkUpdating] = useState(false);
-  const [bulkAction, setBulkAction] = useState<"" | "group" | "tags">("");
+  const [bulkAction, setBulkAction] = useState<"" | "group" | "tags" | "date" | "priority">("");
   const [completionToast, setCompletionToast] = useState<string | null>(null);
   const { mutate: setSettings } = useUpdateSettings();
   const settings = useSettings();
@@ -183,7 +186,7 @@ export default function TaskContainer({
     return "";
   })();
 
-  const startBulkAction = (action: "" | "group" | "tags") => {
+  const startBulkAction = (action: "" | "group" | "tags" | "date" | "priority") => {
     setBulkAction(action);
 
     if (action === "group") {
@@ -191,6 +194,9 @@ export default function TaskContainer({
     } else if (action === "tags") {
       setWorkingTags(uniqueTags);
       setBulkTag("");
+    } else if (action === "date") {
+      const ref = appData.activeDate ?? new Date();
+      setBulkDate(formatDateTime(ref instanceof Date ? ref : new Date(ref)));
     }
   };
 
@@ -199,6 +205,8 @@ export default function TaskContainer({
     setBulkGroup("");
     setBulkTag("");
     setWorkingTags([]);
+    setBulkDate("");
+    setBulkPriority(0);
   };
 
   const showCompletionToast = (text: string) => {
@@ -266,6 +274,19 @@ export default function TaskContainer({
     });
 
     setBulkTag("");
+  };
+
+  const applyDateToSelected = async () => {
+    if (!bulkDate) return;
+    await bulkUpdateSelected(() => ({ date: new Date(bulkDate) }));
+    setBulkDate("");
+  };
+
+  const applyPriorityToSelected = async () => {
+    await bulkUpdateSelected((task) => {
+      if ((task.priority ?? 0) === bulkPriority) return null;
+      return { priority: bulkPriority };
+    });
   };
 
   const handleClick = async (open: boolean) => {
@@ -483,6 +504,72 @@ export default function TaskContainer({
                 </span>
               </>
             )}
+
+            {bulkAction === "date" && (
+              <>
+                <DateTimePicker
+                  value={bulkDate}
+                  onChange={(val) => setBulkDate(val)}
+                  inline
+                />
+                <div className="flex items-center gap-2 mt-2">
+                  <button
+                    type="button"
+                    className="rounded-lg bg-accent-blue px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:shadow-md hover:ring-2 hover:ring-accent-blue/30 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={!hasSelection || !bulkDate || isBulkUpdating}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      applyDateToSelected();
+                    }}
+                  >
+                    Apply date
+                  </button>
+                </div>
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Sets the due date on every selected task.
+                </span>
+              </>
+            )}
+
+            {bulkAction === "priority" && (
+              <>
+                <div className="flex items-center gap-2">
+                  {[0, 1, 2, 3].map((level) => (
+                    <button
+                      key={level}
+                      type="button"
+                      className={`flex-1 rounded-lg border px-3 py-2 text-xs font-semibold transition ${
+                        bulkPriority === level
+                          ? "border-accent-blue bg-accent-blue text-white"
+                          : "border-slate-200 bg-white dark:bg-(--surface-raised) dark:border-(--surface-border) dark:text-primary text-slate-700 hover:ring-1 hover:ring-accent-blue/30"
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setBulkPriority(level);
+                      }}
+                    >
+                      {level === 0 ? "None" : "!".repeat(level)}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 mt-1">
+                  <button
+                    type="button"
+                    className="rounded-lg bg-accent-blue px-3 py-2 text-xs font-semibold text-white shadow-xs transition hover:shadow-md hover:ring-2 hover:ring-accent-blue/30 disabled:cursor-not-allowed disabled:opacity-60"
+                    disabled={!hasSelection || isBulkUpdating}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      applyPriorityToSelected();
+                    }}
+                  >
+                    Apply priority
+                  </button>
+                </div>
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-muted">
+                  Sets priority on every selected task.
+                </span>
+              </>
+            )}
           </div>
         </div>
       </div>
@@ -503,16 +590,16 @@ export default function TaskContainer({
               <Disclosure.Button
                 onClick={async () => await handleClick(open)}
                 as="div"
-                className="w-full flex flex-row items-center rounded-2xl bg-white dark:bg-(--surface-card) border border-slate-200 dark:border-(--surface-border) px-3 py-3 text-primary shadow-sm"
+                className="w-full overflow-hidden flex flex-row items-center rounded-2xl bg-white dark:bg-(--surface-card) border border-slate-200 dark:border-(--surface-border) px-3 py-3 text-primary shadow-sm"
               >
                 <div className="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-row items-center py-1">
+                  <div className="flex flex-row items-center min-w-0 py-1">
                     <ChevronRightIcon
-                      className={open ? "rotate-90 transform" : ""}
+                      className={`shrink-0 ${open ? "rotate-90 transform" : ""}`}
                       width="32"
                     />
-                    <div className="flex flex-row gap-2">
-                      <h1 className="text-xl font-semibold dark:font-bold text-slate-950 dark:text-white">{title}</h1>
+                    <div className="flex flex-row gap-2 min-w-0">
+                      <h1 className="text-xl font-semibold dark:font-bold text-slate-950 dark:text-white truncate">{title}</h1>
                       {baseTasks.filter((task) => !task.done).length > 0 && (
                         <h1 className="text-xl text-accent-blue-700">
                           ({baseTasks.filter((task) => !task.done).length}/
@@ -567,6 +654,16 @@ export default function TaskContainer({
                         <>
                           <button
                             type="button"
+                            className="rounded-lg border border-accent-blue/30 bg-white dark:bg-(--surface-raised) dark:border-(--surface-border) px-3 py-1.5 text-xs font-semibold text-accent-blue shadow-xs transition hover:shadow-md hover:ring-1 hover:ring-accent-blue/30"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedTaskIds(baseTasks.map((t) => t.id!).filter(Boolean));
+                            }}
+                          >
+                            Select All
+                          </button>
+                          <button
+                            type="button"
                             className="rounded-lg border border-emerald-300 bg-emerald-500/90 px-3 py-1.5 text-xs font-semibold text-white shadow-xs transition hover:shadow-md hover:ring-1 hover:ring-emerald-300 disabled:opacity-60 disabled:cursor-not-allowed"
                             disabled={!hasSelection || isBulkUpdating}
                             onClick={(e) => {
@@ -588,6 +685,8 @@ export default function TaskContainer({
                             <Menu.Items className="absolute left-0 right-auto z-130 mt-2 w-52 max-w-[90vw] origin-top-left rounded-xl bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden dark:bg-(--surface-raised) dark:ring-(--surface-border) md:left-auto md:right-0 md:origin-top-right">
                               {[
                                 { key: "group", label: "Edit group" },
+                                { key: "date", label: "Edit date" },
+                                { key: "priority", label: "Edit priority" },
                                 { key: "tags", label: "Edit tags" },
                               ].map((item) => (
                                 <Menu.Item key={item.key}>
@@ -601,7 +700,7 @@ export default function TaskContainer({
                                       }`}
                                       onClick={(e) => {
                                         e.stopPropagation();
-                                        startBulkAction(item.key as "group" | "tags");
+                                        startBulkAction(item.key as "group" | "tags" | "date" | "priority");
                                       }}
                                     >
                                       <span>{item.label}</span>
@@ -634,7 +733,7 @@ export default function TaskContainer({
                   </div>
                 </div>
               </Disclosure.Button>
-              <Disclosure.Panel className="w-full h-full">
+              <Disclosure.Panel className="w-full">
                 {renderBulkActionCard()}
                 {/* {!settings.data.groupsActive?.includes(identifier) && ( */}
                 <TaskMenu
