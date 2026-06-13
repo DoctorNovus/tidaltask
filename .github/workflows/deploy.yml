@@ -52,24 +52,6 @@ jobs:
         run: npm run build:full
         working-directory: packages/app
 
-      # Import the distribution certificate into a dedicated CI keychain
-      - name: Import signing certificate
-        env:
-          CERTIFICATE_BASE64: ${{ secrets.IOS_CERTIFICATE_BASE64 }}
-          CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
-        run: |
-          echo "$CERTIFICATE_BASE64" | tr -d ' \n\r' | base64 --decode > certificate.p12
-          security create-keychain -p "" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "" build.keychain
-          security import certificate.p12 \
-            -k build.keychain \
-            -P "$CERTIFICATE_PASSWORD" \
-            -T /usr/bin/codesign \
-            -T /usr/bin/xcodebuild
-          security set-key-partition-list -S apple-tool:,apple: -s -k "" build.keychain
-          rm -f certificate.p12
-
       - name: Set up Ruby + Bundler
         uses: ruby/setup-ruby@v1
         with:
