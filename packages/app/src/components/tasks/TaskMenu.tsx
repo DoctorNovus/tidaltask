@@ -131,12 +131,7 @@ export default function TaskMenu({
   );
 
   const numGroups = groupedEntries.length;
-  const groupGridClass =
-    numGroups <= 1
-      ? "grid-cols-1"
-      : numGroups <= 4
-        ? "grid-cols-1 md:grid-cols-2"
-        : "grid-cols-1 md:grid-cols-3";
+  const groupGridClass = numGroups > 0 ? "grid-cols-1" : "grid-cols-1";
 
   return (
     <div className="w-full h-full flex flex-col">
@@ -154,7 +149,7 @@ export default function TaskMenu({
               return (
                 <div
                   key={groupName}
-                  className="rounded-2xl surface-card border shadow-xs overflow-hidden flex flex-col"
+                  className="flex flex-col"
                 >
                   <button
                     type="button"

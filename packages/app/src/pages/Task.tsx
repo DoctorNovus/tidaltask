@@ -156,7 +156,7 @@ export default function Task() {
       <div className="w-full h-full text-accent-black">
         <div className="h-full pb-28 md:pb-4 flex flex-col gap-6">
           <ActiveCalendar skeleton={true} searchSlot={searchBar} />
-          <div className="grid gap-6 md:grid-cols-2">
+          <div className="grid gap-6 md:grid-cols-1">
             <DayTasks skeleton={true} />
             <TaskContainer title="All Tasks" skeleton={true} />
           </div>
@@ -179,11 +179,6 @@ export default function Task() {
           </div>
         )}
 
-        {/*
-          Desktop: unified 2-col grid.
-          Slots: [DayTasks] [All Tasks (ungrouped)] [Group1] [Group2] [Group3] …
-          Mobile: stacked single column.
-        */}
         <div className="grid gap-6 md:grid-cols-2">
           <DayTasks
             setIsInspecting={setIsInspecting}
@@ -200,19 +195,23 @@ export default function Task() {
               disableGrouping
             />
           )}
-
-          {taskGroups.map(([groupName, groupTasks]) => (
-            <TaskContainer
-              key={groupName}
-              identifier={`group-${groupName}`}
-              title={capitalize(groupName)}
-              tasks={groupTasks}
-              setIsInspecting={setIsInspecting}
-              activeFilter="dailyTasks"
-              disableGrouping
-            />
-          ))}
         </div>
+
+        {taskGroups.length > 0 && (
+          <div className="grid gap-6 md:grid-cols-1">
+            {taskGroups.map(([groupName, groupTasks]) => (
+              <TaskContainer
+                key={groupName}
+                identifier={`group-${groupName}`}
+                title={capitalize(groupName)}
+                tasks={groupTasks}
+                setIsInspecting={setIsInspecting}
+                activeFilter="dailyTasks"
+                disableGrouping
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div>
