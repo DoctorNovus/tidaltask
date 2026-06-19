@@ -39,7 +39,7 @@ export default function ActiveCalendar({ skeleton, searchSlot }: ActiveCalendarP
                 <ChevronLeftIcon className="w-6 h-6" />
               </div>
             </div>
-            <div className="flex-1 flex flex-row gap-2">
+            <div className="flex-1 flex flex-row gap-1">
               {generateWeek(new Date(), 0).map((date, key) => (
                 <CalendarItem date={date} key={key} />
               ))}
@@ -107,7 +107,7 @@ export default function ActiveCalendar({ skeleton, searchSlot }: ActiveCalendarP
             </button>
           </div>
           <div
-            className="flex-1 flex flex-row gap-2"
+            className="flex-1 flex flex-row gap-1"
             onTouchStart={touchstart}
             onTouchEnd={touchend}
           >

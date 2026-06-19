@@ -3,7 +3,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { initializeNotifications } from "@/utils/notifs";
-import { AppContext, useAppReducer } from "@/hooks/app";
+import { AppContext, useAppReducer, applyFontScale, FONT_SCALE_OPTIONS, type FontScaleId } from "@/hooks/app";
 import { applyColorTheme, getColorThemeConfig } from "@/hooks/theme";
 import Home from "@/pages/Home";
 import Task from "@/pages/Task";
@@ -81,6 +81,14 @@ export default function App() {
         }
     }, [appState?.theme]);
 
+    useEffect(() => {
+        const scale = appState?.fontScale ?? "md";
+        applyFontScale(scale);
+        try {
+            window.localStorage.setItem("tidaltask-font-scale", scale);
+        } catch { /* ignore */ }
+    }, [appState?.fontScale]);
+
     return (
         <div className="h-full overflow-y-auto">
             <QueryClientProvider client={queryClient}>
@@ -109,5 +117,10 @@ export default function App() {
 }
 
 applyColorTheme(getColorThemeConfig());
+const _storedScale = window.localStorage.getItem("tidaltask-font-scale") as FontScaleId | null;
+if (_storedScale && FONT_SCALE_OPTIONS.some(o => o.id === _storedScale)) {
+    const _opt = FONT_SCALE_OPTIONS.find(o => o.id === _storedScale)!;
+    document.documentElement.style.setProperty("--title-w", _opt.titleW);
+}
 createRoot(document.querySelector("#root")!).render(<StrictMode><App /></StrictMode>);
 initialize().catch((error) => console.error(error));

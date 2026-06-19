@@ -9,8 +9,8 @@ export default function CalendarItem({ skeleton, date }: { skeleton?: boolean; d
 
   if (skeleton) {
     return (
-      <div className="flex-1">
-        <div className="w-full flex flex-col items-center justify-center rounded-2xl py-3 px-2 opacity-40">
+      <div className="flex-1 min-w-0">
+        <div className="w-full flex flex-col items-center justify-center rounded-2xl py-3 px-1 overflow-hidden opacity-40">
           <span className="text-sm font-semibold text-slate-400">—</span>
         </div>
       </div>
@@ -23,9 +23,9 @@ export default function CalendarItem({ skeleton, date }: { skeleton?: boolean; d
 
   const dayName = date.toLocaleDateString(undefined, { weekday: "short" });
 
-  let btnClasses = "w-full flex flex-col items-center justify-center rounded-2xl py-3 px-2 gap-0.5 transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue-600";
-  let textClasses = "text-sm font-semibold";
-  let numClasses = "text-lg font-semibold";
+  let btnClasses = "w-full flex flex-col items-center justify-center rounded-2xl py-3 px-1 gap-0.5 overflow-hidden transition focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-blue-600";
+  let textClasses = "text-xs font-semibold truncate";
+  let numClasses = "text-base font-semibold";
 
   if (isActive) {
     btnClasses += " bg-accent-blue-700 ring-2 ring-accent-blue-300 shadow-md";
@@ -42,7 +42,7 @@ export default function CalendarItem({ skeleton, date }: { skeleton?: boolean; d
   }
 
   return (
-    <div className="flex-1">
+    <div className="flex-1 min-w-0">
       <button
         type="button"
         onClick={() => changeDate(date)}

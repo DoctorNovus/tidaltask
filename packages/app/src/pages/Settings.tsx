@@ -21,7 +21,7 @@ import xIcon from "@/assets/social_icons/x.svg";
 import instagramIcon from "@/assets/social_icons/instagram.svg";
 import facebookIcon from "@/assets/social_icons/facebook.svg";
 import discordIcon from "@/assets/social_icons/discord.svg";
-import { useApp } from "@/hooks/app";
+import { useApp, FONT_SCALE_OPTIONS, type FontScaleId } from "@/hooks/app";
 import { useApiKeys, useChangePassword, useExportUserData, useGenerateApiKey, useRequestUserDeletion, useUpdateApiKeys, useUpdateProfile, useUser } from "@/hooks/user";
 import { SecureToken } from "@/plugins/secureToken";
 import { Capacitor } from "@capacitor/core";
@@ -161,6 +161,10 @@ export default function SettingsPage() {
 
   const setTheme = (next: "light" | "dark" | "auto") => {
     setAppState({ ...appState, theme: next });
+  };
+
+  const setFontScale = (next: FontScaleId) => {
+    setAppState({ ...appState, fontScale: next });
   };
 
   const handleProfileSubmit = async (e: FormEvent) => {
@@ -566,31 +570,57 @@ export default function SettingsPage() {
             badge={(appState?.theme ?? "auto") === "auto" ? "Auto" : (appState?.theme ?? "Light")}
           />
           {!isClosed("appearance") && (
-          <div className="px-4 py-4 border-t border-(--surface-border)">
-            <div className="inline-flex items-center gap-1 rounded-xl bg-silver-200 dark:bg-(--surface-card) p-1">
-              {([
-                { id: "light", label: "Light", Icon: SunIcon },
-                { id: "dark",  label: "Dark",  Icon: MoonIcon },
-                { id: "auto",  label: "Auto",  Icon: ComputerDesktopIcon },
-              ] as const).map(({ id, label, Icon }) => {
-                const isActive = (appState?.theme ?? "auto") === id;
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    title={label}
-                    onClick={() => setTheme(id)}
-                    className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                      isActive
-                        ? "bg-accent-blue text-white shadow-xs shadow-accent-blue/30"
-                        : "text-muted hover:text-primary"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {label}
-                  </button>
-                );
-              })}
+          <div className="px-4 py-4 border-t border-(--surface-border) flex flex-col gap-4">
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted">Color mode</span>
+              <div className="inline-flex items-center gap-1 rounded-xl bg-silver-200 dark:bg-(--surface-card) p-1">
+                {([
+                  { id: "light", label: "Light", Icon: SunIcon },
+                  { id: "dark",  label: "Dark",  Icon: MoonIcon },
+                  { id: "auto",  label: "Auto",  Icon: ComputerDesktopIcon },
+                ] as const).map(({ id, label, Icon }) => {
+                  const isActive = (appState?.theme ?? "auto") === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      title={label}
+                      onClick={() => setTheme(id)}
+                      className={`flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                        isActive
+                          ? "bg-accent-blue text-white shadow-xs shadow-accent-blue/30"
+                          : "text-muted hover:text-primary"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted">Font size</span>
+              <div className="flex items-center gap-1 rounded-xl bg-silver-200 dark:bg-(--surface-card) p-1">
+                {FONT_SCALE_OPTIONS.map(({ id, label }) => {
+                  const isActive = (appState?.fontScale ?? "md") === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setFontScale(id)}
+                      className={`flex-1 rounded-lg px-2 py-2 text-xs font-semibold transition ${
+                        isActive
+                          ? "bg-accent-blue text-white shadow-xs shadow-accent-blue/30"
+                          : "text-muted hover:text-primary"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </div>
           )}

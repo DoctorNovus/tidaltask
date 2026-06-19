@@ -12,6 +12,23 @@ Logger.log(`Running in ${import.meta.env.DEV ? "Development" : "Production"} mod
 // TODO: remove tempActiveDate.
 type ThemeChoice = "light" | "dark" | "auto";
 
+export const FONT_SCALE_OPTIONS = [
+  { id: "sm", label: "Small",    zoom: 0.875, titleW: "60vw" },
+  { id: "md", label: "Default",  zoom: 1,     titleW: "48vw" },
+  { id: "lg", label: "Large",    zoom: 1.125, titleW: "36vw" },
+  { id: "xl", label: "X-Large",  zoom: 1.25,  titleW: "26vw" },
+] as const;
+
+export type FontScaleId = typeof FONT_SCALE_OPTIONS[number]["id"];
+
+export function applyFontScale(id: FontScaleId) {
+  const opt = FONT_SCALE_OPTIONS.find(o => o.id === id) ?? FONT_SCALE_OPTIONS[1];
+  const el = document.getElementById("unit-container");
+  if (!el) return;
+  el.style.zoom = opt.zoom === 1 ? "" : String(opt.zoom);
+  document.documentElement.style.setProperty("--title-w", opt.titleW);
+}
+
 export interface AppOptions {
   storedDate?: Date;
   activeDate?: Date;
@@ -20,6 +37,7 @@ export interface AppOptions {
   activeTags?: string[];
 
   theme?: ThemeChoice;
+  fontScale?: FontScaleId;
 
   authorized: boolean;
 }
@@ -32,6 +50,7 @@ const initialData: AppOptions = {
   activeTags: [],
 
   theme: "auto",
+  fontScale: "md",
   authorized: false
 };
 
@@ -40,6 +59,7 @@ const reducer = (data: AppOptions, payload: Partial<AppOptions>): AppOptions => 
 export function useAppReducer(): [AppOptions, React.Dispatch<Partial<AppOptions>>] {
   const initializer = () => {
     let theme = initialData.theme;
+    let fontScale = initialData.fontScale;
 
     if (typeof window !== "undefined") {
       const stored = window.localStorage.getItem("tidaltask-theme")
@@ -50,9 +70,14 @@ export function useAppReducer(): [AppOptions, React.Dispatch<Partial<AppOptions>
         const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches;
         theme = prefersDark ? "dark" : "light";
       }
+
+      const storedScale = window.localStorage.getItem("tidaltask-font-scale") as FontScaleId | null;
+      if (storedScale && FONT_SCALE_OPTIONS.some(o => o.id === storedScale)) {
+        fontScale = storedScale;
+      }
     }
 
-    return { ...initialData, theme };
+    return { ...initialData, theme, fontScale };
   };
 
   return useReducer(reducer, initialData, initializer);

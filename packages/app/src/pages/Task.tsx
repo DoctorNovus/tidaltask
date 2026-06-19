@@ -156,8 +156,8 @@ export default function Task() {
 
   if (tasks.isLoading) {
     return (
-      <div className="w-full h-full text-accent-black">
-        <div className="h-full pb-28 md:pb-4 flex flex-col gap-6">
+      <div className="w-full text-accent-black">
+        <div className="pb-28 md:pb-4 flex flex-col gap-6">
           <ActiveCalendar skeleton={true} searchSlot={searchBar} />
           <div className="grid gap-6 md:grid-cols-1">
             <DayTasks skeleton={true} />
@@ -169,8 +169,8 @@ export default function Task() {
   }
 
   return (
-    <div className="w-full h-full text-accent-black">
-      <div className="h-full pb-28 md:pb-4 flex flex-col gap-6">
+    <div className="w-full text-accent-black">
+      <div className="pb-28 md:pb-4 flex flex-col gap-6">
 
         {/* Full-width calendar strip with search integrated in the card */}
         <ActiveCalendar searchSlot={searchBar} />
