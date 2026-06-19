@@ -3,6 +3,7 @@ import { ExpressPlatform } from "@outwalk/firefly/express";
 import { MongooseDatabase } from "@/_lib/mongoose";
 import { createTokenDocsModel, getDocsBaseUrl, renderTokenDocsHtml } from "@/docs/tokenDocs";
 import { mcpHandler } from "@/mcp/handler";
+import { oauthRouter } from "@/oauth/oauth.router";
 import { rateLimit } from "express-rate-limit";
 import cors from "cors";
 import session from "express-session";
@@ -139,6 +140,9 @@ platform.use((req, res, next) => {
 
     next();
 });
+
+/* OAuth 2.0 server (discovery, registration, authorize, token, revoke) */
+platform.use(oauthRouter);
 
 /* MCP endpoint — POST /mcp (Streamable HTTP, stateless) */
 platform.use(async (req, res, next) => {
