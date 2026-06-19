@@ -52,67 +52,67 @@ export default function MenuFields({
     return (
         <div className={`flex flex-col gap-4 ${isDeleting && "blur-xs"}`}>
             {type === "add" && (
-                <div className="flex flex-col gap-2 rounded-lg border border-accent-blue/15 bg-accent-blue-50/40 px-3 py-3 dark:bg-(--accent-subtle)">
-                    <div className="flex items-center justify-between">
+                <>
+                    <div className="flex items-center justify-between px-1">
                         <div className="flex flex-col">
                             <span className="text-sm font-semibold text-primary">Quick add</span>
                             <span className="text-xs text-muted">Create multiple tasks at once.</span>
                         </div>
-                        <label className="flex items-center gap-2 text-xs text-muted">
-                            <input
-                                type="checkbox"
-                                className="h-4 w-4"
-                                checked={isQuickAdd}
-                                onChange={(e) => {
-                                    setIsQuickAdd(e.target.checked);
-                                    if (e.target.checked) {
-                                        setTempData({ group: "", groupPublic: false });
-                                    }
-                                }}
-                            />
-                            Enable
-                        </label>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const next = !isQuickAdd;
+                                setIsQuickAdd(next);
+                                if (next) setTempData({ group: "", groupPublic: false });
+                            }}
+                            className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                                isQuickAdd
+                                    ? "bg-accent-blue text-white"
+                                    : "bg-silver-200 text-primary ring-1 ring-accent-blue/20 hover:ring-accent-blue/40 dark:bg-[#253350]"
+                            }`}
+                        >
+                            {isQuickAdd ? "On" : "Off"}
+                        </button>
                     </div>
+
                     {isQuickAdd && (
-                        <TaskInfoMenuItem
-                            name="Tasks (one per line)"
-                            type="textarea"
-                            placeholder="Pick up meds&#10;Email client&#10;Water plants"
-                            value={quickTasksInput}
-                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                                setQuickTasksInput(e.target.value)
-                            }
-                        />
-                    )}
-                    {isQuickAdd && (
-                        <div className="md:grid md:grid-cols-2 md:gap-4 flex flex-col gap-3">
+                        <>
                             <div className="flex flex-col gap-1">
-                                <label className="text-xs font-semibold text-primary px-1">Date &amp; Time</label>
-                                <DateTimePicker
-                                    value={formatDateTime(tempData.date instanceof Date && tempData.date.getTime() > 0 ? tempData.date : new Date())}
-                                    onChange={(val) => setTempData({ date: new Date(val) })}
+                                <label className="text-sm font-semibold text-primary px-1">Tasks (one per line)</label>
+                                <textarea
+                                    className="resize-none text-sm px-3 py-2 rounded-lg border border-accent-blue/30 bg-silver-200 text-primary shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[#253350] dark:border-accent-blue/40 min-h-[96px]"
+                                    placeholder={"Pick up meds\nEmail client\nWater plants"}
+                                    value={quickTasksInput}
+                                    onChange={(e) => setQuickTasksInput(e.target.value)}
+                                />
+                                {validationError && (
+                                    <span className="px-1 text-sm font-semibold text-accent-red-500">{validationError}</span>
+                                )}
+                            </div>
+
+                            <div className="md:grid md:grid-cols-2 md:gap-4 flex flex-col gap-4">
+                                <div className="flex flex-col gap-1">
+                                    <label className="text-sm font-semibold text-primary px-1">Date &amp; Time</label>
+                                    <DateTimePicker
+                                        value={formatDateTime(tempData.date instanceof Date && tempData.date.getTime() > 0 ? tempData.date : new Date())}
+                                        onChange={(val) => setTempData({ date: new Date(val) })}
+                                    />
+                                </div>
+                                <GroupSelector
+                                    value={tempData.group ?? ""}
+                                    groups={existingGroups}
+                                    onChange={(val) => setTempData({ group: val })}
                                 />
                             </div>
-                            <GroupSelector
-                                value={tempData.group ?? ""}
-                                groups={existingGroups}
-                                onChange={(val) => setTempData({ group: val })}
+
+                            <TaskInfoMenuTags
+                                tags={tempData.tags ?? []}
+                                onChange={(tags) => setTempData({ tags })}
+                                helperText="Tags will be applied to every task you add."
                             />
-                        </div>
+                        </>
                     )}
-                    {isQuickAdd && (
-                        <TaskInfoMenuTags
-                            tags={tempData.tags ?? []}
-                            onChange={(tags) => setTempData({ tags })}
-                            helperText="Tags will be applied to every task you add."
-                        />
-                    )}
-                    {isQuickAdd && validationError && (
-                        <span className="px-1 text-sm font-semibold text-accent-red-500">
-                            {validationError}
-                        </span>
-                    )}
-                </div>
+                </>
             )}
             {!isQuickAdd && (
                 <>
@@ -190,8 +190,8 @@ export default function MenuFields({
                         <TaskInfoMenuSelect
                             name="Repeating"
                             value={tempData.repeater}
-                            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => {
-                                setTempData({ repeater: e.target.value });
+                            onChange={(value) => {
+                                setTempData({ repeater: value });
                             }}
                             options={[
                                 { name: "Do Not Repeat", value: "" },
@@ -199,6 +199,8 @@ export default function MenuFields({
                                 { name: "Every Week", value: "weekly" },
                                 { name: "Every 2 Weeks", value: "bi-weekly" },
                                 { name: "Every Month", value: "monthly" },
+                                { name: "Every 6 Months", value: "6-monthly" },
+                                { name: "Every Year", value: "yearly" },
                             ]}
                         />
 

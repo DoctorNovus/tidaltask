@@ -240,6 +240,22 @@ export default function CalendarPage() {
     navigate(`/calendar?scope=${scope}&view=month&month=${monthKey}`, { replace: true });
   };
 
+  const priorityBadge = (priority: number | undefined, compact = false) => {
+    if (!priority || priority <= 0) return null;
+    const cfg: Record<number, { label: string; short: string; cls: string }> = {
+      1: { label: "Low",  short: "L", cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
+      2: { label: "Med",  short: "M", cls: "bg-amber-100   text-amber-700   dark:bg-amber-900/30   dark:text-amber-400"   },
+      3: { label: "High", short: "H", cls: "bg-rose-100    text-rose-700    dark:bg-rose-900/30    dark:text-rose-400"    },
+    };
+    const c = cfg[priority];
+    if (!c) return null;
+    return (
+      <span className={`shrink-0 rounded-full px-1.5 py-0.5 font-bold uppercase tracking-wide leading-none ${compact ? "text-[9px]" : "text-[10px]"} ${c.cls}`}>
+        {compact ? c.short : c.label}
+      </span>
+    );
+  };
+
   const openTask = (task: Task, activeDay?: Date) => {
     setAppState({
       ...appState,
@@ -258,7 +274,7 @@ export default function CalendarPage() {
     >
       <div className="flex items-center justify-between gap-1">
         <span className="text-sm xl:text-xs font-semibold text-primary xl:truncate">{task.title}</span>
-        {task.priority ? <span className="text-[11px] font-semibold text-amber-600 shrink-0">P{task.priority}</span> : null}
+        {priorityBadge(task.priority)}
       </div>
       {task.description ? (
         <p className="mt-1 text-xs text-muted line-clamp-2 xl:hidden">{task.description}</p>
@@ -312,8 +328,8 @@ export default function CalendarPage() {
                     className="relative flex flex-col items-start w-full rounded-lg bg-(--surface-card) border border-(--surface-border) px-2 py-1.5 text-left transition hover:border-accent-blue/40"
                   >
                     {task.priority ? (
-                      <span className="absolute top-1 right-1 text-[10px] font-bold text-amber-500 leading-none">
-                        {"!".repeat(task.priority)}
+                      <span className="absolute top-1 right-1 leading-none">
+                        {priorityBadge(task.priority, true)}
                       </span>
                     ) : null}
                     {hasTime(task) && (
@@ -370,9 +386,7 @@ export default function CalendarPage() {
                         <span className="shrink-0 text-[10px] font-bold text-accent-blue">{formatTime(task)}</span>
                       )}
                       <span className="flex-1 min-w-0 text-sm text-primary truncate">{task.title}</span>
-                      {task.priority ? (
-                        <span className="shrink-0 text-xs font-bold text-amber-500">{"!".repeat(task.priority)}</span>
-                      ) : null}
+                      {priorityBadge(task.priority, true)}
                     </button>
                   ))}
                   {overflow > 0 && (

@@ -159,11 +159,19 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
               <div className="flex-shrink-0 w-20">
                 <TaskItemDate task={item} />
               </div>
-              {!!item.priority && item.priority > 0 && (
-                <span className="flex-shrink-0 ml-1 text-xs font-bold text-red-500">
-                  {"!".repeat(item.priority)}
-                </span>
-              )}
+              {!!item.priority && item.priority > 0 && (() => {
+                const badge: Record<number, { label: string; cls: string }> = {
+                  1: { label: "Low",  cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
+                  2: { label: "Med",  cls: "bg-amber-100   text-amber-700   dark:bg-amber-900/30   dark:text-amber-400"   },
+                  3: { label: "High", cls: "bg-rose-100    text-rose-700    dark:bg-rose-900/30    dark:text-rose-400"    },
+                };
+                const b = badge[item.priority!];
+                return b ? (
+                  <span className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide leading-none ${b.cls}`}>
+                    {b.label}
+                  </span>
+                ) : null;
+              })()}
             </div>
           </div>
         </div>

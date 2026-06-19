@@ -16,6 +16,8 @@ export default function TaskItemDate({ task }: { task: Task }) {
       weekly: "Weekly",
       "bi-weekly": "Bi-weekly",
       monthly: "Monthly",
+      "6-monthly": "Every 6 mo",
+      yearly: "Yearly",
     };
     const label = labels[task.repeater] ?? task.repeater;
     return (

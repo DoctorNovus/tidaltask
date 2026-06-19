@@ -69,6 +69,13 @@ export function occursOnDate(task: Task, target: Date): boolean {
     }
     case "monthly":
       return start.getDate() === day.getDate();
+    case "6-monthly": {
+      if (start.getDate() !== day.getDate()) return false;
+      const monthDiff = (day.getFullYear() - start.getFullYear()) * 12 + (day.getMonth() - start.getMonth());
+      return monthDiff % 6 === 0;
+    }
+    case "yearly":
+      return start.getMonth() === day.getMonth() && start.getDate() === day.getDate();
     default:
       return matchDate(start, day);
   }
