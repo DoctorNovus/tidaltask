@@ -292,7 +292,7 @@ function PasskeysSection() {
         <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
                 <p className="text-xs text-muted">Passkeys let you sign in with Face ID, Touch ID, or a hardware key — no password needed.</p>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                     <input
                         type="text"
                         value={labelInput}
@@ -304,7 +304,7 @@ function PasskeysSection() {
                         type="button"
                         onClick={handleAdd}
                         disabled={registerPasskey.isPending}
-                        className="shrink-0 rounded-lg bg-accent-blue px-3 py-2 text-sm font-semibold text-white shadow-xs shadow-accent-blue/30 hover:-translate-y-px transition disabled:opacity-70"
+                        className="rounded-lg bg-accent-blue px-3 py-2 text-sm font-semibold text-white shadow-xs shadow-accent-blue/30 hover:-translate-y-px transition disabled:opacity-70"
                     >
                         {registerPasskey.isPending ? "Registering..." : "Add passkey"}
                     </button>
