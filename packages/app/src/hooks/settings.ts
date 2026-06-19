@@ -20,6 +20,8 @@ export interface Settings {
   groupsActive?: string[];
   apiKeys?: Record<string, string>;
   groupConfig?: Record<string, GroupConfig>;
+  autoDeleteCompletedDays?: number;
+  lastAutoDeleteAt?: number;
 }
 
 /* Gets the settings from the database */

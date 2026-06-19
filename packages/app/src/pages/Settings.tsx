@@ -14,7 +14,7 @@ import AnnouncementManager from "./(Settings)/AnnouncementManager";
 import WhatsNew from "./(Settings)/WhatsNew";
 import ServerNotificationSettings from "./(Settings)/ServerNotificationSettings";
 import DeveloperNotificationSender from "./(Settings)/DeveloperNotificationSender";
-import { useTasks, useDeleteTask } from "@/hooks/tasks";
+import { useDeleteCompletedTasks } from "@/hooks/tasks";
 import xIcon from "@/assets/social_icons/x.svg";
 import instagramIcon from "@/assets/social_icons/instagram.svg";
 import facebookIcon from "@/assets/social_icons/facebook.svg";
@@ -30,8 +30,7 @@ const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || "support@tidaltask.a
 
 export default function SettingsPage() {
   const [tempSettings, setTempSettings] = useState<Settings>({});
-  const tasks = useTasks();
-  const { mutateAsync: deleteTask } = useDeleteTask();
+  const { mutateAsync: deleteCompletedTasks, isPending: isCleanupPending } = useDeleteCompletedTasks();
   const [cleanupInterval, setCleanupInterval] = useState<string>("30");
   const [cleanupStatus, setCleanupStatus] = useState<string>("");
   const [appState, setAppState] = useApp();
@@ -120,41 +119,15 @@ export default function SettingsPage() {
       HandleDailyChange(true);
   };
 
-  const getCompletedTasks = () => {
-    if (!tasks.isSuccess) return [];
-    const now = new Date();
-    const thresholdDays = parseInt(cleanupInterval);
-    const cutoff =
-      isNaN(thresholdDays) || cleanupInterval === "all"
-        ? null
-        : new Date(now.getTime() - thresholdDays * 24 * 60 * 60 * 1000);
-
-    return tasks.data.filter((task) => {
-      const isCompleted =
-        task.done === true ||
-        (Array.isArray(task.done) && task.done.length > 0);
-
-      if (!isCompleted) return false;
-
-      if (!cutoff) return true;
-
-      const taskDate = new Date(task.date);
-      return !isNaN(taskDate.getTime()) && taskDate < cutoff;
-    });
-  };
-
   const handleCleanup = async () => {
-    const toDelete = getCompletedTasks();
-    if (toDelete.length === 0) {
-      setCleanupStatus("No completed tasks to delete.");
-      return;
+    setCleanupStatus("");
+    try {
+      const days = cleanupInterval === "all" ? undefined : parseInt(cleanupInterval, 10);
+      const result = await deleteCompletedTasks(days);
+      setCleanupStatus(result.deleted > 0 ? `Deleted ${result.deleted} task${result.deleted === 1 ? "" : "s"}.` : "No completed tasks to delete.");
+    } catch (err: any) {
+      setCleanupStatus(err?.message || "Failed to delete tasks.");
     }
-
-    setCleanupStatus(`Deleting ${toDelete.length} tasks...`);
-    for (const task of toDelete) {
-      await deleteTask(task);
-    }
-    setCleanupStatus(`Deleted ${toDelete.length} tasks.`);
   };
 
   const HandleDailyChange = async (newValue: boolean) => {
@@ -801,33 +774,49 @@ export default function SettingsPage() {
         </div>
 
         <div className="rounded-2xl surface-card border shadow-sm overflow-hidden">
-          <SectionHeader id="data" title="Delete Completed Tasks" subtitle="Remove completed tasks older than a selected window." />
+          <SectionHeader id="data" title="Delete Completed Tasks" subtitle="Remove completed non-repeating tasks manually or on a schedule." />
           {!isClosed("data") && (
-          <div className="px-4 py-4 flex flex-col gap-3 border-t border-(--surface-border)">
-          <div className="flex flex-wrap items-center gap-3 pt-1">
-            <select
-              className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-2 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
-              value={cleanupInterval}
-              onChange={(e) => setCleanupInterval(e.target.value)}
-            >
-              <option value="7">Older than 7 days</option>
-              <option value="30">Older than 30 days</option>
-              <option value="90">Older than 90 days</option>
-              <option value="all">All completed tasks</option>
-            </select>
-            <button
-              type="button"
-              className="rounded-lg bg-red-500 text-white px-3 py-2 text-sm font-semibold shadow-xs hover:-translate-y-px transition disabled:opacity-60"
-              onClick={handleCleanup}
-              disabled={tasks.isLoading || tasks.isFetching}
-            >
-              Delete completed tasks
-            </button>
-            <span className="text-sm text-muted">
-              {tasks.isLoading ? "Loading..." : `${getCompletedTasks().length} ready to delete`}
-            </span>
-          </div>
-          {cleanupStatus && <span className="text-sm text-muted">{cleanupStatus}</span>}
+          <div className="px-4 py-4 flex flex-col gap-4 border-t border-(--surface-border)">
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-semibold text-primary">Manual</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <select
+                  className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-2 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+                  value={cleanupInterval}
+                  onChange={(e) => setCleanupInterval(e.target.value)}
+                >
+                  <option value="7">Older than 7 days</option>
+                  <option value="30">Older than 30 days</option>
+                  <option value="90">Older than 90 days</option>
+                  <option value="all">All completed tasks</option>
+                </select>
+                <button
+                  type="button"
+                  className="rounded-lg bg-red-500 text-white px-3 py-2 text-sm font-semibold shadow-xs hover:-translate-y-px transition disabled:opacity-60"
+                  onClick={handleCleanup}
+                  disabled={isCleanupPending}
+                >
+                  {isCleanupPending ? "Deleting..." : "Delete now"}
+                </button>
+              </div>
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="text-sm font-semibold text-primary">Auto-delete</span>
+              <div className="flex flex-wrap items-center gap-3">
+                <select
+                  className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-2 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+                  value={String(tempSettings.autoDeleteCompletedDays ?? 0)}
+                  onChange={(e) => UpdateSettings({ autoDeleteCompletedDays: parseInt(e.target.value, 10) })}
+                >
+                  <option value="0">Disabled</option>
+                  <option value="7">After 7 days</option>
+                  <option value="30">After 30 days</option>
+                  <option value="90">After 90 days</option>
+                </select>
+                <span className="text-xs text-muted">Runs once per day when you open the app.</span>
+              </div>
+            </div>
+            {cleanupStatus && <span className="text-sm text-muted">{cleanupStatus}</span>}
           </div>
           )}
         </div>

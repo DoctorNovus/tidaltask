@@ -8,6 +8,7 @@ import { Capacitor } from "@capacitor/core";
 import { SecureToken } from "@/plugins/secureToken";
 import { syncServerNotifications } from "@/utils/notifs";
 import { startRegistration, startAuthentication } from "@simplewebauthn/browser";
+import { getSettings, setSettings } from "@/hooks/settings";
 
 async function storeDeviceToken() {
     if (Capacitor.getPlatform() === "web") return;
@@ -32,6 +33,18 @@ async function ensureDeviceToken() {
     const existing = await SecureToken.getToken().catch(() => ({ token: null }));
     if (existing?.token) return;
     await storeDeviceToken();
+}
+
+async function runAutoDelete() {
+    const settings = await getSettings();
+    const days = settings.autoDeleteCompletedDays;
+    if (!days || days <= 0) return;
+
+    const lastRun = settings.lastAutoDeleteAt ?? 0;
+    if (Date.now() - lastRun < 24 * 60 * 60 * 1000) return;
+
+    await fetchData(`/task/completed?olderThanDays=${days}`, { method: "DELETE" });
+    await setSettings({ ...settings, lastAutoDeleteAt: Date.now() });
 }
 
 export async function reloadAuth() {
@@ -60,6 +73,7 @@ export function useAuth() {
         if (isAuthed) {
             ensureDeviceToken().catch((err) => Logger.logWarning(String(err)));
             syncServerNotifications().catch((err) => Logger.logWarning(String(err)));
+            runAutoDelete().catch((err) => Logger.logWarning(String(err)));
             const interval = window.setInterval(() => {
                 syncServerNotifications().catch((err) => Logger.logWarning(String(err)));
             }, 60 * 1000);

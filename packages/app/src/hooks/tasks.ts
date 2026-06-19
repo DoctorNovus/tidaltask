@@ -301,6 +301,24 @@ export function useDeleteTask(): UseMutationResult<void, Error, Task, unknown> {
   return useMutation({ mutationFn, onSuccess });
 }
 
+export function useDeleteCompletedTasks() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (olderThanDays?: number) => {
+      const url = olderThanDays != null && olderThanDays > 0
+        ? `/task/completed?olderThanDays=${olderThanDays}`
+        : `/task/completed`;
+      const response = await fetchData(url, { method: "DELETE" });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data?.message || "Failed to delete tasks.");
+      return data as { deleted: number };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    },
+  });
+}
+
 export async function getTaskUsers(id: string) {
   const resp = await fetchData(`/task/${id}/users`, {});
 

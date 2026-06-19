@@ -92,6 +92,13 @@ export class TaskController {
         return this.taskService.deleteTask(body.id);
     }
 
+    @Delete("/completed")
+    async deleteCompletedTasks({ session, query }: Request): Promise<{ deleted: number }> {
+        const raw = typeof query.olderThanDays === "string" ? parseInt(query.olderThanDays, 10) : undefined;
+        const olderThanDays = raw != null && !isNaN(raw) && raw > 0 ? raw : undefined;
+        return this.taskService.deleteCompletedTasks(session.user.id, olderThanDays);
+    }
+
     @Post("/invite")
     async inviteUser({ session, body }: Request): Promise<{ success: boolean }> {
         const user = await this.userService.getUserByEmail(body.email);

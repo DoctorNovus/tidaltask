@@ -260,6 +260,29 @@ export class TaskService {
         return Task.findByIdAndDelete(id).lean<Task>().exec();
     }
 
+    async deleteCompletedTasks(userId: string, olderThanDays?: number): Promise<{ deleted: number }> {
+        const tasks = await Task.find({
+            users: userId,
+            done: true,
+            $or: [{ repeater: "" }, { repeater: null }, { repeater: { $exists: false } }],
+        }).select("_id date").lean<Task[]>().exec();
+
+        let toDelete = tasks;
+        if (olderThanDays != null && olderThanDays > 0) {
+            const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000);
+            toDelete = tasks.filter((t) => {
+                const d = new Date(t.date as string);
+                return !isNaN(d.getTime()) && d < cutoff;
+            });
+        }
+
+        if (toDelete.length === 0) return { deleted: 0 };
+
+        const ids = toDelete.map((t) => (t as any)._id);
+        const result = await Task.deleteMany({ _id: { $in: ids } }).exec();
+        return { deleted: result.deletedCount ?? 0 };
+    }
+
     async getUsersByTaskId(id: string): Promise<User[] | null> {
         if (!id || !mongoose.Types.ObjectId.isValid(id)) return [];
         const populated = await Task.findById(id)
