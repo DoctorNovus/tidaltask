@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router";
 import { initializeNotifications } from "@/utils/notifs";
 import { AppContext, useAppReducer } from "@/hooks/app";
+import { applyColorTheme, getColorThemeConfig } from "@/hooks/theme";
 import Home from "@/pages/Home";
 import Task from "@/pages/Task";
 import Settings from "./pages/Settings";
@@ -107,5 +108,6 @@ export default function App() {
     );
 }
 
+applyColorTheme(getColorThemeConfig());
 createRoot(document.querySelector("#root")!).render(<StrictMode><App /></StrictMode>);
 initialize().catch((error) => console.error(error));

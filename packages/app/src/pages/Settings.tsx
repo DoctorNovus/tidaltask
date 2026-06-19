@@ -13,6 +13,7 @@ import ControllerUser from "./(Settings)/ControlledUser";
 import AnnouncementManager from "./(Settings)/AnnouncementManager";
 import WhatsNew from "./(Settings)/WhatsNew";
 import ServerNotificationSettings from "./(Settings)/ServerNotificationSettings";
+import ThemeSettings from "./(Settings)/ThemeSettings";
 import DeveloperNotificationSender from "./(Settings)/DeveloperNotificationSender";
 import { useDeleteCompletedTasks } from "@/hooks/tasks";
 import xIcon from "@/assets/social_icons/x.svg";
@@ -590,6 +591,15 @@ export default function SettingsPage() {
                 );
               })}
             </div>
+          </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl surface-card border shadow-sm overflow-hidden">
+          <SectionHeader id="theme" title="Theme" subtitle="Choose a preset or pick your own accent color." />
+          {!isClosed("theme") && (
+          <div className="px-4 py-4 border-t border-(--surface-border)">
+            <ThemeSettings />
           </div>
           )}
         </div>

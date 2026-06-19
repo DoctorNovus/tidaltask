@@ -246,6 +246,57 @@ button {
   cursor: pointer;
 }
 
+/* Pride theme: gradient buttons get a full rainbow instead of the accent palette */
+[data-color-theme="pride"] .from-accent-blue-700 {
+  --tw-gradient-stops: #f87171, #fb923c, #fbbf24, #4ade80, #818cf8, #c084fc, #f472b6;
+}
+
+/* ── Agenda capsule colour tokens (defaults; overridden by JS theme) ── */
+:root {
+  --capsule-today-bg:      rgba(59,130,246,0.09);
+  --capsule-today-text:    #1e40af;
+  --capsule-today-muted:   #2563eb;
+
+  --capsule-tomorrow-bg:   rgba(245,158,11,0.10);
+  --capsule-tomorrow-text: #92400e;
+  --capsule-tomorrow-muted:#b45309;
+
+  --capsule-week-bg:       rgba(139,92,246,0.10);
+  --capsule-week-text:     #4c1d95;
+  --capsule-week-muted:    #5b21b6;
+
+  --capsule-overdue-bg:    rgba(239,68,68,0.10);
+  --capsule-overdue-text:  #991b1b;
+  --capsule-overdue-muted: #b91c1c;
+
+  /* overdue-clear is always emerald — a "success" state */
+  --capsule-clear-bg:      rgba(16,185,129,0.09);
+  --capsule-clear-text:    #065f46;
+  --capsule-clear-muted:   #047857;
+}
+
+.dark {
+  --capsule-today-bg:      rgba(59,130,246,0.14);
+  --capsule-today-text:    #93c5fd;
+  --capsule-today-muted:   #bfdbfe;
+
+  --capsule-tomorrow-bg:   rgba(245,158,11,0.14);
+  --capsule-tomorrow-text: #fcd34d;
+  --capsule-tomorrow-muted:#fde68a;
+
+  --capsule-week-bg:       rgba(139,92,246,0.14);
+  --capsule-week-text:     #c4b5fd;
+  --capsule-week-muted:    #ddd6fe;
+
+  --capsule-overdue-bg:    rgba(239,68,68,0.14);
+  --capsule-overdue-text:  #fca5a5;
+  --capsule-overdue-muted: #fecaca;
+
+  --capsule-clear-bg:      rgba(16,185,129,0.14);
+  --capsule-clear-text:    #6ee7b7;
+  --capsule-clear-muted:   #a7f3d0;
+}
+
 input,
 textarea,
 select {
