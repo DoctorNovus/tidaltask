@@ -198,14 +198,17 @@ export default function CalendarPage() {
     return () => window.removeEventListener("resize", handler);
   }, []);
 
-  // ~300px accounts for: DataContainer top/bottom padding, Calendar py/pb, header row,
-  // month nav, day-name labels, and gaps. Keeps pill count accurate across device sizes.
+  // containerH is the explicit height we assign to the mobile month container.
+  // windowH (window.innerHeight) minus overhead: DataContainer padding (~96px),
+  // page title + combined mobile nav + gaps (~160px), day-name row + gap (~30px) = ~286px.
+  // Use 320 as a conservative buffer that also covers safe-area insets.
+  const mobileMontContainerH = Math.max(300, windowH - 320);
   const maxMobileTasks = useMemo(() => {
-    const gridH = windowH - 250;
+    const gridH = mobileMontContainerH - 30; // 30 = day-name row (22px) + gap-2 (8px)
     const rowH = Math.max(40, gridH / monthWeeks.length);
-    // 34 = date number (18px) + overflow label (16px); 17 = pill (16px) + gap (1px)
-    return Math.max(1, Math.floor((rowH - 34) / 17));
-  }, [windowH, monthWeeks.length]);
+    // 18 = date number; 17 = pill height (16px) + gap-px (1px)
+    return Math.max(1, Math.floor((rowH - 18) / 17));
+  }, [mobileMontContainerH, monthWeeks.length]);
 
   const overdueList = useMemo(() => {
     if (!tasks.data) return [];
@@ -465,12 +468,7 @@ export default function CalendarPage() {
       </div>
 
       {/* ── Mobile: full-height dot grid ── */}
-      <div className="md:hidden flex flex-col flex-1 min-h-0 gap-2 w-screen -ml-7 px-1.5">
-        <div className="flex flex-wrap items-center justify-center gap-3 shrink-0 px-7">
-          <button type="button" onClick={() => changeMonth(-1)} className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40" aria-label="Previous month">←</button>
-          <span className="text-lg font-semibold text-primary">{formatLabel(monthAnchor, { month: "long", year: "numeric" })}</span>
-          <button type="button" onClick={() => changeMonth(1)} className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40" aria-label="Next month">→</button>
-        </div>
+      <div className="md:hidden flex flex-col gap-2 -mx-3 px-1.5" style={{ height: `${mobileMontContainerH}px` }}>
         <div className="grid grid-cols-7 shrink-0 border-b border-(--surface-border) pb-1">
           {DAY_NAMES.map((d) => (
             <div key={d} className="text-center text-[10px] font-bold text-muted py-1">{d.slice(0, 1)}</div>
@@ -568,14 +566,26 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Mobile week navigation */}
-      {view === "week" && (
-        <div className="flex md:hidden flex-wrap items-center justify-center gap-3">
-          <button type="button" onClick={() => changeWeek(-1)} className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40" aria-label="Previous week">←</button>
-          <span className="text-base font-semibold text-primary">Week of {formatLabel(weekStart, { month: "long", day: "numeric" })}</span>
-          <button type="button" onClick={() => changeWeek(1)} className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40" aria-label="Next week">→</button>
-        </div>
-      )}
+      {/* Mobile navigation (week + month) */}
+      <div className="flex md:hidden items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => view === "week" ? changeWeek(-1) : changeMonth(-1)}
+          className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40"
+          aria-label={view === "week" ? "Previous week" : "Previous month"}
+        >←</button>
+        <span className="flex-1 text-center text-base font-semibold text-primary truncate">
+          {view === "week"
+            ? `Week of ${formatLabel(weekStart, { month: "short", day: "numeric" })}`
+            : formatLabel(monthAnchor, { month: "long", year: "numeric" })}
+        </span>
+        <button
+          type="button"
+          onClick={() => view === "week" ? changeWeek(1) : changeMonth(1)}
+          className="rounded-full surface-card border px-3 py-1.5 text-sm font-semibold text-primary shadow-xs transition hover:border-accent-blue/40"
+          aria-label={view === "week" ? "Next week" : "Next month"}
+        >→</button>
+      </div>
 
       {/* Overdue banner */}
       {scope === "overdue" && (

@@ -3,7 +3,7 @@ import { ExpressPlatform } from "@outwalk/firefly/express";
 import { MongooseDatabase } from "@/_lib/mongoose";
 import { createTokenDocsModel, getDocsBaseUrl, renderTokenDocsHtml } from "@/docs/tokenDocs";
 import { rateLimit } from "express-rate-limit";
-import cors from "cors";
+import type { Request, Response, NextFunction } from "express";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 
@@ -53,35 +53,34 @@ const allowedOriginSuffixes = [
     ".sequenced.ottegi.com",
 ];
 
-platform.use(cors({
-    credentials: true,
-    origin(origin, callback) {
-        if (!origin) {
-            callback(null, true);
-            return;
-        }
+platform.use((req: Request, res: Response, next: NextFunction) => {
+    const origin = req.headers.origin;
 
-        if (allowedOrigins.has(origin)) {
-            callback(null, true);
-            return;
-        }
+    const allowed = !origin
+        || allowedOrigins.has(origin)
+        || (() => {
+            try {
+                const { protocol, hostname } = new URL(origin);
+                return protocol === "https:" && allowedOriginSuffixes.some((s) => hostname.endsWith(s));
+            } catch { return false; }
+        })();
 
-        try {
-            const url = new URL(origin);
-            const isHttps = url.protocol === "https:";
-            const hasAllowedSuffix = allowedOriginSuffixes.some((suffix) => url.hostname.endsWith(suffix));
+    if (origin && allowed) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
+        res.setHeader("Access-Control-Allow-Credentials", "true");
+        res.setHeader("Vary", "Origin");
+    }
 
-            if (isHttps && hasAllowedSuffix) {
-                callback(null, true);
-                return;
-            }
-        } catch {
-            // Ignore invalid origin values and fail closed below.
-        }
+    if (req.method === "OPTIONS") {
+        res.setHeader("Access-Control-Allow-Methods", "GET, HEAD, PUT, PATCH, POST, DELETE, OPTIONS");
+        res.setHeader("Access-Control-Allow-Headers", "Origin, Content-Type, Accept, Authorization, X-Requested-With");
+        res.setHeader("Access-Control-Max-Age", "86400");
+        res.sendStatus(204);
+        return;
+    }
 
-        callback(new Error(`CORS blocked origin: ${origin}`));
-    },
-}));
+    next();
+});
 platform.set("trust proxy", 4);
 
 const sessionStore = MongoStore.create({
