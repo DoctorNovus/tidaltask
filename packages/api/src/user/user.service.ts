@@ -169,6 +169,21 @@ export class UserService {
         return { user, tasks };
     }
 
+    async getCalendarToken(id: string): Promise<string | null> {
+        const user = await User.findById(id).select("calendarToken").lean<User>().exec();
+        return (user as any)?.calendarToken ?? null;
+    }
+
+    async rotateCalendarToken(id: string): Promise<string> {
+        const token = crypto.randomBytes(32).toString("hex");
+        await User.findByIdAndUpdate(id, { calendarToken: token }).exec();
+        return token;
+    }
+
+    async getUserByCalendarToken(token: string): Promise<User | null> {
+        return User.findOne({ calendarToken: token } as any).lean<User>().exec();
+    }
+
     async deleteUserData(id: string): Promise<{ deletedUser: boolean; removedFromTasks: number; deletedTasks: number }> {
         const pullResult = await Task.updateMany({ users: id }, { $pull: { users: id } }).exec();
         const cleanup = await Task.deleteMany({ users: { $size: 0 } }).exec();

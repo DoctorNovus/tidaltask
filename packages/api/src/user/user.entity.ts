@@ -41,4 +41,7 @@ export class User extends Model {
 
     @Prop({ type: [String], select: false })
     twoFactorBackupCodes?: string[];
+
+    @Prop({ type: String, select: false })
+    calendarToken?: string;
 }

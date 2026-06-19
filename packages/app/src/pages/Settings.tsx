@@ -14,6 +14,7 @@ import AnnouncementManager from "./(Settings)/AnnouncementManager";
 import WhatsNew from "./(Settings)/WhatsNew";
 import ServerNotificationSettings from "./(Settings)/ServerNotificationSettings";
 import ThemeSettings from "./(Settings)/ThemeSettings";
+import CalendarSyncSettings from "./(Settings)/CalendarSyncSettings";
 import DeveloperNotificationSender from "./(Settings)/DeveloperNotificationSender";
 import { useDeleteCompletedTasks } from "@/hooks/tasks";
 import xIcon from "@/assets/social_icons/x.svg";
@@ -609,6 +610,15 @@ export default function SettingsPage() {
           {!isClosed("notifications") && (
           <div className="px-4 py-4 border-t border-(--surface-border)">
             <ServerNotificationSettings />
+          </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl surface-card border shadow-sm overflow-hidden">
+          <SectionHeader id="calendar" title="Calendar Sync" subtitle="Subscribe to your tasks in any calendar app." />
+          {!isClosed("calendar") && (
+          <div className="px-4 py-4 border-t border-(--surface-border)">
+            <CalendarSyncSettings />
           </div>
           )}
         </div>
