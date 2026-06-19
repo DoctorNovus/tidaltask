@@ -113,7 +113,7 @@ export class CalendarController {
         const ics = generateIcs(tasks, `${user.first}'s Tasks`);
 
         res.setHeader("Content-Type", "text/calendar; charset=utf-8");
-        res.setHeader("Content-Disposition", 'attachment; filename="tasks.ics"');
+        res.setHeader("Content-Disposition", "attachment; filename=\"tasks.ics\"");
         res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
         res.send(ics);
     }
