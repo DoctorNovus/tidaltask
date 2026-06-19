@@ -2,8 +2,6 @@ import { Application } from "@outwalk/firefly";
 import { ExpressPlatform } from "@outwalk/firefly/express";
 import { MongooseDatabase } from "@/_lib/mongoose";
 import { createTokenDocsModel, getDocsBaseUrl, renderTokenDocsHtml } from "@/docs/tokenDocs";
-import { mcpHandler } from "@/mcp/handler";
-import { oauthRouter } from "@/oauth/oauth.router";
 import { rateLimit } from "express-rate-limit";
 import cors from "cors";
 import session from "express-session";
@@ -30,6 +28,10 @@ const leanIdPlugin = (leanIdModule.default ?? leanIdModule) as any;
 
 database.plugin(leanVirtualsPlugin);
 database.plugin(leanIdPlugin);
+
+/* Import entity-touching modules AFTER plugins are registered so lean-id applies to all schemas */
+const { mcpHandler } = await import("@/mcp/handler");
+const { oauthRouter } = await import("@/oauth/oauth.router");
 
 /* setup the platform and global middleware */
 const platform = new ExpressPlatform();

@@ -70,9 +70,12 @@ export class UserService {
     }
 
     async updateUser(id: string, data: Partial<User>): Promise<User | null> {
-        const nextData = { ...data } as Partial<User>;
+        const nextData = { ...data } as any;
         if (typeof nextData.email === "string") {
-            nextData.email = this.normalizeEmail(nextData.email) as any;
+            nextData.email = this.normalizeEmail(nextData.email);
+        }
+        if (typeof nextData.password === "string") {
+            nextData.password = bcrypt.hashSync(nextData.password, 10);
         }
 
         return User.findByIdAndUpdate(id, nextData).lean<User>().exec();

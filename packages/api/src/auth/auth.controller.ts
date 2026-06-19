@@ -509,10 +509,13 @@ export class AuthController {
         delete req.session.webauthnChallenge;
 
         const passkeyUser = passkey.user as any;
-        req.session.user = { id: passkeyUser.id, first: passkeyUser.first };
-        await this.userService.updateUser(passkeyUser.id, { lastLoggedIn: new Date() });
+        const userId = String(passkeyUser._id ?? passkeyUser.id);
+        req.session.user = { id: userId, first: passkeyUser.first };
+        await this.userService.updateUser(userId, { lastLoggedIn: new Date() });
 
-        return (await this.userService.getUserById(passkeyUser.id))!;
+        const fullUser = await this.userService.getUserById(userId);
+        if (!fullUser) throw new Unauthorized("User not found.");
+        return fullUser;
     }
 
     @Delete("/passkeys/:id")
