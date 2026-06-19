@@ -2,6 +2,9 @@ import { Dialog } from "@headlessui/react";
 import TaskItemMenuPiece from "./TaskItemMenuPiece";
 import { Task, useUpdateTask } from "@/hooks/tasks";
 import { useNavigate } from "react-router";
+import { useApp } from "@/hooks/app";
+import { matchDate } from "@/utils/date";
+import { isTaskDone } from "@/utils/data";
 
 interface TaskItemMenuSelectionProps {
   item: Task;
@@ -17,13 +20,30 @@ export default function TaskItemMenuSelection({
   setIsDeleting,
 }: TaskItemMenuSelectionProps) {
   const navigate = useNavigate();
+  const [appData] = useApp();
 
   const { mutate: updateTask } = useUpdateTask();
 
   const handleMarkComplete = (e: React.MouseEvent) => {
     e.stopPropagation();
-    updateTask({ id: item.id!, data: { ...item, done: !item.done } });
 
+    let newDone: boolean | string[];
+    if (item.repeater && item.repeater.length > 0) {
+      const newDoneArr = Array.isArray(item.done) ? [...item.done] : [];
+      const rawDate = new Date(appData.activeDate ?? new Date());
+      rawDate.setHours(0, 0, 0, 0);
+      const foundIdx = newDoneArr.findIndex((entry) => matchDate(new Date(entry), rawDate));
+      if (foundIdx === -1) {
+        newDoneArr.push(rawDate.toString());
+      } else {
+        newDoneArr.splice(foundIdx, 1);
+      }
+      newDone = newDoneArr;
+    } else {
+      newDone = !item.done;
+    }
+
+    updateTask({ id: item.id!, data: { ...item, done: newDone } });
     setIsManaging(false);
   };
 
@@ -49,7 +69,7 @@ export default function TaskItemMenuSelection({
                 onClick={() => setIsDeleting(true)}
               />
               <TaskItemMenuPiece
-                text={`Mark ${item.done ? "Incomplete" : "Complete"}`}
+                text={`Mark ${isTaskDone(item, appData.activeDate ?? new Date()) ? "Complete" : "Incomplete"}`}
                 color="bg-accent-purple-400"
                 onClick={handleMarkComplete}
               />

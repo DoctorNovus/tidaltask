@@ -4,7 +4,7 @@ import { ChevronRightIcon, PencilSquareIcon } from "@heroicons/react/20/solid";
 import GroupEditDialog from "@/pages/(Layout)/(TaskInfoMenu)/Shared/GroupEditDialog";
 import { Disclosure, Menu, Transition } from "@headlessui/react";
 import { matchDate, formatDateTime } from "@/utils/date";
-import { sortByDate, sortByPriority } from "@/utils/data";
+import { sortByDate, sortByPriority, isTaskDone } from "@/utils/data";
 import { Task } from "@/hooks/tasks";
 import { useUpdateSettings, useSettings } from "@/hooks/settings";
 import { useApp } from "@/hooks/app";
@@ -614,9 +614,9 @@ export default function TaskContainer({
                     <div className="flex flex-row items-center gap-2 min-w-0">
                       <div className="flex flex-row gap-2 min-w-0">
                         <h1 className="text-xl font-semibold dark:font-bold text-slate-950 dark:text-white truncate">{title}</h1>
-                        {baseTasks.filter((task) => !task.done).length > 0 && (
+                        {baseTasks.filter((task) => isTaskDone(task, appData.activeDate ?? new Date())).length > 0 && (
                           <h1 className="text-xl text-accent-blue-700">
-                            ({baseTasks.filter((task) => !task.done).length}/
+                            ({baseTasks.filter((task) => isTaskDone(task, appData.activeDate ?? new Date())).length}/
                             {baseTasks.length})
                           </h1>
                         )}

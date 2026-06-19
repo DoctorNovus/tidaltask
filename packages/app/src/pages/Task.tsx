@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useTasks } from "@/hooks/tasks";
+import { isTaskDone } from "@/utils/data";
 
 import DayTasks from "../components/calendar/DayTasks";
 import ActiveCalendar from "../components/calendar/ActiveCalendar";
@@ -204,7 +205,7 @@ export default function Task() {
           const visibleGroups = taskGroups
             .filter(([groupName, groupTasks]) => {
               if (groupConfig[groupName]?.visible === false) return false;
-              const hasIncomplete = groupTasks.some((t) => t.done !== true);
+              const hasIncomplete = groupTasks.some((t) => isTaskDone(t, appData.activeDate ?? new Date()));
               if (!hasIncomplete && !groupConfig[groupName]?.visibleWhenEmpty) return false;
               return true;
             })

@@ -11,11 +11,19 @@ export default function TaskItemDate({ task }: { task: Task }) {
   let date: Date = taskDate;
 
   if (task.repeater) {
-    date = new Date();
-    date.setHours(
-      taskDate.getHours(),
-      taskDate.getMinutes(),
-      taskDate.getSeconds()
+    const labels: Record<string, string> = {
+      daily: "Daily",
+      weekly: "Weekly",
+      "bi-weekly": "Bi-weekly",
+      monthly: "Monthly",
+    };
+    const label = labels[task.repeater] ?? task.repeater;
+    return (
+      <div className="w-full flex flex-row gap-2 justify-end items-center">
+        <div className="w-full flex justify-end items-center h-6 text-muted">
+          <h1 className="text-small text-right whitespace-nowrap">{label}</h1>
+        </div>
+      </div>
     );
   }
 
