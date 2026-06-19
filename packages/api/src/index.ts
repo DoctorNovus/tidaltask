@@ -2,6 +2,7 @@ import { Application } from "@outwalk/firefly";
 import { ExpressPlatform } from "@outwalk/firefly/express";
 import { MongooseDatabase } from "@/_lib/mongoose";
 import { createTokenDocsModel, getDocsBaseUrl, renderTokenDocsHtml } from "@/docs/tokenDocs";
+import { mcpHandler } from "@/mcp/handler";
 import { rateLimit } from "express-rate-limit";
 import cors from "cors";
 import session from "express-session";
@@ -136,6 +137,19 @@ platform.use((req, res, next) => {
         return;
     }
 
+    next();
+});
+
+/* MCP endpoint — POST /mcp (Streamable HTTP, stateless) */
+platform.use(async (req, res, next) => {
+    if (req.method === "POST" && req.path === "/mcp") {
+        try {
+            await mcpHandler(req, res);
+        } catch {
+            next(new Error("MCP handler error."));
+        }
+        return;
+    }
     next();
 });
 

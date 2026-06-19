@@ -165,3 +165,70 @@ Protected routes require either:
 ```bash
 curl -H "Authorization: Bearer <api_key>" http://localhost:8080/task
 ```
+
+## MCP Server
+
+TidalTask exposes a remote MCP (Model Context Protocol) server at:
+
+```
+POST https://api.tidaltask.app/mcp
+```
+
+It uses the **Streamable HTTP** transport in stateless / JSON-response mode. Each request is self-contained — no session state is maintained.
+
+### Authentication
+
+Pass your TidalTask API token as a Bearer token. Generate one in Settings → API Keys.
+
+### Available tools
+
+| Tool | Description |
+|---|---|
+| `list_incomplete_tasks` | All open tasks (today + upcoming 90 days + overdue) |
+| `list_tasks` | Tasks filtered by `filter` (all/incomplete/today/overdue/week) and optional tags |
+| `get_task` | Fetch a single task by ID |
+| `create_task` | Create a new task |
+| `update_task` | Update fields on an existing task |
+| `complete_task` | Mark a task (or today's occurrence of a repeating task) done |
+| `delete_task` | Permanently delete a task |
+
+### Claude Desktop
+
+Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
+
+```json
+{
+  "mcpServers": {
+    "tidaltask": {
+      "type": "http",
+      "url": "https://api.tidaltask.app/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+```bash
+claude mcp add tidaltask --transport http https://api.tidaltask.app/mcp --header "Authorization: Bearer YOUR_API_KEY"
+```
+
+### Cursor
+
+Add to your Cursor MCP settings:
+
+```json
+{
+  "mcpServers": {
+    "tidaltask": {
+      "url": "https://api.tidaltask.app/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY"
+      }
+    }
+  }
+}
+```

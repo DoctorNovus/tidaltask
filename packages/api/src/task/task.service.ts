@@ -248,6 +248,14 @@ export class TaskService {
         );
     }
 
+    async getTaskByIdForUser(id: string, userId: string): Promise<Task | null> {
+        if (!id || !mongoose.Types.ObjectId.isValid(id)) return null;
+        return Task.findOne({ _id: id, users: userId })
+            .populate({ path: "users", select: "first last email id" })
+            .lean<Task>()
+            .exec();
+    }
+
     async deleteTask(id: string): Promise<Task | null> {
         return Task.findByIdAndDelete(id).lean<Task>().exec();
     }
