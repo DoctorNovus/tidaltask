@@ -210,13 +210,12 @@ function buildServer(userId: string): Server {
                         ? tags.split(",").map((t) => t.trim()).filter(Boolean)
                         : [];
 
-                    const tasks = await (
-                        filter === "today"      ? taskService.getTasksToday(userId) :
-                        filter === "overdue"    ? taskService.getTasksOverdue(userId) :
-                        filter === "week"       ? taskService.getTasksWeek(userId) :
-                        filter === "incomplete" ? taskService.getTasksIncomplete(userId) :
-                                                  taskService.getTasksByUserId(userId, tagList)
-                    );
+                    let tasks;
+                    if (filter === "today") tasks = await taskService.getTasksToday(userId);
+                    else if (filter === "overdue") tasks = await taskService.getTasksOverdue(userId);
+                    else if (filter === "week") tasks = await taskService.getTasksWeek(userId);
+                    else if (filter === "incomplete") tasks = await taskService.getTasksIncomplete(userId);
+                    else tasks = await taskService.getTasksByUserId(userId, tagList);
                     return ok(tasks);
                 }
 
