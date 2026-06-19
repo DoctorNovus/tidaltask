@@ -7,5 +7,7 @@ import type { Request } from "express";
 declare module "express-session" {
     export interface SessionData {
         user: { id: string, first: string, isControlled?: boolean; };
+        pendingUserId?: string;
+        webauthnChallenge?: string;
     }
 }

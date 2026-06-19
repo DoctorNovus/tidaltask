@@ -1,13 +1,34 @@
-import { Controller, Get, Inject, Post } from "@outwalk/firefly";
-import { BadRequest, Unauthorized } from "@outwalk/firefly/errors";
+import { Controller, Delete, Get, Inject, Post } from "@outwalk/firefly";
+import { BadRequest, NotFound, Unauthorized } from "@outwalk/firefly/errors";
 import { UserService } from "@/user/user.service";
 import { User } from "@/user/user.entity";
 import { Request } from "express";
 import sendToWebhook from "@/logging/webhook";
 import { PasswordReset } from "./passwordReset.entity";
 import { DeviceToken } from "./deviceToken.entity";
+import { Passkey } from "./passkey.entity";
 import crypto from "crypto";
 import { Resend } from "resend";
+import { generateSecret as totpGenerateSecret, generateURI as totpGenerateURI, verifySync as totpVerifySync } from "otplib";
+import QRCode from "qrcode";
+import {
+    generateRegistrationOptions,
+    verifyRegistrationResponse,
+    generateAuthenticationOptions,
+    verifyAuthenticationResponse,
+} from "@simplewebauthn/server";
+import type { AuthenticatorTransportFuture, RegistrationResponseJSON, AuthenticationResponseJSON } from "@simplewebauthn/server";
+
+function getRpConfig(req: Request) {
+    const rpID = process.env.WEBAUTHN_RP_ID || "tidaltask.app";
+    const origin = req.headers.origin || process.env.FRONTEND_URL || "https://dashboard.tidaltask.app";
+    const rpName = process.env.WEBAUTHN_RP_NAME || "TidalTask";
+    return { rpID, origin, rpName };
+}
+
+function generateBackupCodes(): string[] {
+    return Array.from({ length: 8 }, () => crypto.randomBytes(5).toString("hex").toUpperCase().match(/.{1,5}/g)!.join("-"));
+}
 
 @Controller()
 export class AuthController {
@@ -22,7 +43,7 @@ export class AuthController {
     }
 
     @Post("/login")
-    async loginToSystem(req: Request): Promise<User> {
+    async loginToSystem(req: Request): Promise<User | { requiresTwoFactor: true }> {
         const { email, password } = req.body;
 
         const user = await this.userService.getUserByEmail(email);
@@ -30,6 +51,11 @@ export class AuthController {
 
         if (!(await this.userService.validatePassword(user.id, password))) {
             throw new Unauthorized("Incorrect Email/Password Combo.");
+        }
+
+        if (user.twoFactorEnabled) {
+            req.session.pendingUserId = user.id;
+            return { requiresTwoFactor: true };
         }
 
         req.session.user = { id: user.id, first: user.first };
@@ -90,7 +116,6 @@ export class AuthController {
     async logout(req: Request): Promise<{ message: string }> {
         if (!req.session.user) throw new Unauthorized("You are not logged in.");
 
-        /* destroy the session and respond with a success message */
         await new Promise<void>((resolve, reject) => req.session.destroy((error) => {
             if (error) reject(error);
             else resolve();
@@ -106,12 +131,11 @@ export class AuthController {
 
         const user = await this.userService.getUserByEmail(email);
 
-        // Always respond success to avoid account enumeration.
         if (!user?.id || !user.email) return { success: true };
 
         const token = crypto.randomBytes(32).toString("hex");
         const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-        const expiresAt = new Date(Date.now() + 60 * 60 * 1000); // 1 hour validity
+        const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
 
         await PasswordReset.deleteMany({ user: user.id });
         await PasswordReset.create({ user: user.id, tokenHash, expiresAt, used: false });
@@ -189,6 +213,316 @@ export class AuthController {
         await PasswordReset.deleteOne({ _id: resetRequest._id }).exec();
 
         return { success: true };
+    }
+
+    // ─── Two-Factor Authentication ────────────────────────────────────────────
+
+    @Post("/2fa/setup")
+    async setupTwoFactor(req: Request): Promise<{ secret: string; qrCode: string; backupCodes: string[] }> {
+        if (!req.session?.user?.id) throw new Unauthorized("Not Logged In");
+
+        const user = await User.findById(req.session.user.id).select("+twoFactorSecret +twoFactorBackupCodes").lean<User>().exec();
+        if (!user) throw new Unauthorized("User not found.");
+        if ((user as any).twoFactorEnabled) throw new BadRequest("Two-factor authentication is already enabled.");
+
+        const secret = totpGenerateSecret();
+        const issuer = process.env.WEBAUTHN_RP_NAME || "TidalTask";
+        const uri = totpGenerateURI({ issuer, label: user.email, secret });
+        const qrCode = await QRCode.toDataURL(uri);
+        const backupCodes = generateBackupCodes();
+        const backupCodeHashes = backupCodes.map((c) => crypto.createHash("sha256").update(c).digest("hex"));
+
+        await User.updateOne({ _id: user.id }, { twoFactorSecret: secret, twoFactorBackupCodes: backupCodeHashes });
+
+        return { secret, qrCode, backupCodes };
+    }
+
+    @Post("/2fa/verify-setup")
+    async verifySetupTwoFactor(req: Request): Promise<{ enabled: boolean }> {
+        if (!req.session?.user?.id) throw new Unauthorized("Not Logged In");
+
+        const code = typeof req.body?.code === "string" ? req.body.code.trim().replace(/\s/g, "") : "";
+        if (!code) throw new BadRequest("Verification code is required.");
+
+        const user = await User.findById(req.session.user.id).select("+twoFactorSecret").lean<User>().exec();
+        if (!user) throw new Unauthorized("User not found.");
+
+        const secret = (user as any).twoFactorSecret;
+        if (!secret) throw new BadRequest("Run setup first.");
+
+        const result = totpVerifySync({ token: code, secret });
+        if (!result.valid) throw new BadRequest("Invalid code. Check your authenticator app and try again.");
+
+        await User.updateOne({ _id: user.id }, { twoFactorEnabled: true });
+
+        return { enabled: true };
+    }
+
+    @Post("/2fa/disable")
+    async disableTwoFactor(req: Request): Promise<{ disabled: boolean }> {
+        if (!req.session?.user?.id) throw new Unauthorized("Not Logged In");
+
+        const code = typeof req.body?.code === "string" ? req.body.code.trim().replace(/\s/g, "") : "";
+        const password = typeof req.body?.password === "string" ? req.body.password : "";
+
+        const user = await User.findById(req.session.user.id).select("+twoFactorSecret").lean<User>().exec();
+        if (!user) throw new Unauthorized("User not found.");
+        if (!(user as any).twoFactorEnabled) throw new BadRequest("Two-factor authentication is not enabled.");
+
+        if (code) {
+            const secret = (user as any).twoFactorSecret;
+            const result = secret ? totpVerifySync({ token: code, secret }) : null;
+            if (!result?.valid) {
+                throw new Unauthorized("Invalid code.");
+            }
+        } else if (password) {
+            if (!(await this.userService.validatePassword(user.id, password))) {
+                throw new Unauthorized("Incorrect password.");
+            }
+        } else {
+            throw new BadRequest("Provide a verification code or current password.");
+        }
+
+        await User.updateOne({ _id: user.id }, { twoFactorEnabled: false, twoFactorSecret: null, twoFactorBackupCodes: [] });
+
+        return { disabled: true };
+    }
+
+    @Post("/2fa/complete-login")
+    async completeTwoFactorLogin(req: Request): Promise<User> {
+        const pendingId = req.session?.pendingUserId;
+        if (!pendingId) throw new Unauthorized("No pending login. Please log in again.");
+
+        const code = typeof req.body?.code === "string" ? req.body.code.trim().replace(/\s/g, "") : "";
+        if (!code) throw new BadRequest("Verification code is required.");
+
+        const user = await User.findById(pendingId).select("+twoFactorSecret +twoFactorBackupCodes").lean<User>().exec();
+        if (!user) throw new Unauthorized("User not found.");
+
+        const secret = (user as any).twoFactorSecret;
+        const isValid = secret && totpVerifySync({ token: code, secret }).valid;
+
+        if (!isValid) throw new Unauthorized("Invalid code. Try again or use a backup code.");
+
+        delete req.session.pendingUserId;
+        req.session.user = { id: user.id, first: user.first };
+        await this.userService.updateUser(user.id, { lastLoggedIn: new Date() });
+
+        const cleanUser = await this.userService.getUserById(user.id);
+        return cleanUser!;
+    }
+
+    @Post("/2fa/backup-login")
+    async backupCodeLogin(req: Request): Promise<User> {
+        const pendingId = req.session?.pendingUserId;
+        if (!pendingId) throw new Unauthorized("No pending login. Please log in again.");
+
+        const code = typeof req.body?.code === "string" ? req.body.code.trim().replace(/\s/g, "").toUpperCase() : "";
+        if (!code) throw new BadRequest("Backup code is required.");
+
+        const user = await User.findById(pendingId).select("+twoFactorBackupCodes").lean<User>().exec();
+        if (!user) throw new Unauthorized("User not found.");
+
+        const codes: string[] = (user as any).twoFactorBackupCodes || [];
+        const codeHash = crypto.createHash("sha256").update(code).digest("hex");
+        const idx = codes.indexOf(codeHash);
+        if (idx === -1) throw new Unauthorized("Invalid backup code.");
+
+        codes.splice(idx, 1);
+        await User.updateOne({ _id: user.id }, { twoFactorBackupCodes: codes });
+
+        delete req.session.pendingUserId;
+        req.session.user = { id: user.id, first: user.first };
+        await this.userService.updateUser(user.id, { lastLoggedIn: new Date() });
+
+        const cleanUser = await this.userService.getUserById(user.id);
+        return cleanUser!;
+    }
+
+    @Post("/2fa/regenerate-backup-codes")
+    async regenerateBackupCodes(req: Request): Promise<{ backupCodes: string[] }> {
+        if (!req.session?.user?.id) throw new Unauthorized("Not Logged In");
+
+        const user = await User.findById(req.session.user.id).lean<User>().exec();
+        if (!user || !(user as any).twoFactorEnabled) throw new BadRequest("Two-factor authentication is not enabled.");
+
+        const backupCodes = generateBackupCodes();
+        const backupCodeHashes = backupCodes.map((c) => crypto.createHash("sha256").update(c).digest("hex"));
+        await User.updateOne({ _id: user.id }, { twoFactorBackupCodes: backupCodeHashes });
+
+        return { backupCodes };
+    }
+
+    // ─── Passkeys ─────────────────────────────────────────────────────────────
+
+    @Get("/passkeys")
+    async listPasskeys(req: Request): Promise<Array<{ id: string; label: string; deviceType?: string; backedUp: boolean; createdAt: Date }>> {
+        if (!req.session?.user?.id) throw new Unauthorized("Not Logged In");
+
+        const passkeys = await Passkey.find({ user: req.session.user.id })
+            .select("id label deviceType backedUp createdAt")
+            .lean<Passkey[]>()
+            .exec();
+
+        return (passkeys as any[]).map((p) => ({
+            id: p.id,
+            label: p.label || "Passkey",
+            deviceType: p.deviceType,
+            backedUp: p.backedUp,
+            createdAt: p.createdAt,
+        }));
+    }
+
+    @Post("/passkeys/register-options")
+    async passkeyRegisterOptions(req: Request): Promise<object> {
+        if (!req.session?.user?.id) throw new Unauthorized("Not Logged In");
+
+        const user = await this.userService.getUserById(req.session.user.id);
+        if (!user) throw new Unauthorized("User not found.");
+
+        const { rpID, rpName } = getRpConfig(req);
+
+        const existingPasskeys = await Passkey.find({ user: user.id }).lean<Passkey[]>().exec();
+
+        const options = await generateRegistrationOptions({
+            rpName,
+            rpID,
+            userName: user.email,
+            userID: new TextEncoder().encode(user.id),
+            attestationType: "none",
+            authenticatorSelection: {
+                residentKey: "preferred",
+                userVerification: "preferred",
+            },
+            excludeCredentials: (existingPasskeys as any[]).map((pk) => ({
+                id: pk.credentialId,
+                transports: pk.transports as AuthenticatorTransportFuture[] | undefined,
+            })),
+        });
+
+        req.session.webauthnChallenge = options.challenge;
+
+        return options;
+    }
+
+    @Post("/passkeys/register-verify")
+    async passkeyRegisterVerify(req: Request): Promise<{ registered: boolean; passkey: object }> {
+        if (!req.session?.user?.id) throw new Unauthorized("Not Logged In");
+
+        const challenge = req.session.webauthnChallenge;
+        if (!challenge) throw new BadRequest("No challenge found. Start registration again.");
+
+        const { rpID, origin } = getRpConfig(req);
+        const body: RegistrationResponseJSON = req.body.response;
+        const label = typeof req.body.label === "string" ? req.body.label.trim() : "Passkey";
+
+        let verification;
+        try {
+            verification = await verifyRegistrationResponse({
+                response: body,
+                expectedChallenge: challenge,
+                expectedOrigin: origin,
+                expectedRPID: rpID,
+                requireUserVerification: false,
+            });
+        } catch (err: any) {
+            throw new BadRequest(err?.message || "Passkey registration failed.");
+        }
+
+        if (!verification.verified || !verification.registrationInfo) {
+            throw new BadRequest("Passkey registration could not be verified.");
+        }
+
+        delete req.session.webauthnChallenge;
+
+        const { credential, credentialDeviceType, credentialBackedUp } = verification.registrationInfo;
+        const passkey = await Passkey.create({
+            user: req.session.user.id,
+            credentialId: credential.id,
+            publicKey: Buffer.from(credential.publicKey).toString("base64url"),
+            counter: credential.counter,
+            deviceType: credentialDeviceType,
+            backedUp: credentialBackedUp,
+            transports: credential.transports,
+            label,
+        });
+
+        return {
+            registered: true,
+            passkey: { id: (passkey as any).id, label, deviceType: credentialDeviceType, backedUp: credentialBackedUp },
+        };
+    }
+
+    @Post("/passkeys/authenticate-options")
+    async passkeyAuthenticateOptions(req: Request): Promise<object> {
+        const { rpID } = getRpConfig(req);
+
+        const options = await generateAuthenticationOptions({
+            rpID,
+            userVerification: "preferred",
+            allowCredentials: [],
+        });
+
+        req.session.webauthnChallenge = options.challenge;
+
+        return options;
+    }
+
+    @Post("/passkeys/authenticate-verify")
+    async passkeyAuthenticateVerify(req: Request): Promise<User> {
+        const challenge = req.session.webauthnChallenge;
+        if (!challenge) throw new BadRequest("No challenge found. Start authentication again.");
+
+        const { rpID, origin } = getRpConfig(req);
+        const body: AuthenticationResponseJSON = req.body;
+
+        const passkey = await Passkey.findOne({ credentialId: body.id })
+            .populate({ path: "user", select: "id first last email twoFactorEnabled" })
+            .lean<Passkey>()
+            .exec();
+
+        if (!passkey) throw new NotFound("Passkey not found.");
+
+        let verification;
+        try {
+            verification = await verifyAuthenticationResponse({
+                response: body,
+                expectedChallenge: challenge,
+                expectedOrigin: origin,
+                expectedRPID: rpID,
+                requireUserVerification: false,
+                credential: {
+                    id: passkey.credentialId,
+                    publicKey: Buffer.from(passkey.publicKey, "base64url") as any,
+                    counter: passkey.counter,
+                    transports: passkey.transports as AuthenticatorTransportFuture[] | undefined,
+                },
+            });
+        } catch (err: any) {
+            throw new Unauthorized(err?.message || "Passkey authentication failed.");
+        }
+
+        if (!verification.verified) throw new Unauthorized("Passkey authentication failed.");
+
+        await Passkey.updateOne({ _id: (passkey as any)._id }, { counter: verification.authenticationInfo.newCounter });
+
+        delete req.session.webauthnChallenge;
+
+        const passkeyUser = passkey.user as any;
+        req.session.user = { id: passkeyUser.id, first: passkeyUser.first };
+        await this.userService.updateUser(passkeyUser.id, { lastLoggedIn: new Date() });
+
+        return (await this.userService.getUserById(passkeyUser.id))!;
+    }
+
+    @Delete("/passkeys/:id")
+    async deletePasskey(req: Request): Promise<{ deleted: boolean }> {
+        if (!req.session?.user?.id) throw new Unauthorized("Not Logged In");
+
+        const result = await Passkey.deleteOne({ _id: req.params.id, user: req.session.user.id }).exec();
+        if (result.deletedCount === 0) throw new NotFound("Passkey not found.");
+
+        return { deleted: true };
     }
 
     private async sendWelcomeOnSignup(user: User): Promise<void> {

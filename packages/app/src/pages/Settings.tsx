@@ -6,6 +6,7 @@ import {
 import { Settings, getSettings, setSettings } from "@/hooks/settings";
 import { useEffect, useState, FormEvent } from "react";
 import UserLogin from "./(Settings)/UserLogin";
+import SecuritySettings from "./(Settings)/SecuritySettings";
 import { Logger } from "@/utils/logger";
 import DeveloperSettings from "./(Settings)/DeveloperSettings";
 import ControllerUser from "./(Settings)/ControlledUser";
@@ -895,6 +896,15 @@ export default function SettingsPage() {
         <div className="flex items-center gap-3 px-1 pt-4">
           <span className="text-[11px] font-bold uppercase tracking-widest text-muted shrink-0">Account</span>
           <div className="flex-1 border-t border-(--surface-border)" />
+        </div>
+
+        <div className="rounded-2xl surface-card border shadow-sm overflow-hidden">
+          <SectionHeader id="security" title="Security" subtitle="Two-factor authentication and passkeys." />
+          {!isClosed("security") && (
+          <div className="px-4 py-4 border-t border-(--surface-border)">
+            <SecuritySettings />
+          </div>
+          )}
         </div>
 
         <div className="rounded-2xl surface-card border shadow-sm overflow-hidden">

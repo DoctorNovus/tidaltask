@@ -32,4 +32,13 @@ export class User extends Model {
 
     @Prop({ type: Object, default: {}, select: false })
     apiKeys?: Record<string, string>;
+
+    @Prop({ type: Boolean, default: false })
+    twoFactorEnabled: boolean;
+
+    @Prop({ type: String, select: false })
+    twoFactorSecret?: string;
+
+    @Prop({ type: [String], select: false })
+    twoFactorBackupCodes?: string[];
 }

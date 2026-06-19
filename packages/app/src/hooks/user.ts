@@ -9,6 +9,7 @@ export interface User {
     developer: boolean;
     synced: boolean;
     lastLoggedIn?: Date;
+    twoFactorEnabled: boolean;
 };
 
 export type ApiKeys = Record<string, string>;
