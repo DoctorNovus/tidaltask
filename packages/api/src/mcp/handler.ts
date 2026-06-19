@@ -1,6 +1,6 @@
 import { Server } from "@modelcontextprotocol/sdk/server";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp";
-import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types";
+import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
+import { CallToolRequestSchema, ListToolsRequestSchema } from "@modelcontextprotocol/sdk/types.js";
 import { z, ZodError } from "zod";
 import type { Request, Response } from "express";
 import { TaskService } from "@/task/task.service";
