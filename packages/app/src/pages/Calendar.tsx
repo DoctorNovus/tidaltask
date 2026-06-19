@@ -475,11 +475,11 @@ export default function CalendarPage() {
           ))}
         </div>
         <div
-          className="grid flex-1 min-h-0"
-          style={{ gridTemplateRows: `repeat(${monthWeeks.length}, 1fr)` }}
+          className="grid flex-1 min-h-0 overflow-hidden"
+          style={{ gridTemplateRows: `repeat(${monthWeeks.length}, minmax(0, 1fr))` }}
         >
           {monthWeeks.map((week, idx) => (
-            <div key={idx} className="flex flex-row">
+            <div key={idx} className="flex flex-row overflow-hidden">
               {week.map((day, dayIdx) => {
                 if (!day) return <div key={`empty-${idx}-${dayIdx}`} className="flex-1" />;
                 const key = dayKey(day);
@@ -497,7 +497,7 @@ export default function CalendarPage() {
                     <span className={`text-center text-xs font-semibold leading-none mb-1 shrink-0 block ${isToday ? "text-accent-blue" : "text-primary"}`}>
                       {day.getDate()}
                     </span>
-                    <div className="flex-1 flex flex-col gap-px px-0.5 min-h-0">
+                    <div className="flex-1 flex flex-col gap-px px-0.5 min-h-0 overflow-hidden">
                       {dayTasks.slice(0, maxMobileTasks).map((task) => (
                         <button
                           key={task.id ?? task.title}
