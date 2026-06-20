@@ -24,7 +24,7 @@ export default function TaskItemShell({ skeleton, children, task, activeDate, cl
     <div
       {...props}
       data-completed={isCompleted}
-      className={`group flex flex-col w-full overflow-hidden rounded-2xl bg-slate-50 dark:bg-(--surface-raised) border border-slate-200 dark:border-(--surface-border) px-3.5 py-3 shadow-sm backdrop-blur-xs transition-all duration-300 ease-out hover:shadow-md hover:border-accent-blue/30 text-primary ${isCompleted ? "opacity-30 translate-y-1 scale-[0.99]" : "opacity-100"} ${className}`}
+      className={`group flex flex-col w-full overflow-hidden rounded-2xl bg-slate-50 dark:bg-(--surface-raised) border border-slate-200 dark:border-(--surface-border) px-3.5 py-3 shadow-sm backdrop-blur-xs transition-all duration-300 ease-out hover:shadow-md hover:border-accent-blue/30 text-primary cursor-pointer ${isCompleted ? "opacity-30 translate-y-1 scale-[0.99]" : "opacity-100"} ${className}`}
     >
       {children}
     </div>

@@ -8,9 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
-		45E56A022F2463C400B3D91F /* MWDATCamera in Frameworks */ = {isa = PBXBuildFile; productRef = 45E56A012F2463C400B3D91F /* MWDATCamera */; };
-		45E56A042F2463C400B3D91F /* MWDATCore in Frameworks */ = {isa = PBXBuildFile; productRef = 45E56A032F2463C400B3D91F /* MWDATCore */; };
-		45E56A062F2463C400B3D91F /* MWDATMockDevice in Frameworks */ = {isa = PBXBuildFile; productRef = 45E56A052F2463C400B3D91F /* MWDATMockDevice */; };
+
 		45E56A082F246E0300B3D91F /* SiriIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E56A072F246E0300B3D91F /* SiriIntents.swift */; };
 		45E56A0A2F246FE600B3D91F /* SecureTokenPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E56A092F246FE600B3D91F /* SecureTokenPlugin.swift */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
@@ -45,10 +43,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				45E56A022F2463C400B3D91F /* MWDATCamera in Frameworks */,
 				D2FB2190CEE9F71AE38A374F /* Pods_App.framework in Frameworks */,
-				45E56A062F2463C400B3D91F /* MWDATMockDevice in Frameworks */,
-				45E56A042F2463C400B3D91F /* MWDATCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -138,7 +133,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastSwiftUpdateCheck = 920;
-				LastUpgradeCheck = 1520;
+				LastUpgradeCheck = 2650;
 				TargetAttributes = {
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
@@ -156,7 +151,6 @@
 			);
 			mainGroup = 504EC2FB1FED79650016851F;
 			packageReferences = (
-				45E56A002F2463C400B3D91F /* XCRemoteSwiftPackageReference "meta-wearables-dat-ios" */,
 			);
 			productRefGroup = 504EC3051FED79650016851F /* Products */;
 			projectDirPath = "";
@@ -291,6 +285,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = B9UMLF8BH7;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -311,6 +306,7 @@
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -351,6 +347,7 @@
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = B9UMLF8BH7;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_USER_SCRIPT_SANDBOXING = YES;
@@ -364,6 +361,7 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				VALIDATE_PRODUCT = YES;
@@ -380,7 +378,6 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = B9UMLF8BH7;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TidalTask;
@@ -390,7 +387,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.3.1;
+				MARKETING_VERSION = 3.4.0;
 				OTHER_SWIFT_FLAGS = "$(inherited) \"-D\" \"COCOAPODS\" \"-DDEBUG\"";
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ottegi.sequenced-app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -415,7 +412,6 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = B9UMLF8BH7;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TidalTask;
@@ -425,7 +421,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 3.3.1;
+				MARKETING_VERSION = 3.4.0;
 				PRODUCT_BUNDLE_IDENTIFIER = "com.ottegi.sequenced-app";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -462,34 +458,6 @@
 		};
 /* End XCConfigurationList section */
 
-/* Begin XCRemoteSwiftPackageReference section */
-		45E56A002F2463C400B3D91F /* XCRemoteSwiftPackageReference "meta-wearables-dat-ios" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/facebook/meta-wearables-dat-ios";
-			requirement = {
-				kind = upToNextMajorVersion;
-				minimumVersion = 0.3.0;
-			};
-		};
-/* End XCRemoteSwiftPackageReference section */
-
-/* Begin XCSwiftPackageProductDependency section */
-		45E56A012F2463C400B3D91F /* MWDATCamera */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 45E56A002F2463C400B3D91F /* XCRemoteSwiftPackageReference "meta-wearables-dat-ios" */;
-			productName = MWDATCamera;
-		};
-		45E56A032F2463C400B3D91F /* MWDATCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 45E56A002F2463C400B3D91F /* XCRemoteSwiftPackageReference "meta-wearables-dat-ios" */;
-			productName = MWDATCore;
-		};
-		45E56A052F2463C400B3D91F /* MWDATMockDevice */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = 45E56A002F2463C400B3D91F /* XCRemoteSwiftPackageReference "meta-wearables-dat-ios" */;
-			productName = MWDATMockDevice;
-		};
-/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 504EC2FC1FED79650016851F /* Project object */;
 }

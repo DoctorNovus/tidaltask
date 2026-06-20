@@ -45,13 +45,26 @@ function nextIcsDate(icsDate: string): string {
     return `${next.getFullYear()}${String(next.getMonth() + 1).padStart(2, "0")}${String(next.getDate()).padStart(2, "0")}`;
 }
 
+function repeaterToRrule(repeater: string): string | null {
+    switch (repeater) {
+        case "daily":      return "RRULE:FREQ=DAILY";
+        case "weekly":     return "RRULE:FREQ=WEEKLY";
+        case "bi-weekly":  return "RRULE:FREQ=WEEKLY;INTERVAL=2";
+        case "monthly":    return "RRULE:FREQ=MONTHLY";
+        case "6-monthly":  return "RRULE:FREQ=MONTHLY;INTERVAL=6";
+        case "yearly":     return "RRULE:FREQ=YEARLY";
+        default:           return null;
+    }
+}
+
 function generateIcs(tasks: Task[], calName: string): string {
     const stamp = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15) + "Z";
 
     const events = tasks
         .filter(task => {
-            if (task.done === true) return false;
-            if (Array.isArray(task.done) && task.done.length > 0) return false;
+            // Exclude non-repeating tasks that are done.
+            // Repeating tasks are always included — their RRULE handles recurrence.
+            if (!task.repeater && task.done === true) return false;
             return Boolean(task.date);
         })
         .map(task => {
@@ -61,12 +74,15 @@ function generateIcs(tasks: Task[], calName: string): string {
             const taskId = (task as any)._id?.toString() ?? (task as any).id;
             if (!taskId) return null;
 
+            const rrule = task.repeater ? repeaterToRrule(task.repeater) : null;
+
             const lines = [
                 "BEGIN:VEVENT",
                 icsLine("UID", `task-${taskId}@tidaltask.app`),
                 icsLine("DTSTART;VALUE=DATE", dateStr),
                 icsLine("DTEND;VALUE=DATE", nextIcsDate(dateStr)),
                 icsLine("SUMMARY", icsEscape(task.title)),
+                ...(rrule ? [rrule] : []),
                 ...(task.description?.trim() ? [icsLine("DESCRIPTION", icsEscape(task.description))] : []),
                 icsLine("DTSTAMP", stamp),
                 ...(task.priority ? [`PRIORITY:${Math.max(1, Math.min(9, 9 - task.priority))}`] : []),
