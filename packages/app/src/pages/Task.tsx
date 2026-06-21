@@ -169,7 +169,7 @@ export default function Task() {
   }
 
   return (
-    <div className="w-full text-accent-black">
+    <div className="w-full overflow-x-hidden text-accent-black">
       <div className="pb-28 md:pb-4 flex flex-col gap-6">
 
         {/* Full-width calendar strip with search integrated in the card */}
@@ -183,20 +183,24 @@ export default function Task() {
         )}
 
         <div className="grid gap-6 md:grid-cols-2">
-          <DayTasks
-            setIsInspecting={setIsInspecting}
-            tasks={tasksForDay}
-          />
+          <div className="min-w-0">
+            <DayTasks
+              setIsInspecting={setIsInspecting}
+              tasks={tasksForDay}
+            />
+          </div>
 
           {ungroupedTasks.length > 0 && (
-            <TaskContainer
-              identifier="ungrouped"
-              title="All Tasks"
-              tasks={ungroupedTasks}
-              setIsInspecting={setIsInspecting}
-              activeFilter="dailyTasks"
-              disableGrouping
-            />
+            <div className="min-w-0">
+              <TaskContainer
+                identifier="ungrouped"
+                title="All Tasks"
+                tasks={ungroupedTasks}
+                setIsInspecting={setIsInspecting}
+                activeFilter="dailyTasks"
+                disableGrouping
+              />
+            </div>
           )}
         </div>
 
@@ -223,15 +227,16 @@ export default function Task() {
                 const cfg = groupConfig[groupName];
                 const displayName = cfg?.displayName || capitalize(groupName);
                 return (
-                  <TaskContainer
-                    key={groupName}
-                    identifier={`group-${groupName}`}
-                    title={displayName}
-                    tasks={groupTasks}
-                    setIsInspecting={setIsInspecting}
-                    activeFilter="dailyTasks"
-                    disableGrouping
-                  />
+                  <div key={groupName} className="min-w-0">
+                    <TaskContainer
+                      identifier={`group-${groupName}`}
+                      title={displayName}
+                      tasks={groupTasks}
+                      setIsInspecting={setIsInspecting}
+                      activeFilter="dailyTasks"
+                      disableGrouping
+                    />
+                  </div>
                 );
               })}
             </div>

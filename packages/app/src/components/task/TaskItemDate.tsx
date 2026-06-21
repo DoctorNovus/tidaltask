@@ -21,9 +21,9 @@ export default function TaskItemDate({ task }: { task: Task }) {
     };
     const label = labels[task.repeater] ?? task.repeater;
     return (
-      <div className="w-full flex flex-row gap-2 justify-end items-center">
-        <div className="w-full flex justify-end items-center h-6 text-muted">
-          <h1 className="text-small text-right whitespace-nowrap">{label}</h1>
+      <div className="w-full flex flex-row gap-2 justify-end items-center overflow-hidden">
+        <div className="w-full flex justify-end items-center h-6 text-muted overflow-hidden">
+          <span className="text-xs text-right truncate leading-none">{label}</span>
         </div>
       </div>
     );
@@ -57,15 +57,15 @@ export default function TaskItemDate({ task }: { task: Task }) {
   };
 
   return (
-    <div className="w-full flex flex-row gap-2 justify-end items-center">
+    <div className="w-full flex flex-row gap-2 justify-end items-center overflow-hidden">
       {checkRelative(date) != undefined && (
         <>
           <div
-            className={`w-full flex justify-end items-center h-6 ${
+            className={`w-full flex justify-end items-center h-6 overflow-hidden ${
               isOverdue(date, new Date()) ? "text-red-400" : "text-muted"
             }`}
           >
-            <h1 className="text-small text-right whitespace-nowrap">{checkRelative(date)}</h1>
+            <span className="text-xs text-right truncate leading-none">{checkRelative(date)}</span>
           </div>
           {/* <img
             src={today_icon}

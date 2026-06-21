@@ -1,11 +1,12 @@
 export default function TaskItemTitle({ text }: { text: string }) {
   return (
     <div
-      className="min-w-0 truncate text-lg mx-3 ml-2 text-primary"
-      style={{ width: "var(--title-w, 48vw)" }}
+      className="flex-1 min-w-0 overflow-hidden pl-2 pr-3"
       title={text || "No Title"}
     >
-      {text || "No Title"}
+      <span className="block truncate text-lg text-primary">
+        {text || "No Title"}
+      </span>
     </div>
   );
 }

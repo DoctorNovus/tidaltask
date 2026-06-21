@@ -6,7 +6,7 @@ export default function DataContainer() {
 
     return (
         <div
-            className="min-h-screen md:ml-56 flex flex-col"
+            className="min-h-screen md:ml-56 flex flex-col overflow-x-hidden"
             style={{ background: "var(--app-background)", transition: "background 0.2s ease" }}
         >
             <div
@@ -14,7 +14,9 @@ export default function DataContainer() {
                 className={`flex flex-1 flex-col overflow-x-hidden ${isAuthRoute ? "justify-center items-center" : "justify-start"} px-4 md:px-6 pt-2 md:pt-8`}
                 style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)" }}
             >
-                <Outlet />
+                <div id="zoom-content" className="flex flex-1 flex-col w-full">
+                    <Outlet />
+                </div>
             </div>
         </div>
     );

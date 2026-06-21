@@ -156,7 +156,7 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
               <div className="flex flex-row items-center min-w-0 flex-1 overflow-hidden">
                 <TaskItemTitle text={item.title} />
               </div>
-              <div className="flex-shrink-0 w-20">
+              <div className="shrink-0 w-20 overflow-hidden">
                 <TaskItemDate task={item} />
               </div>
               {!!item.priority && item.priority > 0 && (() => {

@@ -90,7 +90,7 @@ export default function App() {
     }, [appState?.fontScale]);
 
     return (
-        <div className="h-full overflow-y-auto">
+        <div className="h-full overflow-y-auto overflow-x-hidden">
             <QueryClientProvider client={queryClient}>
                 <AuthBootstrap />
                 <AppContext.Provider value={reducer}>
@@ -119,8 +119,7 @@ export default function App() {
 applyColorTheme(getColorThemeConfig());
 const _storedScale = window.localStorage.getItem("tidaltask-font-scale") as FontScaleId | null;
 if (_storedScale && FONT_SCALE_OPTIONS.some(o => o.id === _storedScale)) {
-    const _opt = FONT_SCALE_OPTIONS.find(o => o.id === _storedScale)!;
-    document.documentElement.style.setProperty("--title-w", _opt.titleW);
+    applyFontScale(_storedScale);
 }
 createRoot(document.querySelector("#root")!).render(<StrictMode><App /></StrictMode>);
 initialize().catch((error) => console.error(error));

@@ -13,20 +13,19 @@ Logger.log(`Running in ${import.meta.env.DEV ? "Development" : "Production"} mod
 type ThemeChoice = "light" | "dark" | "auto";
 
 export const FONT_SCALE_OPTIONS = [
-  { id: "sm", label: "Small",    zoom: 0.875, titleW: "60vw" },
-  { id: "md", label: "Default",  zoom: 1,     titleW: "48vw" },
-  { id: "lg", label: "Large",    zoom: 1.125, titleW: "36vw" },
-  { id: "xl", label: "X-Large",  zoom: 1.25,  titleW: "26vw" },
+  { id: "sm", label: "Small",    zoom: 0.875 },
+  { id: "md", label: "Default",  zoom: 1     },
+  { id: "lg", label: "Large",    zoom: 1.125 },
+  { id: "xl", label: "X-Large",  zoom: 1.25  },
 ] as const;
 
 export type FontScaleId = typeof FONT_SCALE_OPTIONS[number]["id"];
 
 export function applyFontScale(id: FontScaleId) {
   const opt = FONT_SCALE_OPTIONS.find(o => o.id === id) ?? FONT_SCALE_OPTIONS[1];
-  const el = document.getElementById("unit-container");
+  const el = document.getElementById("zoom-content");
   if (!el) return;
   el.style.zoom = opt.zoom === 1 ? "" : String(opt.zoom);
-  document.documentElement.style.setProperty("--title-w", opt.titleW);
 }
 
 export interface AppOptions {
