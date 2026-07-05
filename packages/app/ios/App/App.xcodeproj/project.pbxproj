@@ -18,7 +18,36 @@
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
 		D2FB2190CEE9F71AE38A374F /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00A98C7D6F73A65A376007B5 /* Pods_App.framework */; };
+		C1000000000000000000AA02 /* CalendarPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1000000000000000000AA01 /* CalendarPlugin.swift */; };
+		C1000000000000000000AA04 /* WidgetDataPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1000000000000000000AA03 /* WidgetDataPlugin.swift */; };
+		C1000000000000000000AA0A /* TidalTaskWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1000000000000000000AA05 /* TidalTaskWidgetBundle.swift */; };
+		C1000000000000000000AA0B /* TidalTaskWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1000000000000000000AA06 /* TidalTaskWidget.swift */; };
+		C1000000000000000000AA15 /* TidalTaskWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C1000000000000000000AA09 /* TidalTaskWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		C1000000000000000000AA16 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 504EC2FC1FED79650016851F /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C1000000000000000000AA0F;
+			remoteInfo = TidalTaskWidget;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		C1000000000000000000AA14 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				C1000000000000000000AA15 /* TidalTaskWidget.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		00A98C7D6F73A65A376007B5 /* Pods_App.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_App.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -36,6 +65,13 @@
 		504EC3131FED79650016851F /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		50B271D01FEDC1A000F3C39B /* public */ = {isa = PBXFileReference; lastKnownFileType = folder; path = public; sourceTree = "<group>"; };
 		54D5A17D2899ED7E6B5928D7 /* Pods-App.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.debug.xcconfig"; path = "Target Support Files/Pods-App/Pods-App.debug.xcconfig"; sourceTree = "<group>"; };
+		C1000000000000000000AA01 /* CalendarPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarPlugin.swift; sourceTree = "<group>"; };
+		C1000000000000000000AA03 /* WidgetDataPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetDataPlugin.swift; sourceTree = "<group>"; };
+		C1000000000000000000AA05 /* TidalTaskWidgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TidalTaskWidgetBundle.swift; sourceTree = "<group>"; };
+		C1000000000000000000AA06 /* TidalTaskWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TidalTaskWidget.swift; sourceTree = "<group>"; };
+		C1000000000000000000AA07 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		C1000000000000000000AA08 /* TidalTaskWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = TidalTaskWidget.entitlements; sourceTree = "<group>"; };
+		C1000000000000000000AA09 /* TidalTaskWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TidalTaskWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -44,6 +80,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				D2FB2190CEE9F71AE38A374F /* Pods_App.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C1000000000000000000AA0D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -70,8 +113,11 @@
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
+				C1000000000000000000AA01 /* CalendarPlugin.swift */,
+				C1000000000000000000AA03 /* WidgetDataPlugin.swift */,
 				45E56A092F246FE600B3D91F /* SecureTokenPlugin.swift */,
 				504EC3061FED79650016851F /* App */,
+				C1000000000000000000AA10 /* TidalTaskWidget */,
 				504EC3051FED79650016851F /* Products */,
 				27E2DDA53C4D2A4D1A88CE4A /* Frameworks */,
 				1991ED249B86C05FB6DA468A /* Pods */,
@@ -82,6 +128,7 @@
 			isa = PBXGroup;
 			children = (
 				504EC3041FED79650016851F /* App.app */,
+				C1000000000000000000AA09 /* TidalTaskWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -103,6 +150,17 @@
 			path = App;
 			sourceTree = "<group>";
 		};
+		C1000000000000000000AA10 /* TidalTaskWidget */ = {
+			isa = PBXGroup;
+			children = (
+				C1000000000000000000AA05 /* TidalTaskWidgetBundle.swift */,
+				C1000000000000000000AA06 /* TidalTaskWidget.swift */,
+				C1000000000000000000AA08 /* TidalTaskWidget.entitlements */,
+				C1000000000000000000AA07 /* Info.plist */,
+			);
+			path = TidalTaskWidget;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
@@ -115,15 +173,34 @@
 				504EC3011FED79650016851F /* Frameworks */,
 				504EC3021FED79650016851F /* Resources */,
 				D8D5881C74F8CCF32649C6BC /* [CP] Embed Pods Frameworks */,
+				C1000000000000000000AA14 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				C1000000000000000000AA17 /* PBXTargetDependency */,
 			);
 			name = App;
 			productName = App;
 			productReference = 504EC3041FED79650016851F /* App.app */;
 			productType = "com.apple.product-type.application";
+		};
+		C1000000000000000000AA0F /* TidalTaskWidget */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C1000000000000000000AA13 /* Build configuration list for PBXNativeTarget "TidalTaskWidget" */;
+			buildPhases = (
+				C1000000000000000000AA0C /* Sources */,
+				C1000000000000000000AA0D /* Frameworks */,
+				C1000000000000000000AA0E /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = TidalTaskWidget;
+			productName = TidalTaskWidget;
+			productReference = C1000000000000000000AA09 /* TidalTaskWidget.appex */;
+			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -138,6 +215,9 @@
 					504EC3031FED79650016851F = {
 						CreatedOnToolsVersion = 9.2;
 						LastSwiftMigration = 1100;
+					};
+					C1000000000000000000AA0F = {
+						CreatedOnToolsVersion = 16.0;
 					};
 				};
 			};
@@ -157,6 +237,7 @@
 			projectRoot = "";
 			targets = (
 				504EC3031FED79650016851F /* App */,
+				C1000000000000000000AA0F /* TidalTaskWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -172,6 +253,13 @@
 				50379B232058CBB4000EE86E /* capacitor.config.json in Resources */,
 				504EC30D1FED79650016851F /* Main.storyboard in Resources */,
 				2FAD9763203C412B000D30F8 /* config.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C1000000000000000000AA0E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -225,10 +313,29 @@
 				45E56A082F246E0300B3D91F /* SiriIntents.swift in Sources */,
 				45E56A0A2F246FE600B3D91F /* SecureTokenPlugin.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
+				C1000000000000000000AA02 /* CalendarPlugin.swift in Sources */,
+				C1000000000000000000AA04 /* WidgetDataPlugin.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C1000000000000000000AA0C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C1000000000000000000AA0A /* TidalTaskWidgetBundle.swift in Sources */,
+				C1000000000000000000AA0B /* TidalTaskWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		C1000000000000000000AA17 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C1000000000000000000AA0F /* TidalTaskWidget */;
+			targetProxy = C1000000000000000000AA16 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
 		504EC30B1FED79650016851F /* Main.storyboard */ = {
@@ -382,7 +489,7 @@
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TidalTask;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -416,7 +523,7 @@
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TidalTask;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
-				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -432,6 +539,60 @@
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2,7";
+			};
+			name = Release;
+		};
+		C1000000000000000000AA11 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TidalTaskWidget/TidalTaskWidget.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B9UMLF8BH7;
+				INFOPLIST_FILE = TidalTaskWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ottegi.sequenced-app.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C1000000000000000000AA12 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = TidalTaskWidget/TidalTaskWidget.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B9UMLF8BH7;
+				INFOPLIST_FILE = TidalTaskWidget/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "com.ottegi.sequenced-app.widget";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -452,6 +613,15 @@
 			buildConfigurations = (
 				504EC3171FED79650016851F /* Debug */,
 				504EC3181FED79650016851F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C1000000000000000000AA13 /* Build configuration list for PBXNativeTarget "TidalTaskWidget" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C1000000000000000000AA11 /* Debug */,
+				C1000000000000000000AA12 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

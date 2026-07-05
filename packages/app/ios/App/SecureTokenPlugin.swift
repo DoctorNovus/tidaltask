@@ -14,6 +14,7 @@ public class SecureTokenPlugin: CAPPlugin, CAPBridgedPlugin {
 
     private let service = "com.ottegi.sequenced.deviceToken"
     private let account = "siri"
+    private let appGroupID = "group.com.ottegi.sequenced-app"
 
     @objc func setToken(_ call: CAPPluginCall) {
         guard let token = call.getString("token")?.trimmingCharacters(in: .whitespacesAndNewlines), !token.isEmpty else {
@@ -31,6 +32,7 @@ public class SecureTokenPlugin: CAPPlugin, CAPBridgedPlugin {
             return
         }
         UserDefaults.standard.set(token, forKey: "siriDeviceToken")
+        UserDefaults(suiteName: appGroupID)?.set(token, forKey: "deviceToken")
         call.resolve()
     }
 
@@ -57,6 +59,7 @@ public class SecureTokenPlugin: CAPPlugin, CAPBridgedPlugin {
     @objc func clearToken(_ call: CAPPluginCall) {
         SecItemDelete(queryDictionary() as CFDictionary)
         UserDefaults.standard.removeObject(forKey: "siriDeviceToken")
+        UserDefaults(suiteName: appGroupID)?.removeObject(forKey: "deviceToken")
         call.resolve()
     }
 

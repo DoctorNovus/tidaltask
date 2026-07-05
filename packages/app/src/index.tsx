@@ -17,6 +17,7 @@ import RegisterUser from "@/pages/Auth/RegisterUser";
 import ForgotPassword from "@/pages/Auth/ForgotPassword";
 import AuthBootstrap from "@/components/AuthBootstrap";
 import AnnouncementCenter from "@/components/announcements/AnnouncementCenter";
+import { useWidgetSync } from "@/hooks/widgetSync";
 import "./index.css";
 
 /* define the query client for react-query */
@@ -31,6 +32,11 @@ export const queryClient = new QueryClient({
 /** initialize the app outside the react lifecycle */
 async function initialize() {
     await initializeNotifications();
+}
+
+function WidgetSyncBridge() {
+    useWidgetSync();
+    return null;
 }
 
 export default function App() {
@@ -93,6 +99,7 @@ export default function App() {
         <div className="h-full overflow-y-auto overflow-x-hidden">
             <QueryClientProvider client={queryClient}>
                 <AuthBootstrap />
+                <WidgetSyncBridge />
                 <AppContext.Provider value={reducer}>
                     <BrowserRouter>
                         <AnnouncementCenter />
