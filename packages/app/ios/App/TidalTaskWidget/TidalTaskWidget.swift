@@ -1,5 +1,59 @@
 import WidgetKit
 import SwiftUI
+import AppIntents
+
+// MARK: - Toggle Task Intent
+
+struct ToggleTaskIntent: AppIntent {
+    static var title: LocalizedStringResource = "Check Off Task"
+
+    @Parameter(title: "Task ID")
+    var taskID: String
+
+    init() { taskID = "" }
+    init(taskID: String) { self.taskID = taskID }
+
+    func perform() async throws -> some IntentResult {
+        guard
+            let defaults = UserDefaults(suiteName: appGroupID),
+            let token = defaults.string(forKey: "deviceToken"), !token.isEmpty,
+            let url = URL(string: "\(apiBase)/task")
+        else { return .result() }
+
+        // Fetch all tasks as raw JSON so we can PUT the full object back
+        var getReq = URLRequest(url: url, timeoutInterval: 10)
+        getReq.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        guard
+            let (data, _) = try? await URLSession.shared.data(for: getReq),
+            let rawTasks = try? JSONSerialization.jsonObject(with: data) as? [[String: Any]],
+            var task = rawTasks.first(where: {
+                ($0["id"] as? String == taskID) || ($0["_id"] as? String == taskID)
+            })
+        else { return .result() }
+
+        let repeater = task["repeater"] as? String ?? ""
+        if repeater.isEmpty {
+            task["done"] = true
+        } else {
+            var doneArray = task["done"] as? [String] ?? []
+            let iso = ISO8601DateFormatter()
+            iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            doneArray.append(iso.string(from: Date()))
+            task["done"] = doneArray
+        }
+
+        var putReq = URLRequest(url: url, timeoutInterval: 10)
+        putReq.httpMethod = "PUT"
+        putReq.addValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        putReq.addValue("application/json", forHTTPHeaderField: "Content-Type")
+        putReq.httpBody = try? JSONSerialization.data(withJSONObject: task)
+        _ = try? await URLSession.shared.data(for: putReq)
+
+        WidgetCenter.shared.reloadAllTimelines()
+        return .result()
+    }
+}
 
 // MARK: - API Models
 
@@ -261,37 +315,62 @@ struct WidgetData: Codable {
     }
 }
 
+// MARK: - Widget Configuration Intent
+
+enum WidgetTaskCount: Int, AppEnum {
+    case one   = 1
+    case two   = 2
+    case three = 3
+    case four  = 4
+    case five  = 5
+    case seven = 7
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Number of Tasks"
+    static var caseDisplayRepresentations: [WidgetTaskCount: DisplayRepresentation] = [
+        .one:   "1 — Minimal",
+        .two:   "2 — Compact",
+        .three: "3 — Standard",
+        .four:  "4 tasks",
+        .five:  "5 tasks",
+        .seven: "7 — All",
+    ]
+}
+
+struct TidalTaskWidgetIntent: WidgetConfigurationIntent {
+    static var title: LocalizedStringResource = "TidalTask Widget"
+    static var description = IntentDescription("Choose how many tasks to show.")
+
+    @Parameter(title: "Tasks to Show", default: .three)
+    var taskCount: WidgetTaskCount
+}
+
 // MARK: - Timeline Provider
 
 struct TidalTaskEntry: TimelineEntry {
     let date: Date
     let widgetData: WidgetData
     let isPlaceholder: Bool
+    let taskCount: Int
 }
 
-struct TidalTaskProvider: TimelineProvider {
+struct TidalTaskProvider: AppIntentTimelineProvider {
     func placeholder(in context: Context) -> TidalTaskEntry {
-        TidalTaskEntry(date: .now, widgetData: .placeholder, isPlaceholder: true)
+        TidalTaskEntry(date: .now, widgetData: .placeholder, isPlaceholder: true, taskCount: 3)
     }
 
-    func getSnapshot(in context: Context, completion: @escaping (TidalTaskEntry) -> Void) {
+    func snapshot(for configuration: TidalTaskWidgetIntent, in context: Context) async -> TidalTaskEntry {
         if context.isPreview {
-            completion(TidalTaskEntry(date: .now, widgetData: .placeholder, isPlaceholder: false))
-            return
+            return TidalTaskEntry(date: .now, widgetData: .placeholder, isPlaceholder: false, taskCount: configuration.taskCount.rawValue)
         }
-        Task {
-            let data = await WidgetData.fetch()
-            completion(TidalTaskEntry(date: .now, widgetData: data, isPlaceholder: false))
-        }
+        let data = await WidgetData.fetch()
+        return TidalTaskEntry(date: .now, widgetData: data, isPlaceholder: false, taskCount: configuration.taskCount.rawValue)
     }
 
-    func getTimeline(in context: Context, completion: @escaping (Timeline<TidalTaskEntry>) -> Void) {
-        Task {
-            let data = await WidgetData.fetch()
-            let entry = TidalTaskEntry(date: .now, widgetData: data, isPlaceholder: false)
-            let nextRefresh = Calendar.current.date(byAdding: .minute, value: 30, to: .now)!
-            completion(Timeline(entries: [entry], policy: .after(nextRefresh)))
-        }
+    func timeline(for configuration: TidalTaskWidgetIntent, in context: Context) async -> Timeline<TidalTaskEntry> {
+        let data = await WidgetData.fetch()
+        let entry = TidalTaskEntry(date: .now, widgetData: data, isPlaceholder: false, taskCount: configuration.taskCount.rawValue)
+        let nextRefresh = Calendar.current.date(byAdding: .minute, value: 30, to: .now)!
+        return Timeline(entries: [entry], policy: .after(nextRefresh))
     }
 }
 
@@ -328,10 +407,11 @@ struct StatPill: View {
 
 struct TaskRow: View {
     let task: WidgetTask
+    var interactive: Bool = false
 
     private var priorityColor: Color {
         switch task.priority ?? 0 {
-        case 3: return .overduePink
+        case 3: return Color.overduePink
         case 2: return Color(red: 0.95, green: 0.65, blue: 0.15)
         case 1: return Color(red: 0.20, green: 0.78, blue: 0.40)
         default: return .secondary
@@ -339,14 +419,25 @@ struct TaskRow: View {
     }
 
     private var dotColor: Color {
-        (task.priority ?? 0) > 0 ? priorityColor : .accentBlue.opacity(0.5)
+        (task.priority ?? 0) > 0 ? priorityColor : Color.accentBlue.opacity(0.5)
     }
 
     var body: some View {
         HStack(spacing: 8) {
-            Circle()
-                .fill(dotColor)
-                .frame(width: 6, height: 6)
+            if interactive {
+                Button(intent: ToggleTaskIntent(taskID: task.id)) {
+                    Image(systemName: "circle")
+                        .font(.system(size: 16, weight: .light))
+                        .foregroundStyle(dotColor)
+                }
+                .buttonStyle(.borderless)
+                .frame(width: 30, height: 30)
+                .contentShape(Rectangle())
+            } else {
+                Circle()
+                    .fill(dotColor)
+                    .frame(width: 6, height: 6)
+            }
             Text(task.title)
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(.primary)
@@ -364,10 +455,7 @@ struct SmallWidgetView: View {
     var body: some View {
         let d = entry.widgetData
 
-        ZStack {
-            Color.cardBg.ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
                 // Header
                 HStack(spacing: 4) {
                     Image(systemName: "checkmark.circle.fill")
@@ -420,9 +508,9 @@ struct SmallWidgetView: View {
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(.secondary)
                 }
-            }
-            .padding(14)
         }
+        .padding(14)
+        .background(Color.cardBg)
     }
 }
 
@@ -434,10 +522,7 @@ struct MediumWidgetView: View {
     var body: some View {
         let d = entry.widgetData
 
-        ZStack {
-            Color.cardBg.ignoresSafeArea()
-
-            HStack(alignment: .top, spacing: 0) {
+        HStack(alignment: .top, spacing: 0) {
                 // Left: today count + secondary stat
                 VStack(alignment: .leading, spacing: 0) {
                     HStack(spacing: 4) {
@@ -502,6 +587,7 @@ struct MediumWidgetView: View {
                         .tracking(0.5)
                         .padding(.bottom, 8)
 
+                    let mediumCount = min(entry.taskCount, 3)
                     if d.upcomingTasks.isEmpty {
                         Spacer()
                         Text("No tasks")
@@ -510,8 +596,8 @@ struct MediumWidgetView: View {
                         Spacer()
                     } else {
                         VStack(alignment: .leading, spacing: 8) {
-                            ForEach(d.upcomingTasks.prefix(3)) { task in
-                                TaskRow(task: task)
+                            ForEach(d.upcomingTasks.prefix(mediumCount)) { task in
+                                TaskRow(task: task, interactive: true)
                             }
                         }
                         Spacer(minLength: 0)
@@ -521,8 +607,8 @@ struct MediumWidgetView: View {
                 .padding(.leading, 12)
                 .padding(.trailing, 14)
                 .padding(.vertical, 14)
-            }
         }
+        .background(Color.cardBg)
     }
 }
 
@@ -534,10 +620,7 @@ struct LargeWidgetView: View {
     var body: some View {
         let d = entry.widgetData
 
-        ZStack {
-            Color.cardBg.ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
                 // Header row
                 HStack {
                     HStack(spacing: 5) {
@@ -593,15 +676,15 @@ struct LargeWidgetView: View {
                     Spacer()
                 } else {
                     VStack(alignment: .leading, spacing: 9) {
-                        ForEach(d.upcomingTasks.prefix(7)) { task in
-                            TaskRow(task: task)
+                        ForEach(d.upcomingTasks.prefix(entry.taskCount)) { task in
+                            TaskRow(task: task, interactive: true)
                         }
                     }
                     Spacer(minLength: 0)
                 }
-            }
-            .padding(16)
         }
+        .padding(16)
+        .background(Color.cardBg)
     }
 }
 
@@ -611,7 +694,7 @@ struct TidalTaskWidget: Widget {
     let kind = "TidalTaskWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: TidalTaskProvider()) { entry in
+        AppIntentConfiguration(kind: kind, intent: TidalTaskWidgetIntent.self, provider: TidalTaskProvider()) { entry in
             TidalTaskWidgetEntryView(entry: entry)
                 .containerBackground(.fill.tertiary, for: .widget)
         }
@@ -644,17 +727,17 @@ struct TidalTaskWidgetEntryView: View {
 #Preview(as: .systemSmall) {
     TidalTaskWidget()
 } timeline: {
-    TidalTaskEntry(date: .now, widgetData: .placeholder, isPlaceholder: false)
+    TidalTaskEntry(date: .now, widgetData: .placeholder, isPlaceholder: false, taskCount: 3)
 }
 
 #Preview(as: .systemMedium) {
     TidalTaskWidget()
 } timeline: {
-    TidalTaskEntry(date: .now, widgetData: .placeholder, isPlaceholder: false)
+    TidalTaskEntry(date: .now, widgetData: .placeholder, isPlaceholder: false, taskCount: 3)
 }
 
 #Preview(as: .systemLarge) {
     TidalTaskWidget()
 } timeline: {
-    TidalTaskEntry(date: .now, widgetData: .placeholder, isPlaceholder: false)
+    TidalTaskEntry(date: .now, widgetData: .placeholder, isPlaceholder: false, taskCount: 7)
 }
