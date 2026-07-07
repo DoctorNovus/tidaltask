@@ -107,9 +107,9 @@ export async function initializeNotifications() {
     await requestPermissions();
 
   const sendingDaily: boolean = await checkSendingDaily();
-  if (!sendingDaily) setDailyReminders();
-
-  await syncServerNotifications();
+  if (!sendingDaily) await setDailyReminders();
+  // Server notification sync is handled exclusively by useAuth() to avoid
+  // racing with the auth hook's concurrent call on every app open.
 }
 
 /* Sets daily reminders */
@@ -283,11 +283,16 @@ export async function syncServerNotifications(): Promise<number> {
   return result.delivered;
 }
 
-export async function syncServerNotificationsDetailed(): Promise<{
-  pending: number;
-  delivered: number;
-  permission: PermissionStatus["display"];
-}> {
+type SyncResult = { pending: number; delivered: number; permission: PermissionStatus["display"] };
+let _syncInFlight: Promise<SyncResult> | null = null;
+
+export async function syncServerNotificationsDetailed(): Promise<SyncResult> {
+  if (_syncInFlight) return _syncInFlight;
+  _syncInFlight = _doSyncServerNotifications().finally(() => { _syncInFlight = null; });
+  return _syncInFlight;
+}
+
+async function _doSyncServerNotifications(): Promise<SyncResult> {
   try {
     const pending = await pullPendingServerNotifications();
     if (!pending.length) {

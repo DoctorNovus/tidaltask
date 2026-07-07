@@ -22,14 +22,21 @@
 	<string>3.4.1</string>
 	<key>CFBundleURLTypes</key>
 	<array>
-		<dict/>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.ottegi.sequenced-app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>tidaltask</string>
+			</array>
+		</dict>
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>LSApplicationCategoryType</key>
-	<string></string>
+	<string>public.app-category.productivity</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>LSSupportsOpeningDocumentsInPlace</key>
@@ -40,8 +47,16 @@
 	<string>Allow Bluetooth access to connect to Meta wearables.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Allow microphone access to capture voice commands.</string>
+	<key>NSSiriUsageDescription</key>
+	<string>Allow Siri to add tasks, view due tasks, and manage your TidalTask to-do list hands-free.</string>
 	<key>NSSpeechRecognitionUsageDescription</key>
 	<string>Allow speech recognition to interpret voice commands.</string>
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.ottegi.sequenced.addTask</string>
+		<string>com.ottegi.sequenced.viewTasks</string>
+		<string>com.ottegi.sequenced.viewOverdue</string>
+	</array>
 	<key>UIFileSharingEnabled</key>
 	<true/>
 	<key>UILaunchScreen</key>
