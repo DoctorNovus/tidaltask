@@ -171,12 +171,13 @@ Edit `docker/nginx/conf.d/` to match your domain and certificate paths. The stac
 npm run deploy
 ```
 
-This runs `habitat build && habitat start` — builds the Docker images and starts all containers (API, frontend, MongoDB, Nginx) in one step.
+This runs `habitat build && habitat start` — builds Docker images locally and starts all containers (API, frontend, MongoDB, Nginx). Use this for local testing of the full stack.
 
-For subsequent deployments, pull and redeploy:
+For production, images are built in CI and pushed to GHCR — the server just pulls them:
 
 ```bash
-git pull && npm run deploy
+docker compose pull
+docker compose up -d --remove-orphans
 ```
 
 ### Individual habitat commands
@@ -189,11 +190,24 @@ npm run habitat:stop    # stop containers
 
 ### Continuous deployment (GitHub Actions)
 
-Push to `main` to trigger the `deploy.yml` workflow. It SSHs into the server, pulls the latest code, and redeploys. Required GitHub secrets:
+Push to `main` to trigger the `deploy.yml` workflow:
+
+1. **`build-images`** — builds `sequenced-api` and `sequenced-frontend` Docker images and pushes them to GHCR (using layer caching for fast rebuilds)
+2. **`deploy-server`** — SSHs into the server, pulls the new images from GHCR, and restarts containers
+3. **`ios-release`** — builds the iOS app and submits to App Store (runs in parallel with the server deploy)
+
+Required GitHub secrets:
 
 | Secret | Description |
 |---|---|
 | `DEPLOY_SSH_KEY` | Private SSH key for the server |
+| `GHCR_PAT` | GitHub PAT with `read:packages` scope — used by the server to pull images from GHCR |
+
+Required GitHub variable:
+
+| Variable | Description |
+|---|---|
+| `VITE_API_URL` | API base URL baked into the frontend at build time (e.g. `https://api.tidaltask.app`) |
 
 ---
 
