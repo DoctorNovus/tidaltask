@@ -20,7 +20,7 @@ export class ReviewController {
         }
 
         const message = typeof body?.message === "string" ? body.message.trim() : "";
-        const review = await this.reviewService.createReview({
+        await this.reviewService.createReview({
             rating,
             message,
             userId: session?.user?.id

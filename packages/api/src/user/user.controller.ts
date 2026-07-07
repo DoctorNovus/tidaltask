@@ -61,7 +61,7 @@ export class UserController {
     }
 
     @Post("/delete")
-    async deleteData({ session, res }: Request): Promise<{ deletedUser: boolean; removedFromTasks: number; deletedTasks: number }> {
+    async deleteData({ session }: Request): Promise<{ deletedUser: boolean; removedFromTasks: number; deletedTasks: number }> {
         const result = await this.userService.deleteUserData(session.user.id);
         await sendToWebhook({
             embeds: [
