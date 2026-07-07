@@ -11,6 +11,7 @@ import crypto from "crypto";
 import { Resend } from "resend";
 import { generateSecret as totpGenerateSecret, generateURI as totpGenerateURI, verifySync as totpVerifySync } from "otplib";
 import QRCode from "qrcode";
+import { encryptTotpSecret, decryptTotpSecret, isEncryptedTotp } from "./totp-crypto";
 import {
     generateRegistrationOptions,
     verifyRegistrationResponse,
@@ -232,7 +233,7 @@ export class AuthController {
         const backupCodes = generateBackupCodes();
         const backupCodeHashes = backupCodes.map((c) => crypto.createHash("sha256").update(c).digest("hex"));
 
-        await User.updateOne({ _id: user.id }, { twoFactorSecret: secret, twoFactorBackupCodes: backupCodeHashes });
+        await User.updateOne({ _id: user.id }, { twoFactorSecret: encryptTotpSecret(secret), twoFactorBackupCodes: backupCodeHashes });
 
         return { secret, qrCode, backupCodes };
     }
@@ -247,9 +248,10 @@ export class AuthController {
         const user = await User.findById(req.session.user.id).select("+twoFactorSecret").lean<User>().exec();
         if (!user) throw new Unauthorized("User not found.");
 
-        const secret = (user as any).twoFactorSecret;
-        if (!secret) throw new BadRequest("Run setup first.");
+        const stored = (user as any).twoFactorSecret;
+        if (!stored) throw new BadRequest("Run setup first.");
 
+        const secret = await this.resolveSecret(user.id, stored);
         const result = totpVerifySync({ token: code, secret });
         if (!result.valid) throw new BadRequest("Invalid code. Check your authenticator app and try again.");
 
@@ -270,7 +272,8 @@ export class AuthController {
         if (!(user as any).twoFactorEnabled) throw new BadRequest("Two-factor authentication is not enabled.");
 
         if (code) {
-            const secret = (user as any).twoFactorSecret;
+            const stored = (user as any).twoFactorSecret;
+            const secret = stored ? await this.resolveSecret(user.id, stored) : null;
             const result = secret ? totpVerifySync({ token: code, secret }) : null;
             if (!result?.valid) {
                 throw new Unauthorized("Invalid code.");
@@ -299,7 +302,8 @@ export class AuthController {
         const user = await User.findById(pendingId).select("+twoFactorSecret +twoFactorBackupCodes").lean<User>().exec();
         if (!user) throw new Unauthorized("User not found.");
 
-        const secret = (user as any).twoFactorSecret;
+        const stored = (user as any).twoFactorSecret;
+        const secret = stored ? await this.resolveSecret(user.id, stored) : null;
         const isValid = secret && totpVerifySync({ token: code, secret }).valid;
 
         if (!isValid) throw new Unauthorized("Invalid code. Try again or use a backup code.");
@@ -351,6 +355,16 @@ export class AuthController {
         await User.updateOne({ _id: user.id }, { twoFactorBackupCodes: backupCodeHashes });
 
         return { backupCodes };
+    }
+
+    // Decrypts a stored TOTP secret and, if it was still plaintext (pre-migration),
+    // re-encrypts and persists it so the database is always up to date.
+    private async resolveSecret(userId: string, stored: string): Promise<string> {
+        const plaintext = decryptTotpSecret(stored);
+        if (!isEncryptedTotp(stored)) {
+            await User.updateOne({ _id: userId }, { twoFactorSecret: encryptTotpSecret(plaintext) });
+        }
+        return plaintext;
     }
 
     // ─── Passkeys ─────────────────────────────────────────────────────────────

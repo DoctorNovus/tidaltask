@@ -172,6 +172,35 @@ platform.use((req, res, next) => {
     next();
 });
 
+/* Encrypt any TOTP secrets that are still stored in plaintext.
+   This runs once at startup and is safe to re-run — already-encrypted
+   records are detected by the "enc:v1:" prefix and skipped. */
+if (process.env.TOTP_ENCRYPTION_KEY) {
+    const { User } = await import("@/user/user.entity");
+    const { encryptTotpSecret, isEncryptedTotp } = await import("@/auth/totp-crypto");
+    const candidates = await (User as any)
+        .find({ twoFactorSecret: { $exists: true, $ne: null } })
+        .select("+twoFactorSecret")
+        .lean()
+        .exec() as any[];
+    const stale = candidates.filter((u: any) => u.twoFactorSecret && !isEncryptedTotp(u.twoFactorSecret));
+    if (stale.length > 0) {
+        await Promise.all(
+            stale.map((u: any) =>
+                (User as any).updateOne({ _id: u._id }, { twoFactorSecret: encryptTotpSecret(u.twoFactorSecret) })
+            )
+        );
+        console.log(`[startup] Encrypted ${stale.length} plaintext TOTP secret(s).`);
+    }
+} else {
+    // Warn if any users have 2FA enabled but the key is not configured.
+    const { User } = await import("@/user/user.entity");
+    const count = await (User as any).countDocuments({ twoFactorEnabled: true }).exec();
+    if (count > 0) {
+        console.warn(`[startup] WARNING: ${count} user(s) have 2FA enabled but TOTP_ENCRYPTION_KEY is not set. TOTP secrets are unencrypted.`);
+    }
+}
+
 /* OAuth 2.0 server (discovery, registration, authorize, token, revoke) */
 platform.use(oauthRouter);
 

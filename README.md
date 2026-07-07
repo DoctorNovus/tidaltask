@@ -10,6 +10,13 @@
 - **Calendar view** — week and day views with task occurrence tracking
 - **Priority levels** — High / Medium / Low priority with visual indicators
 - **Announcements** — in-app What's New feed for release notes
+- **Two-factor authentication** — TOTP-based 2FA with AES-256-GCM encrypted secrets at rest
+- **Passkeys** — WebAuthn passkey registration and login
+- **API keys** — per-user API keys (stored as SHA-256 hashes) for programmatic access
+- **OAuth 2.0** — authorization server with PKCE support for third-party integrations
+- **MCP endpoint** — Model Context Protocol endpoint at `POST /mcp` for AI assistant integration
+- **Data portability** — full GDPR Art. 20 data export
+- **Right to erasure** — GDPR Art. 17 / CCPA-compliant account + data deletion
 - **PWA + native** — installable as a web app or native iOS/Android app
 
 ## Download
@@ -54,22 +61,34 @@ npm install
 Create `.env` in the repo root (used by the API in dev):
 
 ```bash
-# .env
+# Required
 DATABASE_URL=mongodb://localhost:27017/sequenced
 PORT=8080
-SESSION_SECRET=change-me-to-a-random-string
+SESSION_SECRET=<random 64-char string>
 APP_URL=http://localhost:5173
+FRONTEND_URL=http://localhost:5173
+
+# 2FA — encrypt TOTP secrets at rest (AES-256-GCM)
+TOTP_ENCRYPTION_KEY=<64-char hex string (32 random bytes)>
+
+# WebAuthn / Passkeys
+WEBAUTHN_RP_ID=localhost
+WEBAUTHN_RP_NAME=TidalTask
 ```
 
-For email features (password reset, welcome emails), also add:
+For email features (password reset, welcome emails):
 
 ```bash
 RESEND_API_KEY=re_...
-RESEND_AUDIENCE_ID=...
-FRONTEND_URL=http://localhost:5173
 RESET_FROM_EMAIL=no-reply@yourdomain.com
 WELCOME_FROM_EMAIL=no-reply@yourdomain.com
 WELCOME_EMAIL_SUBJECT=Welcome to TidalTask
+```
+
+For Discord webhook logging (optional):
+
+```bash
+UPDATES_WEBHOOK_URL=https://discord.com/api/webhooks/...
 ```
 
 ### 3. Start the API
@@ -118,17 +137,26 @@ DATABASE_URL=mongodb://mongouser:mongopassword@mongo:27017/sequenced?authSource=
 SESSION_SECRET=<random 64-char string>
 APP_URL=https://api.yourdomain.com
 PORT=8080
-
-# Frontend
 FRONTEND_URL=https://yourdomain.com
+
+# 2FA encryption — generate once and keep secret
+TOTP_ENCRYPTION_KEY=<64-char hex string (32 random bytes)>
+
+# WebAuthn / Passkeys
+WEBAUTHN_RP_ID=yourdomain.com
+WEBAUTHN_RP_NAME=TidalTask
 
 # Email (Resend)
 RESEND_API_KEY=re_...
-RESEND_AUDIENCE_ID=...
 RESET_FROM_EMAIL=no-reply@yourdomain.com
 WELCOME_FROM_EMAIL=no-reply@yourdomain.com
 WELCOME_EMAIL_SUBJECT=Welcome to TidalTask
+
+# Discord webhook logging (optional)
+UPDATES_WEBHOOK_URL=https://discord.com/api/webhooks/...
 ```
+
+> **Note:** If `TOTP_ENCRYPTION_KEY` is set, the API automatically migrates any plaintext TOTP secrets to AES-256-GCM on startup. If it is not set and users have 2FA enabled, a warning is logged.
 
 ### 3. Configure Nginx
 
@@ -252,6 +280,17 @@ This updates:
 | `packages/app/package.json` | `"version"` |
 | `ios/App/App.xcodeproj/project.pbxproj` | `MARKETING_VERSION` (both build configs) |
 | `android/app/build.gradle` | `versionName` + `versionCode` (e.g. `3.2.0` → `30200`) |
+
+---
+
+## Security & compliance
+
+- **GDPR Art. 13/17/20/32** and **CCPA** — users can export or permanently delete all their data from the app settings
+- **TOTP secrets** are encrypted with AES-256-GCM at rest; plaintext secrets are migrated automatically on first server startup after `TOTP_ENCRYPTION_KEY` is set
+- **API keys** are stored as SHA-256 hashes — raw values are shown only once at generation time
+- **Session cookies** are `httpOnly`, `secure` (production), `sameSite: lax`
+- **Security headers** — `Strict-Transport-Security`, `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, `Permissions-Policy`
+- **Auth rate limiting** — 20 failed attempts per 15 minutes on login, register, and password reset endpoints
 
 ---
 
