@@ -2,7 +2,7 @@ import { useState } from "react";
 import TaskMenu from "../../tasks/TaskMenu";
 import { ChevronRightIcon, PencilSquareIcon } from "@heroicons/react/20/solid";
 import GroupEditDialog from "@/pages/(Layout)/(TaskInfoMenu)/Shared/GroupEditDialog";
-import { Disclosure, Menu, Transition } from "@headlessui/react";
+import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItems, MenuItem, Transition } from "@headlessui/react";
 import { matchDate, formatDateTime } from "@/utils/date";
 import { sortByDate, sortByPriority, isTaskDone } from "@/utils/data";
 import { Task } from "@/hooks/tasks";
@@ -600,10 +600,10 @@ export default function TaskContainer({
         >
           {({ open }) => (
             <>
-              <Disclosure.Button
+              <DisclosureButton
                 onClick={async () => await handleClick(open)}
                 as="div"
-                className="w-full overflow-hidden flex flex-row items-center rounded-2xl bg-white dark:bg-(--surface-card) border border-slate-200 dark:border-(--surface-border) px-3 py-3 text-primary shadow-sm group/card"
+                className="w-full relative z-10 flex flex-row items-center rounded-2xl bg-white dark:bg-(--surface-card) border border-slate-200 dark:border-(--surface-border) px-3 py-3 text-primary shadow-sm group/card"
               >
                 <div className="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="flex flex-row items-center min-w-0 py-1 gap-2 flex-1">
@@ -698,48 +698,42 @@ export default function TaskContainer({
                           >
                             Complete ({selectedTaskIds.length})
                           </button>
-                          <Menu as="div" className="relative z-110 inline-block text-left">
-                            <Menu.Button
+                          <Menu as="div" className="inline-block text-left">
+                            <MenuButton
                               disabled={!hasSelection || isBulkUpdating}
                               onClick={(e) => e.stopPropagation()}
                               className="flex items-center gap-1 rounded-lg border border-slate-200 bg-white dark:bg-(--surface-raised) dark:border-(--surface-border) dark:text-primary px-2.5 py-1.5 text-xs font-semibold text-slate-700 shadow-xs transition hover:shadow-md hover:ring-1 hover:ring-slate-200 disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                               <EllipsisHorizontalIcon className="h-4 w-4" />
                               <span>Actions</span>
-                            </Menu.Button>
-                            <Menu.Items className="absolute left-0 right-auto z-130 mt-2 w-52 max-w-[90vw] origin-top-left rounded-xl bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden dark:bg-(--surface-raised) dark:ring-(--surface-border) md:left-auto md:right-0 md:origin-top-right">
+                            </MenuButton>
+                            <MenuItems anchor="bottom end" className="z-130 w-52 rounded-xl bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-hidden dark:bg-(--surface-raised) dark:ring-(--surface-border) [--anchor-gap:8px]">
                               {[
                                 { key: "group", label: "Edit group" },
                                 { key: "date", label: "Edit date" },
                                 { key: "priority", label: "Edit priority" },
                                 { key: "tags", label: "Edit tags" },
                               ].map((item) => (
-                                <Menu.Item key={item.key}>
-                                  {({ active }) => (
-                                    <button
-                                      type="button"
-                                      className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm ${
-                                        active
-                                          ? "bg-accent-blue/10 text-slate-900 dark:bg-(--accent-subtle) dark:text-primary"
-                                          : "text-slate-800 dark:text-primary"
-                                      }`}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        startBulkAction(item.key as "group" | "tags" | "date" | "priority");
-                                      }}
-                                    >
-                                      <span>{item.label}</span>
-                                      {item.key === "group" && sharedGroup && (
-                                        <span className="text-[11px] text-slate-500 dark:text-muted">#{sharedGroup}</span>
-                                      )}
-                                      {item.key === "tags" && uniqueTags.length > 0 && (
-                                        <span className="text-[11px] text-slate-500 dark:text-muted">{uniqueTags.length} tags</span>
-                                      )}
-                                    </button>
-                                  )}
-                                </Menu.Item>
+                                <MenuItem key={item.key}>
+                                  <button
+                                    type="button"
+                                    className="flex w-full items-center justify-between px-3 py-2 text-left text-sm text-slate-800 dark:text-primary data-focus:bg-accent-blue/10 data-focus:text-slate-900 dark:data-focus:bg-(--accent-subtle) dark:data-focus:text-primary"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      startBulkAction(item.key as "group" | "tags" | "date" | "priority");
+                                    }}
+                                  >
+                                    <span>{item.label}</span>
+                                    {item.key === "group" && sharedGroup && (
+                                      <span className="text-[11px] text-slate-500 dark:text-muted">#{sharedGroup}</span>
+                                    )}
+                                    {item.key === "tags" && uniqueTags.length > 0 && (
+                                      <span className="text-[11px] text-slate-500 dark:text-muted">{uniqueTags.length} tags</span>
+                                    )}
+                                  </button>
+                                </MenuItem>
                               ))}
-                            </Menu.Items>
+                            </MenuItems>
                           </Menu>
                           <button
                             type="button"
@@ -757,8 +751,8 @@ export default function TaskContainer({
                     </div>
                   </div>
                 </div>
-              </Disclosure.Button>
-              <Disclosure.Panel className="w-full">
+              </DisclosureButton>
+              <DisclosurePanel className="w-full">
                 {renderBulkActionCard()}
                 {/* {!settings.data.groupsActive?.includes(identifier) && ( */}
                 <TaskMenu
@@ -774,7 +768,7 @@ export default function TaskContainer({
                   disableGrouping={disableGrouping}
                 />
                 {/* )} */}
-              </Disclosure.Panel>
+              </DisclosurePanel>
             </>
           )}
         </Disclosure>
