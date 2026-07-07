@@ -285,7 +285,7 @@ This updates:
 
 ## Security & compliance
 
-- **GDPR Art. 13/17/20/32** and **CCPA** — users can export or permanently delete all their data from the app settings
+- **GDPR Art. 13/17/20/32** and **CCPA** — users can export or permanently delete all their data from the app settings; see [Privacy Policy](https://tidaltask.app/privacy) and [Terms of Service](https://tidaltask.app/tos)
 - **TOTP secrets** are encrypted with AES-256-GCM at rest; plaintext secrets are migrated automatically on first server startup after `TOTP_ENCRYPTION_KEY` is set
 - **API keys** are stored as SHA-256 hashes — raw values are shown only once at generation time
 - **Session cookies** are `httpOnly`, `secure` (production), `sameSite: lax`
