@@ -17,10 +17,12 @@ export async function session(req: Request, _res: Response, next: NextFunction) 
     const token = match[1].trim();
     if (!token) throw new Unauthorized("Not Logged In");
 
+    // API keys are stored as SHA-256 hashes; hash the incoming token before comparing.
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
     const user = await User.findOne({
         $expr: {
             $in: [
-                token,
+                tokenHash,
                 {
                     $map: {
                         input: { $objectToArray: { $ifNull: ["$apiKeys", {}] } },
@@ -38,7 +40,6 @@ export async function session(req: Request, _res: Response, next: NextFunction) 
         return;
     }
 
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
     const deviceToken = await DeviceToken.findOne({ tokenHash, expiresAt: { $gt: new Date() } })
         .populate({ path: "user", select: "first last email id" })
         .lean<DeviceToken>()

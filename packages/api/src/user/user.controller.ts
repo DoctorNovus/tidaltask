@@ -46,14 +46,13 @@ export class UserController {
     }
 
     @Get("/export")
-    async exportData({ session }: Request): Promise<{ user: User | null; tasks: any[] }> {
-        const user = await this.userService.getUserById(session.user.id);
+    async exportData({ session }: Request): Promise<Record<string, unknown>> {
         const data = await this.userService.exportUserData(session.user.id);
         await sendToWebhook({
             embeds: [
                 {
                     title: "User Data Exported",
-                    description: `User **${session.user.id}** (${user?.first ?? "Unknown"} ${user?.last ?? ""} | ${user?.email ?? "No email"}) exported their data.`,
+                    description: `User **${session.user.id}** exported their data.`,
                     timestamp: new Date()
                 }
             ]
@@ -62,18 +61,19 @@ export class UserController {
     }
 
     @Post("/delete")
-    async deleteData({ session }: Request): Promise<{ deletedUser: boolean; removedFromTasks: number; deletedTasks: number }> {
-        const user = await this.userService.getUserById(session.user.id);
+    async deleteData({ session, res }: Request): Promise<{ deletedUser: boolean; removedFromTasks: number; deletedTasks: number }> {
         const result = await this.userService.deleteUserData(session.user.id);
         await sendToWebhook({
             embeds: [
                 {
                     title: "User Requested Deletion",
-                    description: `User **${session.user.id}** (${user?.first ?? "Unknown"} ${user?.last ?? ""} | ${user?.email ?? "No email"}) requested account deletion.\nRemoved from ${result.removedFromTasks} tasks; deleted ${result.deletedTasks} tasks.`,
+                    description: `User **${session.user.id}** requested account deletion. Removed from ${result.removedFromTasks} tasks; deleted ${result.deletedTasks} tasks.`,
                     timestamp: new Date()
                 }
             ]
         });
+        // Destroy the session immediately after account deletion.
+        await new Promise<void>((resolve) => session.destroy(() => resolve()));
         return result;
     }
 

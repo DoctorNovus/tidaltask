@@ -30,10 +30,7 @@ export class ReviewController {
             embeds: [
                 {
                     title: "New Review Submitted",
-                    description: `Rating: **${rating}/5**${message ? `\\nMessage: ${message}` : ""}`,
-                    footer: {
-                        text: review.userEmail ? `From ${review.userEmail}` : "From an authenticated user"
-                    },
+                    description: `Rating: **${rating}/5**${message ? `\nMessage: ${message}` : ""}`,
                     timestamp: new Date()
                 }
             ]

@@ -53,6 +53,17 @@ const allowedOriginSuffixes = [
     ".sequenced.ottegi.com",
 ];
 
+// Security headers (HSTS, clickjacking protection, MIME sniffing, etc.)
+platform.use((_req: Request, res: Response, next: NextFunction) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "DENY");
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("X-DNS-Prefetch-Control", "off");
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+    next();
+});
+
 platform.use((req: Request, res: Response, next: NextFunction) => {
     const origin = req.headers.origin;
 
@@ -106,10 +117,16 @@ platform.use(session({
     resave: false,
     saveUninitialized: false,
     secret: sessionSecret,
-    cookie: { maxAge: 30 * 24 * 60 * 60 * 1000 },
+    cookie: {
+        maxAge: 30 * 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV !== "development",
+        sameSite: "lax",
+        httpOnly: true,
+    },
     store: sessionStore
 }));
 
+// Global rate limit — broad protection against scraping / flooding.
 platform.use(rateLimit({
     windowMs: 15 * 60 * 1000,
     limit: 10000,
@@ -117,6 +134,19 @@ platform.use(rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 }));
+
+// Tight rate limit on auth endpoints — prevents brute-force and credential stuffing.
+const authRateLimit = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 20,
+    message: { message: "Too many attempts. Please try again in 15 minutes." },
+    standardHeaders: true,
+    legacyHeaders: false,
+    skipSuccessfulRequests: true,
+});
+["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password"].forEach((path) => {
+    platform.use(path, authRateLimit);
+});
 
 platform.use((req, res, next) => {
     if (req.method !== "GET") {

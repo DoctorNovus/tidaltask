@@ -3,7 +3,16 @@ import { BadRequest } from "@outwalk/firefly/errors";
 import { User } from "./user.entity";
 import bcrypt from "bcrypt";
 import { Task } from "@/task/task.entity";
+import { DeviceToken } from "@/auth/deviceToken.entity";
+import { Passkey } from "@/auth/passkey.entity";
+import { PasswordReset } from "@/auth/passwordReset.entity";
+import { NotificationMessage } from "@/notification/notificationMessage.entity";
+import { NotificationPreference } from "@/notification/notificationPreference.entity";
+import { Announcement } from "@/announcement/announcement.entity";
+import { Review } from "@/review/review.entity";
+import { OAuthCode } from "@/oauth/oauthCode.entity";
 import crypto from "crypto";
+import mongoose from "mongoose";
 
 @Injectable()
 export class UserService {
@@ -105,68 +114,82 @@ export class UserService {
         return this.updateUser(id, { password: next });
     }
 
+    // Returns key names with masked values — never returns the actual key or its hash.
     async getApiKeys(id: string): Promise<Record<string, string>> {
         const user = await User.findById(id).select("apiKeys").lean<User>().exec();
-        return user?.apiKeys ?? {};
+        const keys = user?.apiKeys ?? {};
+        return Object.fromEntries(Object.keys(keys).map((name) => [name, "••••••••"]));
     }
 
     async setApiKeys(id: string, apiKeys: Record<string, string>): Promise<Record<string, string>> {
-        await User.findByIdAndUpdate(id, { apiKeys }).exec();
-        return apiKeys;
+        const hashed = Object.fromEntries(
+            Object.entries(apiKeys).map(([name, value]) => [
+                name,
+                crypto.createHash("sha256").update(value).digest("hex"),
+            ])
+        );
+        await User.findByIdAndUpdate(id, { apiKeys: hashed }).exec();
+        return Object.fromEntries(Object.keys(hashed).map((name) => [name, "••••••••"]));
     }
 
     async generateApiKey(id: string, name: string): Promise<{ name: string; value: string; apiKeys: Record<string, string> }> {
         const user = await User.findById(id).select("apiKeys").lean<User>().exec();
-        const apiKeys = user?.apiKeys ?? {};
+        const existing = user?.apiKeys ?? {};
         const value = crypto.randomBytes(32).toString("hex");
-        const nextKeys = { ...apiKeys, [name]: value };
+        const hash = crypto.createHash("sha256").update(value).digest("hex");
+        const nextKeys = { ...existing, [name]: hash };
         await User.findByIdAndUpdate(id, { apiKeys: nextKeys }).exec();
-        return { name, value, apiKeys: nextKeys };
+        const maskedKeys = Object.fromEntries(Object.keys(nextKeys).map((k) => [k, "••••••••"]));
+        return { name, value, apiKeys: maskedKeys };
     }
 
-    private sanitizeUser(user: any) {
-        if (!user) return null;
-        const { first, last, email, createdAt, updatedAt } = user;
-        return { first, last, email, createdAt, updatedAt };
-    }
+    async exportUserData(id: string): Promise<Record<string, unknown>> {
+        const user = await User.findById(id)
+            .select("first last email createdAt updatedAt lastLoggedIn twoFactorEnabled synced")
+            .lean<User>()
+            .exec();
 
-    private sanitizeTask(task: any) {
-        if (!task) return null;
-        const {
-            title,
-            description,
-            date,
-            done,
-            repeater,
-            reminder,
-            type,
-            accordion,
-            priority,
-            group,
-            tags,
-            id
-        } = task;
+        const tasks = await Task.find({ users: id })
+            .select("title description date done repeater reminder type priority group tags createdAt updatedAt")
+            .lean()
+            .exec();
+
+        const notificationPrefs = await NotificationPreference.findOne({ user: id })
+            .select("pushEnabled remindersEnabled summaryCadence summaryTime weeklyDay utcOffsetMinutes")
+            .lean()
+            .exec();
+
+        const notifications = await NotificationMessage.find({ user: id })
+            .select("title body type scheduledFor deliveredAt createdAt")
+            .sort({ createdAt: -1 })
+            .lean()
+            .exec();
+
+        const passkeys = await Passkey.find({ user: id })
+            .select("label deviceType backedUp createdAt")
+            .lean()
+            .exec();
+
+        const deviceTokens = await DeviceToken.find({ user: id })
+            .select("label expiresAt createdAt")
+            .lean()
+            .exec();
+
+        const reviews = await Review.find({ user: id })
+            .select("rating message createdAt")
+            .lean()
+            .exec();
+
         return {
-            id,
-            title,
-            description,
-            date,
-            done,
-            repeater,
-            reminder,
-            type,
-            accordion,
-            priority,
-            group,
-            tags
+            exportedAt: new Date().toISOString(),
+            profile: user,
+            tasks,
+            notificationPreferences: notificationPrefs,
+            notificationHistory: notifications,
+            passkeys,
+            deviceTokens,
+            reviews,
         };
-    }
-
-    async exportUserData(id: string): Promise<{ user: any; tasks: any[] }> {
-        const user = this.sanitizeUser(await this.getUserById(id));
-        const tasksRaw = await Task.find({ users: id }).lean().exec();
-        const tasks = tasksRaw.map((t) => this.sanitizeTask(t)).filter(Boolean);
-        return { user, tasks };
     }
 
     async getCalendarToken(id: string): Promise<string | null> {
@@ -185,8 +208,40 @@ export class UserService {
     }
 
     async deleteUserData(id: string): Promise<{ deletedUser: boolean; removedFromTasks: number; deletedTasks: number }> {
+        // Cascade-delete / anonymize all records linked to this user before removing the account,
+        // satisfying GDPR Art. 17 (right to erasure) and CCPA right-to-delete.
+
+        // 1. Tasks: pull user from shared tasks, then remove tasks they owned alone.
         const pullResult = await Task.updateMany({ users: id }, { $pull: { users: id } }).exec();
         const cleanup = await Task.deleteMany({ users: { $size: 0 } }).exec();
+
+        // 2. Auth records.
+        await PasswordReset.deleteMany({ user: id }).exec();
+        await DeviceToken.deleteMany({ user: id }).exec();
+        await Passkey.deleteMany({ user: id }).exec();
+
+        // 3. Notification records.
+        await NotificationMessage.deleteMany({ user: id }).exec();
+        await NotificationPreference.deleteOne({ user: id }).exec();
+
+        // 4. OAuth codes still pending for this user.
+        await OAuthCode.deleteMany({ userId: id }).exec();
+
+        // 5. Announcement engagement: remove user's ObjectId from all viewedBy / clickedBy arrays.
+        await (Announcement as any).updateMany(
+            {},
+            { $pull: { viewedBy: new mongoose.Types.ObjectId(id), clickedBy: new mongoose.Types.ObjectId(id) } }
+        ).exec();
+
+        // 6. Reviews: anonymize rather than delete (preserves aggregate feedback while removing PII).
+        await Review.updateMany({ user: id }, { $unset: { userEmail: 1, user: 1 } }).exec();
+
+        // 7. Active sessions: find and delete any session documents belonging to this user.
+        //    Sessions are stored as JSON strings; we match on the serialized user id.
+        const sessionCollection = mongoose.connection.collection("session");
+        await sessionCollection.deleteMany({ session: { $regex: `"id":"${id}"` } });
+
+        // 8. Finally, hard-delete the user document itself.
         const deleted = await User.findByIdAndDelete(id).lean<User>().exec();
 
         return {

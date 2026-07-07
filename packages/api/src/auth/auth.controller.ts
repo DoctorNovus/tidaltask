@@ -91,7 +91,7 @@ export class AuthController {
 
         sendToWebhook({
             embeds: [
-                { title: "New User Has Registered", description: `**${first} ${last}** has registered with the email, **${email}**.`, timestamp: new Date() }
+                { title: "New User Has Registered", description: `User **${user.id}** has registered.`, timestamp: new Date() }
             ]
         });
         return user;
@@ -533,32 +533,8 @@ export class AuthController {
         if (!resendApiKey || !user?.email) return;
 
         const resend = new Resend(resendApiKey);
-        const audienceId = (process.env.RESEND_AUDIENCE_ID || "").trim();
 
         try {
-            if (audienceId) {
-                const contact = await resend.contacts.create({
-                    audienceId,
-                    email: user.email,
-                    firstName: user.first || "",
-                    lastName: user.last || ""
-                });
-
-                if (contact?.error) {
-                    const updated = await resend.contacts.update({
-                        audienceId,
-                        email: user.email,
-                        firstName: user.first || "",
-                        lastName: user.last || "",
-                        unsubscribed: false
-                    });
-
-                    if (updated?.error) {
-                        throw new Error(updated.error.message || "Unable to add user to audience.");
-                    }
-                }
-            }
-
             const fromEmail = process.env.WELCOME_FROM_EMAIL || process.env.RESET_FROM_EMAIL || "TidalTask <support@tidaltask.app>";
             const subject = process.env.WELCOME_EMAIL_SUBJECT || "Welcome to TidalTask";
             const welcome = await resend.emails.send({
@@ -595,7 +571,7 @@ export class AuthController {
                 embeds: [
                     {
                         title: "Welcome Email Failed",
-                        description: `User **${user.id}** (${user.email}) failed welcome flow: ${String((error as Error)?.message || error)}`,
+                        description: `User **${user.id}** failed welcome flow: ${String((error as Error)?.message || error)}`,
                         timestamp: new Date()
                     }
                 ]

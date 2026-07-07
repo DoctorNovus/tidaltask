@@ -24,6 +24,6 @@ export class ReviewService {
     }
 
     async listReviews(): Promise<Review[]> {
-        return Review.find().sort({ createdAt: -1 }).lean<Review[]>().exec();
+        return Review.find().select("-userEmail -user").sort({ createdAt: -1 }).lean<Review[]>().exec();
     }
 }
