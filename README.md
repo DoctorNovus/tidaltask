@@ -255,12 +255,11 @@ The `ios-release` job in `deploy.yml` runs on every push to `main`. Required sec
 
 | Secret | Description |
 |---|---|
-| `IOS_CERTIFICATE_BASE64` | Base64-encoded `.p12` distribution certificate |
-| `IOS_CERTIFICATE_PASSWORD` | Password for the `.p12` |
-| `IOS_PROVISIONING_PROFILE_BASE64` | Base64-encoded `.mobileprovision` |
 | `ASC_KEY_ID` | App Store Connect API key ID |
 | `ASC_ISSUER_ID` | App Store Connect issuer ID |
 | `ASC_KEY_CONTENT` | Base64-encoded `.p8` API key content |
+
+Signing is handled automatically by Xcode (`-allowProvisioningUpdates`) — no certificate or provisioning profile secrets needed.
 
 ---
 
