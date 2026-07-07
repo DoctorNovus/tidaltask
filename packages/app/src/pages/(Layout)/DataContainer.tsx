@@ -11,8 +11,7 @@ export default function DataContainer() {
         >
             <div
                 id="unit-container"
-                className={`flex flex-1 flex-col overflow-x-hidden ${isAuthRoute ? "justify-center items-center" : "justify-start"} px-4 md:px-6 pt-2 md:pt-8`}
-                style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 5.5rem)" }}
+                className={`flex flex-1 flex-col overflow-x-hidden ${isAuthRoute ? "justify-center items-center" : "justify-start"} px-4 md:px-6 pt-2 md:pt-8 pb-[calc(env(safe-area-inset-bottom,0px)+5.5rem)] md:pb-6`}
             >
                 <div id="zoom-content" className="flex flex-1 flex-col w-full">
                     <Outlet />

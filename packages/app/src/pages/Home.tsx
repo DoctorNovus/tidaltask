@@ -21,8 +21,8 @@ const Home = () => {
 
     if (auth.isLoading)
         return (
-            <div className="w-full flex flex-col pb-24 md:pb-4">
-                <div className="w-full flex flex-col gap-6 md:grid md:grid-cols-[1fr_300px] md:items-start">
+            <div className="w-full flex flex-col pb-24 md:pb-6">
+                <div className="w-full flex flex-col gap-6 xl:grid xl:grid-cols-[1fr_256px] xl:items-start">
                     <div className="flex flex-col gap-6">
                         <HomeIntroduction skeleton={true} />
                         <HomeAgenda skeleton={true} />
@@ -35,8 +35,8 @@ const Home = () => {
 
     return (
         <AuthProvider>
-            <div className="w-full flex flex-col pb-24 md:pb-4">
-                <div className="w-full flex flex-col gap-6 md:grid md:grid-cols-[1fr_300px] md:items-start">
+            <div className="w-full flex flex-col pb-24 md:pb-6">
+                <div className="w-full flex flex-col gap-6 xl:grid xl:grid-cols-[1fr_256px] xl:items-start">
                     <div className="flex flex-col gap-6">
                         <HomeIntroduction user={user} today={today} />
                         <HomeAgenda />
