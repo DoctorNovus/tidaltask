@@ -4,12 +4,16 @@ import { useTasks, Task } from "@/hooks/tasks";
 import { occursOnDate, isTaskDone } from "@/utils/data";
 import TaskInfoMenu from "@/pages/(Layout)/TaskInfoMenu";
 import { useApp } from "@/hooks/app";
+import { useSettings } from "@/hooks/settings";
+import { useDeviceCalendarEvents, DeviceCalendarEvent } from "@/hooks/calendar";
 
 type Scope = "today" | "tomorrow" | "week" | "month" | "overdue" | "all";
 type ViewMode = "week" | "month";
 
 const MAX_WEEK_TASKS = 6;
 const MAX_MONTH_TASKS = 3;
+const MAX_WEEK_EVENTS = 3;
+const MAX_MONTH_EVENTS = 2;
 
 const DAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
@@ -110,6 +114,35 @@ const scopeToDates = (scope: Scope, today: Date) => {
   }
 };
 
+const formatEventTime = (event: DeviceCalendarEvent) =>
+  new Date(event.startDate).toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+
+const sortEventsByTime = (list: DeviceCalendarEvent[]) =>
+  [...list].sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+
+function groupEventsByDay(events: DeviceCalendarEvent[], start: Date, end: Date) {
+  const grouped: Record<string, DeviceCalendarEvent[]> = {};
+
+  for (const event of events) {
+    const eventStart = normalizeDay(new Date(event.startDate));
+    // All-day event end dates are exclusive (midnight of the following day) — back off
+    // by a moment before normalizing so a single all-day event doesn't spill into the next day.
+    const rawEnd = new Date(event.endDate);
+    const eventEnd = normalizeDay(event.isAllDay ? new Date(rawEnd.getTime() - 1) : rawEnd);
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const day = new Date(d);
+      if (day >= eventStart && day <= eventEnd) {
+        const key = dayKey(day);
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(event);
+      }
+    }
+  }
+
+  return grouped;
+}
+
 function groupTasksByDay(tasks: Task[], start: Date, end: Date) {
   const grouped: Record<string, Task[]> = {};
 
@@ -132,8 +165,10 @@ export default function CalendarPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const tasks = useTasks();
+  const settings = useSettings();
   const [appState, setAppState] = useApp();
   const [isTaskMenuOpen, setIsTaskMenuOpen] = useState(false);
+  const showDeviceCalendarEvents = !!settings.data?.showDeviceCalendarEvents;
 
   const today = normalizeDay(new Date());
   const initialScope = (params.get("scope") as Scope) || "week";
@@ -178,6 +213,12 @@ export default function CalendarPage() {
   }, [view, weekStart, monthAnchor, scope, today]);
 
   const grouped = useMemo(() => groupTasksByDay(tasks.data || [], start, end), [tasks.data, start, end]);
+
+  const deviceEvents = useDeviceCalendarEvents(start, end, showDeviceCalendarEvents);
+  const eventsGrouped = useMemo(
+    () => groupEventsByDay(deviceEvents.data || [], start, end),
+    [deviceEvents.data, start, end]
+  );
 
   const weekDays = useMemo(() => buildWeekDays(weekStart), [weekStart]);
   const monthDays = useMemo(() => buildMonthDays(monthAnchor), [monthAnchor]);
@@ -294,6 +335,20 @@ export default function CalendarPage() {
     </button>
   );
 
+  const renderEventChip = (event: DeviceCalendarEvent, compact = false) => (
+    <div
+      key={event.id}
+      title={event.title}
+      className={`flex items-center gap-1.5 rounded-md border-l-2 bg-(--surface-raised)/60 px-2 py-1 ${compact ? "text-[10px]" : "text-xs"}`}
+      style={{ borderLeftColor: event.color }}
+    >
+      {!event.isAllDay && (
+        <span className="shrink-0 font-semibold text-muted">{formatEventTime(event)}</span>
+      )}
+      <span className="truncate italic text-muted">{event.title}</span>
+    </div>
+  );
+
   const renderWeek = () => (
     <>
       {/* ── Desktop: 7-column strip with vertical dividers ── */}
@@ -301,9 +356,12 @@ export default function CalendarPage() {
         {weekDays.map((day) => {
           const key = dayKey(day);
           const dayTasks = sortByTime(grouped[key] || []);
+          const dayEvents = sortEventsByTime(eventsGrouped[key] || []);
           const isToday = dayKey(day) === dayKey(today);
           const visible = dayTasks.slice(0, MAX_WEEK_TASKS);
           const overflow = dayTasks.length - MAX_WEEK_TASKS;
+          const visibleEvents = dayEvents.slice(0, MAX_WEEK_EVENTS);
+          const eventOverflow = dayEvents.length - MAX_WEEK_EVENTS;
 
           return (
             <div key={key} className="flex flex-col">
@@ -348,6 +406,14 @@ export default function CalendarPage() {
                 {overflow > 0 && (
                   <span className="text-xs font-semibold text-accent-blue px-1">+{overflow} more</span>
                 )}
+                {visibleEvents.length > 0 && (
+                  <div className="flex flex-col gap-1 mt-1 pt-1 border-t border-(--surface-border)/60">
+                    {visibleEvents.map((event) => renderEventChip(event))}
+                    {eventOverflow > 0 && (
+                      <span className="text-[10px] font-semibold text-muted px-1">+{eventOverflow} more</span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           );
@@ -359,8 +425,10 @@ export default function CalendarPage() {
         {weekDays.map((day, idx) => {
           const key = dayKey(day);
           const dayTasks = sortByTime(grouped[key] || []);
+          const dayEvents = sortEventsByTime(eventsGrouped[key] || []);
           const isToday = dayKey(day) === dayKey(today);
           const overflow = dayTasks.length - 3;
+          const eventOverflow = dayEvents.length - 2;
           return (
             <div key={key} className={idx > 0 ? "border-t border-(--surface-border)" : ""}>
               <div className={`flex items-center gap-3 px-4 py-2.5 ${isToday ? "bg-(--accent-subtle)" : ""}`}>
@@ -397,6 +465,14 @@ export default function CalendarPage() {
                   )}
                 </div>
               )}
+              {dayEvents.length > 0 && (
+                <div className="flex flex-col px-4 pb-2.5 pt-0.5 gap-1">
+                  {dayEvents.slice(0, 2).map((event) => renderEventChip(event, true))}
+                  {eventOverflow > 0 && (
+                    <span className="text-[10px] font-semibold text-muted pt-0.5">+{eventOverflow} more</span>
+                  )}
+                </div>
+              )}
             </div>
           );
         })}
@@ -426,10 +502,13 @@ export default function CalendarPage() {
                 }
                 const key = dayKey(day);
                 const dayTasks = grouped[key] || [];
+                const dayEvents = sortEventsByTime(eventsGrouped[key] || []);
                 const isToday = dayKey(day) === dayKey(today);
                 const isCurrentMonth = day.getMonth() === monthAnchor.getMonth();
                 const visible = dayTasks.slice(0, MAX_MONTH_TASKS);
                 const overflow = dayTasks.length - MAX_MONTH_TASKS;
+                const visibleEvents = dayEvents.slice(0, MAX_MONTH_EVENTS);
+                const eventOverflow = dayEvents.length - MAX_MONTH_EVENTS;
 
                 return (
                   <div
@@ -459,6 +538,10 @@ export default function CalendarPage() {
                     {overflow > 0 && (
                       <span className="text-[11px] font-semibold text-accent-blue pl-1">+{overflow} more</span>
                     )}
+                    {visibleEvents.map((event) => renderEventChip(event, true))}
+                    {eventOverflow > 0 && (
+                      <span className="text-[10px] font-semibold text-muted pl-1">+{eventOverflow} more</span>
+                    )}
                   </div>
                 );
               })}
@@ -484,6 +567,7 @@ export default function CalendarPage() {
                 if (!day) return <div key={`empty-${idx}-${dayIdx}`} className="flex-1" />;
                 const key = dayKey(day);
                 const dayTasks = sortByTime(grouped[key] || []);
+                const dayEvents = sortEventsByTime(eventsGrouped[key] || []);
                 const isToday = dayKey(day) === dayKey(today);
                 const isCurrentMonth = day.getMonth() === monthAnchor.getMonth();
                 const overflow = dayTasks.length - maxMobileTasks;
@@ -497,6 +581,17 @@ export default function CalendarPage() {
                     <span className={`text-center text-xs font-semibold leading-none mb-1 shrink-0 block ${isToday ? "text-accent-blue" : "text-primary"}`}>
                       {day.getDate()}
                     </span>
+                    {dayEvents.length > 0 && (
+                      <div className="flex shrink-0 justify-center gap-0.5 pb-0.5" title={dayEvents.map((e) => e.title).join(", ")}>
+                        {dayEvents.slice(0, 3).map((event) => (
+                          <span
+                            key={event.id}
+                            className="h-1 w-1 rounded-full"
+                            style={{ backgroundColor: event.color }}
+                          />
+                        ))}
+                      </div>
+                    )}
                     <div className="flex-1 flex flex-col gap-px px-0.5 min-h-0 overflow-hidden">
                       {dayTasks.slice(0, maxMobileTasks).map((task) => (
                         <button

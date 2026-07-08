@@ -22,6 +22,8 @@ export interface Settings {
   groupConfig?: Record<string, GroupConfig>;
   autoDeleteCompletedDays?: number;
   lastAutoDeleteAt?: number;
+  showDeviceCalendarEvents?: boolean;
+  deviceCalendarSyncEnabled?: boolean;
 }
 
 /* Gets the settings from the database */

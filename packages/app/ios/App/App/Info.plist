@@ -45,6 +45,10 @@
 	<string>901268969035464</string>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Allow Bluetooth access to connect to Meta wearables.</string>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>Allow calendar access to sync tasks to your calendar and show your calendar events in TidalTask.</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Allow calendar access to sync tasks to your calendar and show your calendar events in TidalTask.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Allow microphone access to capture voice commands.</string>
 	<key>NSSiriUsageDescription</key>

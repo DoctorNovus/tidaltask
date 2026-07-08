@@ -7,15 +7,44 @@ import {
     isNative,
     requestCalendarPermission,
     clearAllTidalTaskEvents,
+    reconcileDeviceCalendarSync,
 } from "@/hooks/calendar";
+import { useSettings, useUpdateSettings } from "@/hooks/settings";
+import { useTasks } from "@/hooks/tasks";
 
 export default function CalendarSyncSettings() {
     const tokenQuery = useCalendarToken();
     const rotate = useRotateCalendarToken();
     const remove = useDeleteCalendarToken();
+    const settingsQuery = useSettings();
+    const updateSettings = useUpdateSettings();
+    const tasksQuery = useTasks();
     const [copied, setCopied] = useState(false);
     const [nativeStatus, setNativeStatus] = useState<string>("");
+    const [nativeSyncPending, setNativeSyncPending] = useState(false);
+    const [showEventsStatus, setShowEventsStatus] = useState<string>("");
     const [showRotateConfirm, setShowRotateConfirm] = useState(false);
+    const showDeviceCalendarEvents = !!settingsQuery.data?.showDeviceCalendarEvents;
+    const deviceCalendarSyncEnabled = !!settingsQuery.data?.deviceCalendarSyncEnabled;
+
+    const handleToggleShowEvents = async () => {
+        setShowEventsStatus("");
+        if (showDeviceCalendarEvents) {
+            await updateSettings.mutateAsync({ showDeviceCalendarEvents: false });
+            return;
+        }
+
+        try {
+            const granted = await requestCalendarPermission();
+            if (!granted) {
+                setShowEventsStatus("Calendar access denied. Enable it in Settings > Privacy > Calendars.");
+                return;
+            }
+            await updateSettings.mutateAsync({ showDeviceCalendarEvents: true });
+        } catch (e: any) {
+            setShowEventsStatus(e?.message || "Unable to request calendar access.");
+        }
+    };
 
     const token = tokenQuery.data;
     const icsUrl = token ? buildIcsUrl(token) : null;
@@ -44,25 +73,34 @@ export default function CalendarSyncSettings() {
 
     const handleNativeToggle = async () => {
         setNativeStatus("");
+        setNativeSyncPending(true);
         try {
             const granted = await requestCalendarPermission();
             if (!granted) {
                 setNativeStatus("Calendar access denied. Enable it in Settings > Privacy > Calendars.");
                 return;
             }
-            setNativeStatus("Calendar access granted. Tasks with dates will sync automatically.");
+            await updateSettings.mutateAsync({ deviceCalendarSyncEnabled: true });
+            await reconcileDeviceCalendarSync(tasksQuery.data || []);
+            setNativeStatus("Calendar access granted. Your tasks with dates have been added, and future changes will sync automatically.");
         } catch (e: any) {
             setNativeStatus(e?.message || "Unable to request calendar access.");
+        } finally {
+            setNativeSyncPending(false);
         }
     };
 
     const handleClearNative = async () => {
         setNativeStatus("");
+        setNativeSyncPending(true);
         try {
+            await updateSettings.mutateAsync({ deviceCalendarSyncEnabled: false });
             await clearAllTidalTaskEvents();
-            setNativeStatus("Removed all TidalTask events from your calendar.");
+            setNativeStatus("Disconnected and removed all TidalTask events from your calendar.");
         } catch (e: any) {
             setNativeStatus(e?.message || "Unable to clear calendar events.");
+        } finally {
+            setNativeSyncPending(false);
         }
     };
 
@@ -177,28 +215,58 @@ export default function CalendarSyncSettings() {
                 </div>
             )}
 
+            {/* Show device calendar events in TidalTask */}
+            {isNative && (
+                <div className="flex flex-col gap-2">
+                    <span className="text-xs font-semibold uppercase tracking-widest text-muted">Show in TidalTask</span>
+                    <p className="text-xs text-muted">
+                        Display your device's calendar events on the Calendar page, alongside your tasks.
+                    </p>
+                    <div className="flex items-center gap-3">
+                        <button
+                            type="button"
+                            onClick={handleToggleShowEvents}
+                            disabled={updateSettings.isPending || settingsQuery.isLoading}
+                            className={`rounded-lg px-3 py-2 text-xs font-semibold shadow-xs transition disabled:opacity-70 ${
+                                showDeviceCalendarEvents
+                                    ? "bg-accent-blue text-white shadow-accent-blue/30"
+                                    : "border border-(--surface-border) text-primary hover:-translate-y-px"
+                            }`}
+                        >
+                            {showDeviceCalendarEvents ? "Showing device calendar" : "Show device calendar"}
+                        </button>
+                    </div>
+                    {showEventsStatus && <span className="text-xs text-muted">{showEventsStatus}</span>}
+                </div>
+            )}
+
             {/* Native calendar (iOS only) */}
             {isNative && (
                 <div className="flex flex-col gap-2">
                     <span className="text-xs font-semibold uppercase tracking-widest text-muted">Device calendar</span>
                     <p className="text-xs text-muted">
-                        Push tasks directly into your device's native calendar. Events update when you modify tasks in TidalTask.
+                        Push tasks directly into your device's native calendar. Events update automatically whenever you add, edit, complete, or delete a task. Only non-repeating, incomplete tasks with a date are synced.
                     </p>
                     <div className="flex flex-wrap gap-2">
-                        <button
-                            type="button"
-                            onClick={handleNativeToggle}
-                            className="rounded-lg bg-accent-blue px-3 py-2 text-xs font-semibold text-white shadow-xs shadow-accent-blue/30 hover:-translate-y-px transition"
-                        >
-                            Connect device calendar
-                        </button>
-                        <button
-                            type="button"
-                            onClick={handleClearNative}
-                            className="rounded-lg border border-(--surface-border) px-3 py-2 text-xs font-semibold text-primary hover:-translate-y-px transition"
-                        >
-                            Remove all events
-                        </button>
+                        {deviceCalendarSyncEnabled ? (
+                            <button
+                                type="button"
+                                onClick={handleClearNative}
+                                disabled={nativeSyncPending}
+                                className="rounded-lg border border-(--surface-border) px-3 py-2 text-xs font-semibold text-primary hover:-translate-y-px transition disabled:opacity-70"
+                            >
+                                {nativeSyncPending ? "Working..." : "Disconnect & remove events"}
+                            </button>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handleNativeToggle}
+                                disabled={nativeSyncPending}
+                                className="rounded-lg bg-accent-blue px-3 py-2 text-xs font-semibold text-white shadow-xs shadow-accent-blue/30 hover:-translate-y-px transition disabled:opacity-70"
+                            >
+                                {nativeSyncPending ? "Connecting..." : "Connect device calendar"}
+                            </button>
+                        )}
                     </div>
                     {nativeStatus && <span className="text-xs text-muted">{nativeStatus}</span>}
                 </div>

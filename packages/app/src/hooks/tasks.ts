@@ -5,6 +5,7 @@ import {
   useMutation,
   UseQueryResult,
   UseMutationResult,
+  QueryClient,
 } from "@tanstack/react-query";
 
 import { Logger } from "@/utils/logger";
@@ -12,6 +13,7 @@ import { Logger } from "@/utils/logger";
 import { getSync } from "./settings";
 import { fetchData } from "@/utils/data";
 import { formatDateTime } from "@/utils/date";
+import { reconcileDeviceCalendarSync } from "@/hooks/calendar";
 
 export type CountData = { count: number };
 
@@ -222,6 +224,12 @@ export function useTaskById(id: string): UseQueryResult {
   });
 }
 
+/* Refetches tasks and pushes the fresh list to the device calendar (no-op unless enabled). */
+async function refreshAndSyncCalendar(queryClient: QueryClient): Promise<void> {
+  const tasks = await queryClient.fetchQuery({ queryKey: ["tasks"], queryFn: loadTasks, staleTime: 0 });
+  await reconcileDeviceCalendarSync(tasks);
+}
+
 /* Adds a task to the tasks database */
 export function useAddTask(): UseMutationResult<void, Error, Task, unknown> {
   const queryClient = useQueryClient();
@@ -234,7 +242,7 @@ export function useAddTask(): UseMutationResult<void, Error, Task, unknown> {
   };
 
   const onSuccess = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    await refreshAndSyncCalendar(queryClient);
   };
 
   return useMutation({ mutationFn, onSuccess });
@@ -251,7 +259,7 @@ export function useAddTasksBulk(): UseMutationResult<void, Error, Partial<Task>[
   const queryClient = useQueryClient();
 
   const onSuccess = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    await refreshAndSyncCalendar(queryClient);
   };
 
   return useMutation({ mutationFn: addTasksBulk, onSuccess });
@@ -277,7 +285,7 @@ export function useUpdateTask(): UseMutationResult<
   };
 
   const onSuccess = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    await refreshAndSyncCalendar(queryClient);
   };
 
   return useMutation({ mutationFn, onSuccess });
@@ -295,7 +303,7 @@ export function useDeleteTask(): UseMutationResult<void, Error, Task, unknown> {
   };
 
   const onSuccess = async () => {
-    await queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    await refreshAndSyncCalendar(queryClient);
   };
 
   return useMutation({ mutationFn, onSuccess });
@@ -313,8 +321,8 @@ export function useDeleteCompletedTasks() {
       if (!response.ok) throw new Error(data?.message || "Failed to delete tasks.");
       return data as { deleted: number };
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    onSuccess: async () => {
+      await refreshAndSyncCalendar(queryClient);
     },
   });
 }
