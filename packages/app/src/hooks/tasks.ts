@@ -14,6 +14,7 @@ import { getSync } from "./settings";
 import { fetchData } from "@/utils/data";
 import { formatDateTime } from "@/utils/date";
 import { reconcileDeviceCalendarSync } from "@/hooks/calendar";
+import { reconcileTaskDueNotifications } from "@/utils/notifs";
 
 export type CountData = { count: number };
 
@@ -228,6 +229,7 @@ export function useTaskById(id: string): UseQueryResult {
 async function refreshAndSyncCalendar(queryClient: QueryClient): Promise<void> {
   const tasks = await queryClient.fetchQuery({ queryKey: ["tasks"], queryFn: loadTasks, staleTime: 0 });
   await reconcileDeviceCalendarSync(tasks);
+  await reconcileTaskDueNotifications(tasks);
 }
 
 /* Adds a task to the tasks database */

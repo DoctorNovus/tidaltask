@@ -6,6 +6,7 @@ import TaskInfoMenuTags from "./Shared/TaskInfoMenuTags";
 import TaskInfoMenuSelect from "./Shared/TaskInfoMenuSelect";
 import ExpandableTextarea from "./Shared/ExpandableTextarea";
 import { useTasks } from "@/hooks/tasks";
+import { useSettings } from "@/hooks/settings";
 import { useMemo } from "react";
 import GroupSelector from "./Shared/GroupSelector";
 
@@ -38,6 +39,7 @@ export default function MenuFields({
     validationError
 }: MenuFieldsProps) {
     const tasks = useTasks();
+    const settings = useSettings();
     const existingGroups = useMemo(() => {
         if (!tasks.isSuccess) return [];
         const seen = new Set<string>();
@@ -45,8 +47,13 @@ export default function MenuFields({
             const g = (t.group ?? "").trim().toLowerCase();
             if (g) seen.add(g);
         });
-        return Array.from(seen).sort();
-    }, [tasks.isSuccess, tasks.data]);
+        const groupConfig = settings.data?.groupConfig ?? {};
+        return Array.from(seen).sort((a, b) => {
+            const oa = groupConfig[a]?.order ?? Infinity;
+            const ob = groupConfig[b]?.order ?? Infinity;
+            return oa !== ob ? oa - ob : a.localeCompare(b);
+        });
+    }, [tasks.isSuccess, tasks.data, settings.data]);
 
 
     return (

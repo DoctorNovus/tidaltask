@@ -11,6 +11,7 @@ import { getSettings, setSettings } from "@/hooks/settings";
 import { Logger } from "./logger";
 import { fetchData } from "./data";
 import { acknowledgeDeliveredNotifications, pullPendingServerNotifications } from "@/hooks/notifications";
+import type { Task } from "@/hooks/tasks";
 
 const FALLBACK_BODY = "Stay on track—open TidalTask to see what's due today.";
 const MAX_DELIVERED_SERVER_NOTIFICATION_IDS = 300;
@@ -261,6 +262,70 @@ function hashNotificationId(value: string): number {
 
   const normalized = Math.abs(hash);
   return (normalized % 2147483646) + 1;
+}
+
+const TASK_DUE_ID_PREFIX = "task-due:";
+
+function taskDueNotificationId(taskId: string): number {
+  return hashNotificationId(`${TASK_DUE_ID_PREFIX}${taskId}`);
+}
+
+function hasTimedFutureDueDate(task: Task): boolean {
+  if (task.repeater) return false;
+  if (task.done === true) return false;
+  const d = new Date(task.date);
+  if (Number.isNaN(d.getTime()) || d.getFullYear() < 2000) return false;
+  // No specific time set (midnight) — there's no "time of day" to notify at.
+  if (d.getHours() === 0 && d.getMinutes() === 0) return false;
+  return d.getTime() > Date.now();
+}
+
+/**
+ * Schedules a local notification to fire at each eligible task's exact due time,
+ * independent of the server-driven reminder system (works offline, no polling delay).
+ * Only non-repeating, incomplete tasks with a specific future time are included —
+ * repeating tasks aren't supported since they can have many pending occurrences.
+ */
+export async function reconcileTaskDueNotifications(tasks: Task[]): Promise<void> {
+  // Local scheduling this far ahead is unreliable in a browser tab (setTimeout doesn't
+  // survive the tab closing), so this is native-only.
+  if (isWeb()) return;
+
+  const settings = await getSettings();
+  const previousIds = settings.scheduledDueNotificationTaskIds || [];
+
+  if (!settings.notifyAtTaskTime) {
+    if (previousIds.length) {
+      await cancelNotifications(previousIds.map((id) => ({ id: taskDueNotificationId(id) } as LocalNotificationSchema)));
+      settings.scheduledDueNotificationTaskIds = [];
+      await setSettings(settings);
+    }
+    return;
+  }
+
+  const eligible = tasks.filter((task) => task.id && hasTimedFutureDueDate(task));
+  const eligibleIds = eligible.map((task) => task.id!);
+
+  const noLongerEligible = previousIds.filter((id) => !eligibleIds.includes(id));
+  if (noLongerEligible.length) {
+    await cancelNotifications(noLongerEligible.map((id) => ({ id: taskDueNotificationId(id) } as LocalNotificationSchema)));
+  }
+
+  // Re-scheduling with the same id replaces any existing pending notification for that
+  // task, so tasks that are still eligible don't need an explicit cancel first.
+  if (eligible.length) {
+    await scheduleNotification(
+      ...eligible.map((task) => ({
+        id: taskDueNotificationId(task.id!),
+        title: "TidalTask",
+        body: task.title,
+        schedule: { at: new Date(task.date) },
+      }))
+    );
+  }
+
+  settings.scheduledDueNotificationTaskIds = eligibleIds;
+  await setSettings(settings);
 }
 
 function getDeliveredServerNotificationIds(settings: Awaited<ReturnType<typeof getSettings>>): Set<string> {

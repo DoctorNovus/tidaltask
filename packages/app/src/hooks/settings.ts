@@ -24,6 +24,8 @@ export interface Settings {
   lastAutoDeleteAt?: number;
   showDeviceCalendarEvents?: boolean;
   deviceCalendarSyncEnabled?: boolean;
+  notifyAtTaskTime?: boolean;
+  scheduledDueNotificationTaskIds?: string[];
 }
 
 /* Gets the settings from the database */

@@ -2,6 +2,7 @@ import {
   cancelNotification,
   getPending,
   setDailyReminders,
+  reconcileTaskDueNotifications,
 } from "@/utils/notifs";
 import { Settings, getSettings, setSettings } from "@/hooks/settings";
 import { useEffect, useState, FormEvent } from "react";
@@ -16,7 +17,7 @@ import ServerNotificationSettings from "./(Settings)/ServerNotificationSettings"
 import ThemeSettings from "./(Settings)/ThemeSettings";
 import CalendarSyncSettings from "./(Settings)/CalendarSyncSettings";
 import DeveloperNotificationSender from "./(Settings)/DeveloperNotificationSender";
-import { useDeleteCompletedTasks } from "@/hooks/tasks";
+import { useDeleteCompletedTasks, useTasks } from "@/hooks/tasks";
 import xIcon from "@/assets/social_icons/x.svg";
 import instagramIcon from "@/assets/social_icons/instagram.svg";
 import facebookIcon from "@/assets/social_icons/facebook.svg";
@@ -33,6 +34,7 @@ const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || "support@tidaltask.a
 export default function SettingsPage() {
   const [tempSettings, setTempSettings] = useState<Settings>({});
   const { mutateAsync: deleteCompletedTasks, isPending: isCleanupPending } = useDeleteCompletedTasks();
+  const tasksQuery = useTasks();
   const [cleanupInterval, setCleanupInterval] = useState<string>("30");
   const [cleanupStatus, setCleanupStatus] = useState<string>("");
   const [appState, setAppState] = useApp();
@@ -165,6 +167,12 @@ export default function SettingsPage() {
 
   const setFontScale = (next: FontScaleId) => {
     setAppState({ ...appState, fontScale: next });
+  };
+
+  const handleToggleTaskDueNotifications = async () => {
+    const next = !tempSettings.notifyAtTaskTime;
+    await UpdateSettings({ notifyAtTaskTime: next });
+    await reconcileTaskDueNotifications(tasksQuery.data || []);
   };
 
   const handleProfileSubmit = async (e: FormEvent) => {
@@ -638,8 +646,29 @@ export default function SettingsPage() {
         <div className="rounded-2xl surface-card border shadow-sm overflow-hidden">
           <SectionHeader id="notifications" title="Notifications" subtitle="Configure reminders and push alerts." />
           {!isClosed("notifications") && (
-          <div className="px-4 py-4 border-t border-(--surface-border)">
+          <div className="px-4 py-4 border-t border-(--surface-border) flex flex-col gap-4">
             <ServerNotificationSettings />
+            {Capacitor.getPlatform() !== "web" && (
+              <div className="pt-4 border-t border-(--surface-border) flex items-center justify-between gap-4">
+                <div className="flex flex-col">
+                  <span className="text-sm text-primary">Local due-time reminders</span>
+                  <span className="text-xs text-muted">
+                    Notify on this device at each task's exact due time, without waiting on the server. Only non-repeating tasks with a specific time are included.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleTaskDueNotifications}
+                  className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold shadow-xs transition ${
+                    tempSettings.notifyAtTaskTime
+                      ? "bg-accent-blue text-white shadow-accent-blue/30"
+                      : "border border-(--surface-border) text-primary hover:-translate-y-px"
+                  }`}
+                >
+                  {tempSettings.notifyAtTaskTime ? "On" : "Off"}
+                </button>
+              </div>
+            )}
           </div>
           )}
         </div>
