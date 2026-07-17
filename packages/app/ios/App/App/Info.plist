@@ -43,6 +43,10 @@
 	<true/>
 	<key>MetaAppID</key>
 	<string>901268969035464</string>
+	<key>NSAlarmKitUsageDescription</key>
+	<string>Allow TidalTask to ring alarms for your tasks so you don't miss them.</string>
+	<key>NSSupportsLiveActivities</key>
+	<true/>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string>Allow Bluetooth access to connect to Meta wearables.</string>
 	<key>NSCalendarsFullAccessUsageDescription</key>

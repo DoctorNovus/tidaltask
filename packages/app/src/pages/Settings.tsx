@@ -14,6 +14,7 @@ import ControllerUser from "./(Settings)/ControlledUser";
 import AnnouncementManager from "./(Settings)/AnnouncementManager";
 import WhatsNew from "./(Settings)/WhatsNew";
 import ServerNotificationSettings from "./(Settings)/ServerNotificationSettings";
+import AlarmSettings from "./(Settings)/AlarmSettings";
 import ThemeSettings from "./(Settings)/ThemeSettings";
 import CalendarSyncSettings from "./(Settings)/CalendarSyncSettings";
 import DeveloperNotificationSender from "./(Settings)/DeveloperNotificationSender";
@@ -669,6 +670,15 @@ export default function SettingsPage() {
                 </button>
               </div>
             )}
+          </div>
+          )}
+        </div>
+
+        <div className="rounded-2xl surface-card border shadow-sm overflow-hidden">
+          <SectionHeader id="alarms" title="Alarms" subtitle="Ring-until-dismissed alarms for tasks and groups." />
+          {!isClosed("alarms") && (
+          <div className="px-4 py-4 border-t border-(--surface-border)">
+            <AlarmSettings />
           </div>
           )}
         </div>

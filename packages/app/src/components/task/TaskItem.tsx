@@ -1,5 +1,5 @@
 import { Task, useUpdateTask } from "@/hooks/tasks";
-import { matchDate } from "@/utils/date";
+import { completeTaskOccurrence } from "@/utils/taskCompletion";
 import { useState } from "react";
 import TaskItemShell from "./TaskItemShell";
 import TaskItemCheckBox from "./TaskItemCheckbox";
@@ -67,25 +67,7 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
     e.stopPropagation();
     setIsCompleting(true);
 
-    if (item.repeater && item.repeater.length != 0) {
-      const activeDate = appData.activeDate;
-      const newDone = Array.isArray(item.done) ? [...item.done] : [];
-
-      let rawDate = new Date(activeDate!);
-      rawDate.setHours(0, 0, 0, 0);
-
-      const foundIdx = newDone.findIndex((entry) => matchDate(new Date(entry), rawDate));
-
-      if (foundIdx === -1) {
-        newDone.push(rawDate.toString());
-      } else {
-        newDone.splice(foundIdx, 1);
-      }
-
-      updateTask({ id: item.id!, data: { ...item, done: newDone } });
-    } else {
-      updateTask({ id: item.id!, data: { ...item, done: !item.done } });
-    }
+    completeTaskOccurrence(item as Task, appData.activeDate!, updateTask);
 
     if (onComplete) onComplete(item as Task);
 

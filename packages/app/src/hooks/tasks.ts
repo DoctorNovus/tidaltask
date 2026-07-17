@@ -15,6 +15,7 @@ import { fetchData } from "@/utils/data";
 import { formatDateTime } from "@/utils/date";
 import { reconcileDeviceCalendarSync } from "@/hooks/calendar";
 import { reconcileTaskDueNotifications } from "@/utils/notifs";
+import { reconcileAlarms } from "@/utils/alarmScheduler";
 
 export type CountData = { count: number };
 
@@ -230,17 +231,19 @@ async function refreshAndSyncCalendar(queryClient: QueryClient): Promise<void> {
   const tasks = await queryClient.fetchQuery({ queryKey: ["tasks"], queryFn: loadTasks, staleTime: 0 });
   await reconcileDeviceCalendarSync(tasks);
   await reconcileTaskDueNotifications(tasks);
+  await reconcileAlarms();
 }
 
 /* Adds a task to the tasks database */
-export function useAddTask(): UseMutationResult<void, Error, Task, unknown> {
+export function useAddTask(): UseMutationResult<Task, Error, Task, unknown> {
   const queryClient = useQueryClient();
 
   const mutationFn = async (task: Task) => {
-    await fetchData("/task", {
+    const response = await fetchData("/task", {
       method: "POST",
       body: serializeTask(task)
     });
+    return normalizeTaskFromApi(await response.json());
   };
 
   const onSuccess = async () => {

@@ -9,6 +9,7 @@ import { useTasks } from "@/hooks/tasks";
 import { useSettings } from "@/hooks/settings";
 import { useMemo } from "react";
 import GroupSelector from "./Shared/GroupSelector";
+import TaskAlarmField, { AlarmDraft } from "./Shared/TaskAlarmField";
 
 
 interface MenuFieldsProps {
@@ -23,6 +24,8 @@ interface MenuFieldsProps {
     isQuickAdd: boolean;
     setIsQuickAdd: any;
     validationError: string | null;
+    alarmDraft?: AlarmDraft | null;
+    setAlarmDraft?: (draft: AlarmDraft | null) => void;
 }
 
 export default function MenuFields({
@@ -36,7 +39,9 @@ export default function MenuFields({
     setQuickTasksInput,
     isQuickAdd,
     setIsQuickAdd,
-    validationError
+    validationError,
+    alarmDraft,
+    setAlarmDraft
 }: MenuFieldsProps) {
     const tasks = useTasks();
     const settings = useSettings();
@@ -230,6 +235,15 @@ export default function MenuFields({
                     <span className="text-xs text-muted px-1 -mt-2">
                         Repeating tasks can be completed once per due day; completion is tracked per occurrence.
                     </span>
+
+                    {/* Alarm */}
+                    <TaskAlarmField
+                        taskId={type === "edit" ? tempData.id : undefined}
+                        taskDate={tempData.date instanceof Date ? tempData.date : new Date(tempData.date)}
+                        taskRepeater={tempData.repeater}
+                        draft={alarmDraft}
+                        onDraftChange={setAlarmDraft}
+                    />
 
                     {/* Priority */}
                     <div className="flex flex-col gap-2">

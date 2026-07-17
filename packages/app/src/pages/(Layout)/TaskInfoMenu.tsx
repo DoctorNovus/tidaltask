@@ -10,6 +10,10 @@ import {
 
 import { createID } from "@/utils/id";
 import { scheduleNotification } from "@/utils/notifs";
+import { useAddAlarm } from "@/hooks/alarms";
+import { reconcileAlarms } from "@/utils/alarmScheduler";
+import { AlarmDraft, repeatDaysForTask, alarmTimeString } from "./(TaskInfoMenu)/Shared/TaskAlarmField";
+import { formatDate } from "@/utils/date";
 
 import {
   Dialog,
@@ -47,9 +51,11 @@ export default function TaskInfoMenu({
     payload: Record<string, any>
   ) => ({ ...data, ...payload });
 
-  const { mutate: addTask } = useAddTask();
+  const { mutate: addTask, mutateAsync: addTaskAsync } = useAddTask();
   const { mutateAsync: addTasksBulk } = useAddTasksBulk();
   const { mutate: updateTask } = useUpdateTask();
+  const { mutateAsync: addAlarmFromDraft } = useAddAlarm();
+  const [alarmDraft, setAlarmDraft] = useState<AlarmDraft | null>(null);
 
   const getDefaultDate = () => {
     const now = new Date();
@@ -139,6 +145,7 @@ export default function TaskInfoMenu({
     });
     setQuickTasksInput("");
     setIsQuickAdd(false);
+    setAlarmDraft(null);
   }, [isOpen, appData.activeDate]);
 
   if (type == "edit") {
@@ -217,6 +224,7 @@ export default function TaskInfoMenu({
     setQuickTasksInput("");
     setIsQuickAdd(false);
     setValidationError(null);
+    setAlarmDraft(null);
     setAppData({ ...appData, activeTask: undefined });
     setIsOpen(false);
   };
@@ -324,10 +332,28 @@ export default function TaskInfoMenu({
     const cleanedTask = {
       ...tempData,
       title: tempData.title.trim(),
-    };
+    } as Task;
 
-    addTask(cleanedTask as Task);
-    createNotification(cleanedTask as Task);
+    if (alarmDraft?.enabled) {
+      addTaskAsync(cleanedTask).then(async (createdTask) => {
+        if (!createdTask?.id) return;
+        const when = alarmDraft.when;
+        const repeatDays = repeatDaysForTask(cleanedTask.repeater, when);
+        await addAlarmFromDraft({
+          scope: "task",
+          task: createdTask.id,
+          time: alarmTimeString(when),
+          repeatDays,
+          date: repeatDays.length === 0 ? formatDate(when) : null,
+          enabled: true,
+        });
+        await reconcileAlarms();
+      });
+    } else {
+      addTask(cleanedTask);
+    }
+
+    createNotification(cleanedTask);
 
     showToast("Task created", "create");
     resetForm();
@@ -377,6 +403,8 @@ export default function TaskInfoMenu({
                   appData={appData}
                   setAppData={setAppData}
                   validationError={validationError}
+                  alarmDraft={alarmDraft}
+                  setAlarmDraft={setAlarmDraft}
                 />
                 <MenuEdit
                   type={type!}

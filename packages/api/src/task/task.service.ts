@@ -1,6 +1,7 @@
 import { Injectable } from "@outwalk/firefly";
 import { Task } from "./task.entity";
 import { User } from "@/user/user.entity";
+import { Alarm } from "@/alarm/alarm.entity";
 import { UpdateQuery } from "mongoose";
 import mongoose from "mongoose";
 
@@ -110,10 +111,14 @@ export class TaskService {
 
     async addTask(data: Partial<Task>): Promise<Task> {
         const tags = this.normalizeTags(data.tags);
-        return Task.create({
+        const created = await Task.create({
             ...data,
             ...(tags ? { tags } : {}),
         });
+
+        // Non-lean documents don't carry the `id` virtual (only .lean() queries do via
+        // the mongoose-lean-id plugin) — re-fetch lean so callers can rely on `.id`.
+        return Task.findById(created._id).lean<Task>().exec() as Promise<Task>;
     }
 
     async addTasks(data: Partial<Task>[]): Promise<Task[]> {
@@ -122,7 +127,8 @@ export class TaskService {
             return { ...task, ...(tags ? { tags } : {}) };
         });
 
-        return Task.insertMany(withTags);
+        const created = await Task.insertMany(withTags);
+        return Task.find({ _id: { $in: created.map((t) => t._id) } }).lean<Task[]>().exec();
     }
 
     async updateTask(id: string, data: Partial<Task> | UpdateQuery<Task>): Promise<Task | null> {
@@ -257,7 +263,9 @@ export class TaskService {
     }
 
     async deleteTask(id: string): Promise<Task | null> {
-        return Task.findByIdAndDelete(id).lean<Task>().exec();
+        const deleted = await Task.findByIdAndDelete(id).lean<Task>().exec();
+        if (deleted) await Alarm.deleteMany({ task: id }).exec();
+        return deleted;
     }
 
     async deleteCompletedTasks(userId: string, olderThanDays?: number): Promise<{ deleted: number }> {

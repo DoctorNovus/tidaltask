@@ -16,6 +16,7 @@ import LoginUser from "@/pages/Auth/LoginUser";
 import RegisterUser from "@/pages/Auth/RegisterUser";
 import ForgotPassword from "@/pages/Auth/ForgotPassword";
 import AuthBootstrap from "@/components/AuthBootstrap";
+import AlarmBridge from "@/components/AlarmBridge";
 import AnnouncementCenter from "@/components/announcements/AnnouncementCenter";
 import { useWidgetSync } from "@/hooks/widgetSync";
 import "./index.css";
@@ -99,6 +100,7 @@ export default function App() {
         <div className="h-full overflow-y-auto overflow-x-hidden">
             <QueryClientProvider client={queryClient}>
                 <AuthBootstrap />
+                <AlarmBridge />
                 <WidgetSyncBridge />
                 <AppContext.Provider value={reducer}>
                     <BrowserRouter>

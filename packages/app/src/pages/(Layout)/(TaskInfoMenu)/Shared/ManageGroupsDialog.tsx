@@ -2,6 +2,7 @@ import { Dialog, DialogPanel, Transition } from "@headlessui/react";
 import { ChevronUpIcon, ChevronDownIcon, EyeIcon, EyeSlashIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { useEffect, useState } from "react";
 import { useSettings, useUpdateSettings, GroupConfig } from "@/hooks/settings";
+import GroupAlarmField from "./GroupAlarmField";
 
 interface GroupRow {
   key: string;
@@ -144,6 +145,9 @@ export default function ManageGroupsDialog({ open, onClose, groups }: ManageGrou
                     </div>
                     <span className="text-xs text-muted select-none">Show when empty</span>
                   </label>
+
+                  {/* Group alarm — saves immediately (synced separately from the settings below) */}
+                  <GroupAlarmField group={row.key} />
                 </div>
               ))}
             </div>

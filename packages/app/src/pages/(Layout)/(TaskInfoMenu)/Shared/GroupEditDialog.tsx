@@ -3,6 +3,8 @@ import { XMarkIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/20/solid";
 import { useEffect, useState } from "react";
 import { useSettings, useUpdateSettings } from "@/hooks/settings";
 import { Task, useUpdateTask } from "@/hooks/tasks";
+import { useAlarms, useUpdateAlarm } from "@/hooks/alarms";
+import { reconcileAlarms } from "@/utils/alarmScheduler";
 
 interface GroupEditDialogProps {
   open: boolean;
@@ -15,6 +17,8 @@ export default function GroupEditDialog({ open, onClose, groupKey, tasks }: Grou
   const settings = useSettings();
   const { mutate: updateSettings } = useUpdateSettings();
   const { mutateAsync: updateTask } = useUpdateTask();
+  const { data: alarms } = useAlarms();
+  const { mutateAsync: updateAlarm } = useUpdateAlarm();
 
   const [name, setName] = useState("");
   const [visible, setVisible] = useState(true);
@@ -39,6 +43,14 @@ export default function GroupEditDialog({ open, onClose, groupKey, tasks }: Grou
           t.id ? updateTask({ id: t.id, data: { ...t, group: newKey } }) : Promise.resolve()
         )
       );
+
+      // Re-point the group's alarm (if any) to the new key so it doesn't orphan.
+      const groupAlarm = alarms?.find((a) => a.scope === "group" && a.group === groupKey);
+      if (groupAlarm) {
+        await updateAlarm({ id: groupAlarm.id, data: { group: newKey } });
+        await reconcileAlarms();
+      }
+
       // Move config from old key to new key
       const { [groupKey]: old, ...rest } = existing;
       updateSettings({

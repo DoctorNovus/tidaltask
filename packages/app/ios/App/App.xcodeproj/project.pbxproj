@@ -8,7 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		2FAD9763203C412B000D30F8 /* config.xml in Resources */ = {isa = PBXBuildFile; fileRef = 2FAD9762203C412B000D30F8 /* config.xml */; };
-
+		4574FBB6300AA46C001BB1D0 /* AlarmKitPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4574FBB4300AA46C001BB1D0 /* AlarmKitPlugin.swift */; };
+		4574FBB9300AA4B8001BB1D0 /* AlarmKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4574FBB7300AA486001BB1D0 /* AlarmKit.framework */; platformFilter = ios; };
 		45E56A082F246E0300B3D91F /* SiriIntents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E56A072F246E0300B3D91F /* SiriIntents.swift */; };
 		45E56A0A2F246FE600B3D91F /* SecureTokenPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 45E56A092F246FE600B3D91F /* SecureTokenPlugin.swift */; };
 		50379B232058CBB4000EE86E /* capacitor.config.json in Resources */ = {isa = PBXBuildFile; fileRef = 50379B222058CBB4000EE86E /* capacitor.config.json */; };
@@ -17,12 +18,12 @@
 		504EC30F1FED79650016851F /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 504EC30E1FED79650016851F /* Assets.xcassets */; };
 		504EC3121FED79650016851F /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 504EC3101FED79650016851F /* LaunchScreen.storyboard */; };
 		50B271D11FEDC1A000F3C39B /* public in Resources */ = {isa = PBXBuildFile; fileRef = 50B271D01FEDC1A000F3C39B /* public */; };
-		D2FB2190CEE9F71AE38A374F /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00A98C7D6F73A65A376007B5 /* Pods_App.framework */; };
 		C1000000000000000000AA02 /* CalendarPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1000000000000000000AA01 /* CalendarPlugin.swift */; };
 		C1000000000000000000AA04 /* WidgetDataPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1000000000000000000AA03 /* WidgetDataPlugin.swift */; };
 		C1000000000000000000AA0A /* TidalTaskWidgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1000000000000000000AA05 /* TidalTaskWidgetBundle.swift */; };
 		C1000000000000000000AA0B /* TidalTaskWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1000000000000000000AA06 /* TidalTaskWidget.swift */; };
 		C1000000000000000000AA15 /* TidalTaskWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = C1000000000000000000AA09 /* TidalTaskWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D2FB2190CEE9F71AE38A374F /* Pods_App.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 00A98C7D6F73A65A376007B5 /* Pods_App.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -54,6 +55,8 @@
 		073DF59E93C38CBBCEF1DEFB /* Pods-App.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-App.release.xcconfig"; path = "Target Support Files/Pods-App/Pods-App.release.xcconfig"; sourceTree = "<group>"; };
 		2FAD9762203C412B000D30F8 /* config.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = config.xml; sourceTree = "<group>"; };
 		45368DBD2BA101B2002D9282 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
+		4574FBB4300AA46C001BB1D0 /* AlarmKitPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AlarmKitPlugin.swift; sourceTree = "<group>"; };
+		4574FBB7300AA486001BB1D0 /* AlarmKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AlarmKit.framework; path = System/Library/Frameworks/AlarmKit.framework; sourceTree = SDKROOT; };
 		45E56A072F246E0300B3D91F /* SiriIntents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SiriIntents.swift; sourceTree = "<group>"; };
 		45E56A092F246FE600B3D91F /* SecureTokenPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecureTokenPlugin.swift; sourceTree = "<group>"; };
 		50379B222058CBB4000EE86E /* capacitor.config.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = capacitor.config.json; sourceTree = "<group>"; };
@@ -80,6 +83,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D2FB2190CEE9F71AE38A374F /* Pods_App.framework in Frameworks */,
+				4574FBB9300AA4B8001BB1D0 /* AlarmKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -105,6 +109,7 @@
 		27E2DDA53C4D2A4D1A88CE4A /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				4574FBB7300AA486001BB1D0 /* AlarmKit.framework */,
 				00A98C7D6F73A65A376007B5 /* Pods_App.framework */,
 			);
 			name = Frameworks;
@@ -113,6 +118,7 @@
 		504EC2FB1FED79650016851F = {
 			isa = PBXGroup;
 			children = (
+				4574FBB4300AA46C001BB1D0 /* AlarmKitPlugin.swift */,
 				C1000000000000000000AA01 /* CalendarPlugin.swift */,
 				C1000000000000000000AA03 /* WidgetDataPlugin.swift */,
 				45E56A092F246FE600B3D91F /* SecureTokenPlugin.swift */,
@@ -311,6 +317,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				45E56A082F246E0300B3D91F /* SiriIntents.swift in Sources */,
+				4574FBB6300AA46C001BB1D0 /* AlarmKitPlugin.swift in Sources */,
 				45E56A0A2F246FE600B3D91F /* SecureTokenPlugin.swift in Sources */,
 				504EC3081FED79650016851F /* AppDelegate.swift in Sources */,
 				C1000000000000000000AA02 /* CalendarPlugin.swift in Sources */,
@@ -485,6 +492,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B9UMLF8BH7;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TidalTask;
@@ -519,6 +527,7 @@
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = B9UMLF8BH7;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				INFOPLIST_FILE = App/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = TidalTask;
@@ -627,7 +636,6 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
-
 	};
 	rootObject = 504EC2FC1FED79650016851F /* Project object */;
 }
