@@ -317,6 +317,10 @@ export default function TaskContainer({
 
   const hasSelection = selectedTaskIds.length > 0;
 
+  const visibleTasks = baseTasks.filter((task) =>
+    taskFilter === "incomplete" ? isTaskDone(task, appData.activeDate ?? new Date()) : true
+  );
+
   const renderBulkActionCard = () => {
     if (!selectionMode || !bulkAction) return null;
 
@@ -605,8 +609,8 @@ export default function TaskContainer({
                 as="div"
                 className="w-full relative z-10 flex flex-row items-center rounded-2xl bg-white dark:bg-(--surface-card) border border-slate-200 dark:border-(--surface-border) px-3 py-3 text-primary shadow-sm group/card"
               >
-                <div className="w-full flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex flex-row items-center min-w-0 py-1 gap-2 flex-1">
+                <div className="w-full flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                  <div className="flex flex-row items-center min-w-0 sm:min-w-[140px] py-1 gap-2 flex-1">
                     <ChevronRightIcon
                       className={`shrink-0 ${open ? "rotate-90 transform" : ""}`}
                       width="32"
@@ -682,7 +686,7 @@ export default function TaskContainer({
                             className="rounded-lg border border-accent-blue/30 bg-white dark:bg-(--surface-raised) dark:border-(--surface-border) px-3 py-1.5 text-xs font-semibold text-accent-blue shadow-xs transition hover:shadow-md hover:ring-1 hover:ring-accent-blue/30"
                             onClick={(e) => {
                               e.stopPropagation();
-                              setSelectedTaskIds(baseTasks.map((t) => t.id!).filter(Boolean));
+                              setSelectedTaskIds(visibleTasks.map((t) => t.id!).filter(Boolean));
                             }}
                           >
                             Select All

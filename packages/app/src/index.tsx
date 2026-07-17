@@ -29,6 +29,7 @@ export const queryClient = new QueryClient({
         }
     }
 });
+if (import.meta.env.DEV) (window as any).__queryClient = queryClient;
 
 /** initialize the app outside the react lifecycle */
 async function initialize() {
@@ -95,6 +96,18 @@ export default function App() {
             window.localStorage.setItem("tidaltask-font-scale", scale);
         } catch { /* ignore */ }
     }, [appState?.fontScale]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem("tidaltask-task-density", appState?.taskDensity ?? "comfortable");
+        } catch { /* ignore */ }
+    }, [appState?.taskDensity]);
+
+    useEffect(() => {
+        try {
+            window.localStorage.setItem("tidaltask-task-shape", appState?.taskShape ?? "bubbly");
+        } catch { /* ignore */ }
+    }, [appState?.taskShape]);
 
     return (
         <div className="h-full overflow-y-auto overflow-x-hidden">

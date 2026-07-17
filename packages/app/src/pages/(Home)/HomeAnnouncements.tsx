@@ -145,8 +145,8 @@ export default function HomeAnnouncements() {
                 </ul>
             )}
 
-            {/* Add a note — desktop only */}
-            <div className="hidden md:flex flex-col gap-2">
+            {/* Add a note */}
+            <div className="flex flex-col gap-2">
                 <textarea
                     value={draft}
                     onChange={(e) => setDraft(e.target.value)}

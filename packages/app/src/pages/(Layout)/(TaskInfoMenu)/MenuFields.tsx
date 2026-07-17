@@ -7,9 +7,10 @@ import TaskInfoMenuSelect from "./Shared/TaskInfoMenuSelect";
 import ExpandableTextarea from "./Shared/ExpandableTextarea";
 import { useTasks } from "@/hooks/tasks";
 import { useSettings } from "@/hooks/settings";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import GroupSelector from "./Shared/GroupSelector";
 import TaskAlarmField, { AlarmDraft } from "./Shared/TaskAlarmField";
+import { ChevronRightIcon } from "@heroicons/react/16/solid";
 
 
 interface MenuFieldsProps {
@@ -45,14 +46,18 @@ export default function MenuFields({
 }: MenuFieldsProps) {
     const tasks = useTasks();
     const settings = useSettings();
+    const [showMoreQuickOptions, setShowMoreQuickOptions] = useState(false);
     const existingGroups = useMemo(() => {
-        if (!tasks.isSuccess) return [];
         const seen = new Set<string>();
-        tasks.data.forEach((t) => {
-            const g = (t.group ?? "").trim().toLowerCase();
-            if (g) seen.add(g);
-        });
+        if (tasks.isSuccess) {
+            tasks.data.forEach((t) => {
+                const g = (t.group ?? "").trim().toLowerCase();
+                if (g) seen.add(g);
+            });
+        }
         const groupConfig = settings.data?.groupConfig ?? {};
+        // Groups created via the group editor but not yet assigned to a task still belong in the list.
+        Object.keys(groupConfig).forEach((g) => seen.add(g));
         return Array.from(seen).sort((a, b) => {
             const oa = groupConfig[a]?.order ?? Infinity;
             const ob = groupConfig[b]?.order ?? Infinity;
@@ -102,26 +107,37 @@ export default function MenuFields({
                                 )}
                             </div>
 
-                            <div className="md:grid md:grid-cols-2 md:gap-4 flex flex-col gap-4">
-                                <div className="flex flex-col gap-1">
-                                    <label className="text-sm font-semibold text-primary px-1">Date &amp; Time</label>
-                                    <DateTimePicker
-                                        value={formatDateTime(tempData.date instanceof Date && tempData.date.getTime() > 0 ? tempData.date : new Date())}
-                                        onChange={(val) => setTempData({ date: new Date(val) })}
-                                    />
-                                </div>
-                                <GroupSelector
-                                    value={tempData.group ?? ""}
-                                    groups={existingGroups}
-                                    onChange={(val) => setTempData({ group: val })}
+                            <div className="flex flex-col gap-1">
+                                <label className="text-sm font-semibold text-primary px-1">Date &amp; Time</label>
+                                <DateTimePicker
+                                    value={formatDateTime(tempData.date instanceof Date && tempData.date.getTime() > 0 ? tempData.date : new Date())}
+                                    onChange={(val) => setTempData({ date: new Date(val) })}
                                 />
                             </div>
 
-                            <TaskInfoMenuTags
-                                tags={tempData.tags ?? []}
-                                onChange={(tags) => setTempData({ tags })}
-                                helperText="Tags will be applied to every task you add."
-                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowMoreQuickOptions((v) => !v)}
+                                className="flex items-center gap-1 px-1 text-xs font-semibold text-muted hover:text-accent-blue transition w-fit"
+                            >
+                                <ChevronRightIcon className={`h-3.5 w-3.5 transition-transform ${showMoreQuickOptions ? "rotate-90" : ""}`} />
+                                {showMoreQuickOptions ? "Fewer options" : "Add more options"}
+                            </button>
+
+                            {showMoreQuickOptions && (
+                                <div className="flex flex-col gap-4">
+                                    <GroupSelector
+                                        value={tempData.group ?? ""}
+                                        groups={existingGroups}
+                                        onChange={(val) => setTempData({ group: val })}
+                                    />
+                                    <TaskInfoMenuTags
+                                        tags={tempData.tags ?? []}
+                                        onChange={(tags) => setTempData({ tags })}
+                                        helperText="Tags will be applied to every task you add."
+                                    />
+                                </div>
+                            )}
                         </>
                     )}
                 </>
@@ -185,13 +201,13 @@ export default function MenuFields({
                                 <label className="text-sm font-semibold text-primary px-1 opacity-0 select-none">Due Date</label>
                                 <button
                                     onClick={() => {
-                                        const restoredDate = appData.storedDate ?? new Date();
+                                        const restoredDate = appData.storedDate ?? new Date(Date.now() + 1000 * 60 * 60 * 24);
                                         setAppData({ ...appData, activeDate: restoredDate, storedDate: undefined });
                                         setTempData({ ...tempData, date: restoredDate });
                                     }}
                                     className="h-10 w-full text-center rounded-lg px-3 py-2 text-sm font-semibold shadow-xs transition bg-accent-blue text-white hover:-translate-y-px"
                                 >
-                                    Add Due Date
+                                    Add Due Date (+24h)
                                 </button>
                             </div>
                         )}

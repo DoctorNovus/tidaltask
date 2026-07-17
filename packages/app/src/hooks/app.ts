@@ -21,6 +21,9 @@ export const FONT_SCALE_OPTIONS = [
 
 export type FontScaleId = typeof FONT_SCALE_OPTIONS[number]["id"];
 
+export type TaskDensity = "comfortable" | "compact";
+export type TaskShape = "bubbly" | "blocky";
+
 export function applyFontScale(id: FontScaleId) {
   const opt = FONT_SCALE_OPTIONS.find(o => o.id === id) ?? FONT_SCALE_OPTIONS[1];
   const el = document.getElementById("zoom-content");
@@ -37,6 +40,8 @@ export interface AppOptions {
 
   theme?: ThemeChoice;
   fontScale?: FontScaleId;
+  taskDensity?: TaskDensity;
+  taskShape?: TaskShape;
 
   authorized: boolean;
 }
@@ -50,6 +55,8 @@ const initialData: AppOptions = {
 
   theme: "auto",
   fontScale: "md",
+  taskDensity: "comfortable",
+  taskShape: "bubbly",
   authorized: false
 };
 
@@ -59,6 +66,8 @@ export function useAppReducer(): [AppOptions, React.Dispatch<Partial<AppOptions>
   const initializer = () => {
     let theme = initialData.theme;
     let fontScale = initialData.fontScale;
+    let taskDensity = initialData.taskDensity;
+    let taskShape = initialData.taskShape;
 
     if (typeof window !== "undefined") {
       const stored = window.localStorage.getItem("tidaltask-theme")
@@ -74,9 +83,19 @@ export function useAppReducer(): [AppOptions, React.Dispatch<Partial<AppOptions>
       if (storedScale && FONT_SCALE_OPTIONS.some(o => o.id === storedScale)) {
         fontScale = storedScale;
       }
+
+      const storedDensity = window.localStorage.getItem("tidaltask-task-density") as TaskDensity | null;
+      if (storedDensity === "comfortable" || storedDensity === "compact") {
+        taskDensity = storedDensity;
+      }
+
+      const storedShape = window.localStorage.getItem("tidaltask-task-shape") as TaskShape | null;
+      if (storedShape === "bubbly" || storedShape === "blocky") {
+        taskShape = storedShape;
+      }
     }
 
-    return { ...initialData, theme, fontScale };
+    return { ...initialData, theme, fontScale, taskDensity, taskShape };
   };
 
   return useReducer(reducer, initialData, initializer);

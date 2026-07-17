@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router";
-import { useTasks, Task } from "@/hooks/tasks";
+import { useTasks, Task, useUpdateTask } from "@/hooks/tasks";
 import { occursOnDate, isTaskDone } from "@/utils/data";
+import { completeTaskOccurrence } from "@/utils/taskCompletion";
 import TaskInfoMenu from "@/pages/(Layout)/TaskInfoMenu";
 import { useApp } from "@/hooks/app";
 import { useSettings } from "@/hooks/settings";
 import { useDeviceCalendarEvents, DeviceCalendarEvent } from "@/hooks/calendar";
+import { CheckIcon } from "@heroicons/react/20/solid";
 
 type Scope = "today" | "tomorrow" | "week" | "month" | "overdue" | "all";
 type ViewMode = "week" | "month";
@@ -212,7 +214,33 @@ export default function CalendarPage() {
     return scopeToDates(scope, today);
   }, [view, weekStart, monthAnchor, scope, today]);
 
-  const grouped = useMemo(() => groupTasksByDay(tasks.data || [], start, end), [tasks.data, start, end]);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const searchedTasks = useMemo(() => {
+    const all = tasks.data || [];
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return all;
+
+    return all.filter((task) => {
+      const title = (task.title ?? "").toLowerCase();
+      const description = (task.description ?? "").toLowerCase();
+      const group = (task.group ?? "").toLowerCase();
+      const tags = Array.isArray(task.tags)
+        ? task.tags
+            .map((tag) => (typeof tag === "string" ? tag.toLowerCase() : ""))
+            .join(" ")
+        : "";
+
+      return (
+        title.includes(term) ||
+        description.includes(term) ||
+        group.includes(term) ||
+        tags.includes(term)
+      );
+    });
+  }, [tasks.data, searchTerm]);
+
+  const grouped = useMemo(() => groupTasksByDay(searchedTasks, start, end), [searchedTasks, start, end]);
 
   const deviceEvents = useDeviceCalendarEvents(start, end, showDeviceCalendarEvents);
   const eventsGrouped = useMemo(
@@ -252,9 +280,8 @@ export default function CalendarPage() {
   }, [mobileMontContainerH, monthWeeks.length]);
 
   const overdueList = useMemo(() => {
-    if (!tasks.data) return [];
-    return tasks.data.filter((task) => isOverdue(task, today));
-  }, [tasks.data, today]);
+    return searchedTasks.filter((task) => isOverdue(task, today));
+  }, [searchedTasks, today]);
 
   const handleViewChange = (next: ViewMode) => {
     setView(next);
@@ -309,31 +336,85 @@ export default function CalendarPage() {
     setIsTaskMenuOpen(true);
   };
 
-  const renderTask = (task: Task, day?: Date) => (
-    <button
-      key={task.id ?? task.title}
-      type="button"
-      onClick={() => openTask(task, day)}
-      className="flex flex-col rounded-xl surface-card border px-3 py-2 xl:px-2 xl:py-1.5 text-left shadow-xs transition hover:border-accent-blue/40"
-    >
-      <div className="flex items-center justify-between gap-1">
-        <span className="text-sm xl:text-xs font-semibold text-primary xl:truncate">{task.title}</span>
-        {priorityBadge(task.priority)}
+  const { mutate: updateTaskMutation } = useUpdateTask();
+
+  const isActiveDay = (day: Date) => dayKey(day) === dayKey(normalizeDay(appState.activeDate ?? today));
+
+  const selectDate = (day: Date) => {
+    setAppState({ ...appState, activeDate: day });
+  };
+
+  const toggleTaskComplete = (task: Task, day: Date, e: React.MouseEvent) => {
+    e.stopPropagation();
+    completeTaskOccurrence(task, day, updateTaskMutation);
+  };
+
+  const completeToggle = (task: Task, day: Date, compact = false) => {
+    const pending = isPendingOnDate(task, day);
+    return (
+      <button
+        type="button"
+        onClick={(e) => toggleTaskComplete(task, day, e)}
+        title={pending ? "Mark complete" : "Mark incomplete"}
+        aria-label={pending ? "Mark complete" : "Mark incomplete"}
+        className={`shrink-0 flex items-center justify-center rounded-md border-2 transition ${compact ? "h-4 w-4" : "h-5 w-5"} ${
+          pending
+            ? "border-accent-blue/50 bg-white hover:border-accent-blue dark:bg-[rgba(15,23,42,0.7)]"
+            : "border-accent-blue bg-linear-to-br from-accent-blue-600 to-accent-blue-500"
+        }`}
+      >
+        {!pending && <CheckIcon className={compact ? "h-3 w-3 text-white" : "h-3.5 w-3.5 text-white"} />}
+      </button>
+    );
+  };
+
+  // Trackpad two-finger swipe fires as wheel events with a horizontal delta.
+  // Debounce so one physical swipe gesture only advances the range once.
+  const wheelCooldown = useRef(false);
+  const handleWheelNav = (e: React.WheelEvent) => {
+    if (Math.abs(e.deltaX) < 24 || Math.abs(e.deltaX) <= Math.abs(e.deltaY)) return;
+    if (wheelCooldown.current) return;
+
+    wheelCooldown.current = true;
+    if (view === "week") changeWeek(e.deltaX > 0 ? 1 : -1);
+    else changeMonth(e.deltaX > 0 ? 1 : -1);
+
+    window.setTimeout(() => { wheelCooldown.current = false; }, 450);
+  };
+
+  const renderTask = (task: Task, day?: Date) => {
+    const effectiveDay = day ?? normalizeDay(new Date(task.date));
+    return (
+      <div
+        key={task.id ?? task.title}
+        className="flex items-start gap-2 rounded-xl surface-card border px-3 py-2 xl:px-2 xl:py-1.5 shadow-xs transition hover:border-accent-blue/40"
+      >
+        <div className="pt-0.5">{completeToggle(task, effectiveDay)}</div>
+        <button
+          type="button"
+          onClick={() => openTask(task, day)}
+          className="flex flex-1 min-w-0 flex-col text-left"
+        >
+          <div className="flex items-center justify-between gap-1">
+            <span className="text-sm xl:text-xs font-semibold text-primary xl:truncate">{task.title}</span>
+            {priorityBadge(task.priority)}
+          </div>
+          {task.description ? (
+            <p className="mt-1 text-xs text-muted line-clamp-2 xl:hidden">{task.description}</p>
+          ) : null}
+          {Array.isArray(task.tags) && task.tags.length > 0 && (
+            <div className="mt-2 flex flex-wrap gap-2 xl:hidden">
+              {task.tags.map((tag) => (
+                <span key={String(tag)} className="rounded-full bg-accent-blue/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-blue-800 ring-1 ring-accent-blue/20">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </button>
       </div>
-      {task.description ? (
-        <p className="mt-1 text-xs text-muted line-clamp-2 xl:hidden">{task.description}</p>
-      ) : null}
-      {Array.isArray(task.tags) && task.tags.length > 0 && (
-        <div className="mt-2 flex flex-wrap gap-2 xl:hidden">
-          {task.tags.map((tag) => (
-            <span key={String(tag)} className="rounded-full bg-accent-blue/10 px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-accent-blue-800 ring-1 ring-accent-blue/20">
-              #{tag}
-            </span>
-          ))}
-        </div>
-      )}
-    </button>
-  );
+    );
+  };
 
   const renderEventChip = (event: DeviceCalendarEvent, compact = false) => (
     <div
@@ -366,7 +447,12 @@ export default function CalendarPage() {
           return (
             <div key={key} className="flex flex-col">
               {/* Column header */}
-              <div className={`flex flex-col shrink-0 items-center gap-1 px-2 py-3 border-b border-(--surface-border) ${isToday ? "bg-(--accent-subtle)" : ""}`}>
+              <button
+                type="button"
+                onClick={() => selectDate(day)}
+                title={`Set active date to ${formatLabel(day, { month: "long", day: "numeric" })}`}
+                className={`flex flex-col shrink-0 items-center gap-1 w-full px-2 py-3 border-b border-(--surface-border) transition hover:bg-(--accent-subtle) ${isToday ? "bg-(--accent-subtle)" : ""} ${isActiveDay(day) ? "ring-2 ring-inset ring-accent-blue/50" : ""}`}
+              >
                 <span className={`text-[11px] font-semibold uppercase tracking-wider ${isToday ? "text-accent-blue" : "text-muted"}`}>
                   {formatLabel(day, { weekday: "short" })}
                 </span>
@@ -375,33 +461,38 @@ export default function CalendarPage() {
                 }`}>
                   {day.getDate()}
                 </div>
-              </div>
+              </button>
               {/* Tasks */}
               <div className="flex flex-col flex-1 min-h-0 overflow-y-auto gap-2 p-2">
                 {visible.length === 0 && (
                   <span className="text-center text-xs text-muted py-3">—</span>
                 )}
                 {visible.map((task) => (
-                  <button
+                  <div
                     key={task.id ?? task.title}
-                    type="button"
-                    onClick={() => openTask(task, day)}
-                    className="relative flex flex-col items-start w-full rounded-lg bg-(--surface-card) border border-(--surface-border) px-2 py-1.5 text-left transition hover:border-accent-blue/40"
+                    className="relative flex items-start gap-1.5 w-full rounded-lg bg-(--surface-card) border border-(--surface-border) px-2 py-1.5 transition hover:border-accent-blue/40"
                   >
-                    {task.priority ? (
-                      <span className="absolute top-1 right-1 leading-none">
-                        {priorityBadge(task.priority, true)}
+                    <div className="pt-0.5">{completeToggle(task, day, true)}</div>
+                    <button
+                      type="button"
+                      onClick={() => openTask(task, day)}
+                      className="relative flex flex-1 min-w-0 flex-col items-start text-left"
+                    >
+                      {task.priority ? (
+                        <span className="absolute top-0 right-1 leading-none">
+                          {priorityBadge(task.priority, true)}
+                        </span>
+                      ) : null}
+                      {hasTime(task) && (
+                        <span className="text-[10px] font-bold text-accent-blue leading-none mb-0.5">
+                          {formatTime(task)}
+                        </span>
+                      )}
+                      <span className="text-xs font-semibold text-primary leading-snug line-clamp-2 pr-3">
+                        {task.title}
                       </span>
-                    ) : null}
-                    {hasTime(task) && (
-                      <span className="text-[10px] font-bold text-accent-blue leading-none mb-0.5">
-                        {formatTime(task)}
-                      </span>
-                    )}
-                    <span className="text-xs font-semibold text-primary leading-snug line-clamp-2 pr-3">
-                      {task.title}
-                    </span>
-                  </button>
+                    </button>
+                  </div>
                 ))}
                 {overflow > 0 && (
                   <span className="text-xs font-semibold text-accent-blue px-1">+{overflow} more</span>
@@ -431,7 +522,12 @@ export default function CalendarPage() {
           const eventOverflow = dayEvents.length - 2;
           return (
             <div key={key} className={idx > 0 ? "border-t border-(--surface-border)" : ""}>
-              <div className={`flex items-center gap-3 px-4 py-2.5 ${isToday ? "bg-(--accent-subtle)" : ""}`}>
+              <button
+                type="button"
+                onClick={() => selectDate(day)}
+                title={`Set active date to ${formatLabel(day, { month: "long", day: "numeric" })}`}
+                className={`flex items-center gap-3 w-full px-4 py-2.5 text-left transition ${isToday ? "bg-(--accent-subtle)" : ""} ${isActiveDay(day) ? "ring-2 ring-inset ring-accent-blue/50" : ""}`}
+              >
                 <span className={`shrink-0 w-8 text-xs font-bold ${isToday ? "text-accent-blue" : "text-muted"}`}>
                   {formatLabel(day, { weekday: "short" })}
                 </span>
@@ -443,22 +539,24 @@ export default function CalendarPage() {
                     {dayTasks.length}
                   </span>
                 )}
-              </div>
+              </button>
               {dayTasks.length > 0 && (
                 <div className="flex flex-col px-4 pb-2.5 pt-0.5 gap-0.5">
                   {dayTasks.slice(0, 3).map((task) => (
-                    <button
-                      key={task.id ?? task.title}
-                      type="button"
-                      onClick={() => openTask(task, day)}
-                      className="flex items-center gap-2 w-full py-0.5 text-left"
-                    >
-                      {hasTime(task) && (
-                        <span className="shrink-0 text-[10px] font-bold text-accent-blue">{formatTime(task)}</span>
-                      )}
-                      <span className="flex-1 min-w-0 text-sm text-primary truncate">{task.title}</span>
-                      {priorityBadge(task.priority, true)}
-                    </button>
+                    <div key={task.id ?? task.title} className="flex items-center gap-2 w-full py-0.5">
+                      {completeToggle(task, day, true)}
+                      <button
+                        type="button"
+                        onClick={() => openTask(task, day)}
+                        className="flex flex-1 min-w-0 items-center gap-2 text-left"
+                      >
+                        {hasTime(task) && (
+                          <span className="shrink-0 text-[10px] font-bold text-accent-blue">{formatTime(task)}</span>
+                        )}
+                        <span className="flex-1 min-w-0 text-sm text-primary truncate">{task.title}</span>
+                        {priorityBadge(task.priority, true)}
+                      </button>
+                    </div>
                   ))}
                   {overflow > 0 && (
                     <span className="text-xs font-semibold text-accent-blue pt-0.5">+{overflow} more</span>
@@ -516,24 +614,34 @@ export default function CalendarPage() {
                     className={`flex flex-col p-2 gap-1 ${!isCurrentMonth ? "opacity-40" : ""}`}
                   >
                     <div className="flex justify-end mb-0.5">
-                      <span className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold ${
-                        isToday ? "ring-2 ring-accent-blue/70 text-accent-blue" : "text-primary"
-                      }`}>
+                      <button
+                        type="button"
+                        onClick={() => selectDate(day)}
+                        title={`Set active date to ${formatLabel(day, { month: "long", day: "numeric" })}`}
+                        className={`flex h-6 w-6 items-center justify-center rounded-lg text-xs font-bold transition hover:bg-(--accent-subtle) ${
+                          isToday ? "ring-2 ring-accent-blue/70 text-accent-blue" : "text-primary"
+                        } ${isActiveDay(day) && !isToday ? "ring-2 ring-accent-blue/50" : ""}`}
+                      >
                         {day.getDate()}
-                      </span>
+                      </button>
                     </div>
                     {visible.map((task) => (
-                      <button
+                      <div
                         key={task.id ?? task.title}
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); openTask(task, day); }}
-                        className="truncate w-full text-left rounded-md bg-(--surface-raised) px-1.5 py-1 text-[11px] font-semibold text-primary transition hover:bg-(--accent-subtle) hover:text-accent-blue"
+                        className="flex items-center gap-1 w-full rounded-md bg-(--surface-raised) px-1.5 py-1 transition hover:bg-(--accent-subtle)"
                       >
-                        {hasTime(task) && (
-                          <span className="text-accent-blue mr-1">{formatTime(task)}</span>
-                        )}
-                        {task.title}
-                      </button>
+                        {completeToggle(task, day, true)}
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openTask(task, day); }}
+                          className="flex-1 min-w-0 truncate text-left text-[11px] font-semibold text-primary hover:text-accent-blue"
+                        >
+                          {hasTime(task) && (
+                            <span className="text-accent-blue mr-1">{formatTime(task)}</span>
+                          )}
+                          {task.title}
+                        </button>
+                      </div>
                     ))}
                     {overflow > 0 && (
                       <span className="text-[11px] font-semibold text-accent-blue pl-1">+{overflow} more</span>
@@ -574,9 +682,11 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={key}
-                    className={`flex flex-col flex-1 overflow-hidden pt-1 ${
+                    onClick={() => selectDate(day)}
+                    title={`Set active date to ${formatLabel(day, { month: "long", day: "numeric" })}`}
+                    className={`flex flex-col flex-1 overflow-hidden pt-1 cursor-pointer ${
                       isToday ? "bg-(--accent-subtle)" : ""
-                    } ${!isCurrentMonth ? "opacity-40" : ""}`}
+                    } ${!isCurrentMonth ? "opacity-40" : ""} ${isActiveDay(day) ? "ring-2 ring-inset ring-accent-blue/50" : ""}`}
                   >
                     <span className={`text-center text-xs font-semibold leading-none mb-1 shrink-0 block ${isToday ? "text-accent-blue" : "text-primary"}`}>
                       {day.getDate()}
@@ -648,6 +758,30 @@ export default function CalendarPage() {
         </div>
 
         <div className="flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2 rounded-full surface-card border px-3 py-1.5 shadow-xs">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4 shrink-0 text-slate-400"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <line x1="16.65" y1="16.65" x2="21" y2="21" />
+            </svg>
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search tasks…"
+              className="w-32 lg:w-44 bg-transparent text-sm text-primary outline-hidden placeholder:text-slate-400"
+            />
+          </div>
+
           {(["week", "month"] as ViewMode[]).map((mode) => (
             <button
               key={mode}
@@ -659,6 +793,31 @@ export default function CalendarPage() {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Mobile search — full width below the header */}
+      <div className="sm:hidden flex items-center gap-2 rounded-xl surface-card border px-3 py-2 shadow-xs">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-4 w-4 shrink-0 text-slate-400"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <line x1="16.65" y1="16.65" x2="21" y2="21" />
+        </svg>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search tasks…"
+          className="w-full bg-transparent text-sm text-primary outline-hidden placeholder:text-slate-400"
+        />
       </div>
 
       {/* Mobile navigation (week + month) */}
@@ -710,7 +869,11 @@ export default function CalendarPage() {
         </div>
       )}
       {tasks.isSuccess && (
-        <div className="flex flex-col flex-1 min-h-0">
+        <div
+          key={view === "week" ? `week-${dayKey(weekStart)}` : `month-${monthAnchor.getFullYear()}-${monthAnchor.getMonth()}`}
+          onWheel={handleWheelNav}
+          className="flex flex-col flex-1 min-h-0 calendar-range-shift"
+        >
           {view === "week" ? renderWeek() : renderMonth()}
           <TaskInfoMenu type="edit" isOpen={isTaskMenuOpen} setIsOpen={setIsTaskMenuOpen} />
         </div>

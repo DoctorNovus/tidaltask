@@ -7,6 +7,8 @@ export interface GroupConfig {
   order?: number;
   visible?: boolean;
   visibleWhenEmpty?: boolean;
+  isDefault?: boolean;
+  excludeFromUpcoming?: boolean;
 }
 
 export interface Settings {

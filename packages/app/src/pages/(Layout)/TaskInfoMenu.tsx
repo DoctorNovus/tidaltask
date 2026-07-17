@@ -8,6 +8,7 @@ import {
   useUpdateTask,
 } from "@/hooks/tasks";
 
+import { useSettings } from "@/hooks/settings";
 import { createID } from "@/utils/id";
 import { scheduleNotification } from "@/utils/notifs";
 import { useAddAlarm } from "@/hooks/alarms";
@@ -56,6 +57,15 @@ export default function TaskInfoMenu({
   const { mutate: updateTask } = useUpdateTask();
   const { mutateAsync: addAlarmFromDraft } = useAddAlarm();
   const [alarmDraft, setAlarmDraft] = useState<AlarmDraft | null>(null);
+  const settings = useSettings();
+
+  const getDefaultGroup = () => {
+    const config = settings.data?.groupConfig ?? {};
+    const defaults = Object.entries(config)
+      .filter(([, c]) => c.isDefault)
+      .sort(([, a], [, b]) => (a.order ?? Infinity) - (b.order ?? Infinity));
+    return defaults[0]?.[0] ?? "";
+  };
 
   const getDefaultDate = () => {
     const now = new Date();
@@ -97,7 +107,8 @@ export default function TaskInfoMenu({
   const initialData: Task = {
     ...createInitialTaskData(),
     id: createID(20),
-    date: getDefaultDate(),
+    date: new Date(0),
+    group: getDefaultGroup(),
   };
 
   const [tempData, setTempData] = useReducer(reducer, initialData);
@@ -141,12 +152,13 @@ export default function TaskInfoMenu({
     setTempData({
       ...createInitialTaskData(),
       id: createID(20),
-      date: getDefaultDate(),
+      date: new Date(0),
+      group: getDefaultGroup(),
     });
     setQuickTasksInput("");
     setIsQuickAdd(false);
     setAlarmDraft(null);
-  }, [isOpen, appData.activeDate]);
+  }, [isOpen, appData.activeDate, settings.data]);
 
   if (type == "edit") {
     if (
@@ -219,7 +231,7 @@ export default function TaskInfoMenu({
     setTempData({
       ...createInitialTaskData(),
       id: undefined,
-      date: getDefaultDate()
+      date: new Date(0)
     });
     setQuickTasksInput("");
     setIsQuickAdd(false);

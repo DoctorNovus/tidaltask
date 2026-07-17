@@ -10,7 +10,7 @@ import UserLogin from "./(Settings)/UserLogin";
 import SecuritySettings from "./(Settings)/SecuritySettings";
 import { Logger } from "@/utils/logger";
 import DeveloperSettings from "./(Settings)/DeveloperSettings";
-import ControllerUser from "./(Settings)/ControlledUser";
+import AdminPanel from "./(Settings)/AdminPanel";
 import AnnouncementManager from "./(Settings)/AnnouncementManager";
 import WhatsNew from "./(Settings)/WhatsNew";
 import ServerNotificationSettings from "./(Settings)/ServerNotificationSettings";
@@ -23,7 +23,7 @@ import xIcon from "@/assets/social_icons/x.svg";
 import instagramIcon from "@/assets/social_icons/instagram.svg";
 import facebookIcon from "@/assets/social_icons/facebook.svg";
 import discordIcon from "@/assets/social_icons/discord.svg";
-import { useApp, FONT_SCALE_OPTIONS, type FontScaleId } from "@/hooks/app";
+import { useApp, FONT_SCALE_OPTIONS, type FontScaleId, type TaskDensity, type TaskShape } from "@/hooks/app";
 import { useApiKeys, useChangePassword, useExportUserData, useGenerateApiKey, useRequestUserDeletion, useUpdateApiKeys, useUpdateProfile, useUser } from "@/hooks/user";
 import { SecureToken } from "@/plugins/secureToken";
 import { Capacitor } from "@capacitor/core";
@@ -168,6 +168,14 @@ export default function SettingsPage() {
 
   const setFontScale = (next: FontScaleId) => {
     setAppState({ ...appState, fontScale: next });
+  };
+
+  const setTaskDensity = (next: TaskDensity) => {
+    setAppState({ ...appState, taskDensity: next });
+  };
+
+  const setTaskShape = (next: TaskShape) => {
+    setAppState({ ...appState, taskShape: next });
   };
 
   const handleToggleTaskDueNotifications = async () => {
@@ -631,6 +639,59 @@ export default function SettingsPage() {
                 })}
               </div>
             </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted">Task density</span>
+              <div className="inline-flex items-center gap-1 rounded-xl bg-silver-200 dark:bg-(--surface-card) p-1">
+                {([
+                  { id: "comfortable", label: "Comfortable" },
+                  { id: "compact", label: "Compact" },
+                ] as const).map(({ id, label }) => {
+                  const isActive = (appState?.taskDensity ?? "comfortable") === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setTaskDensity(id)}
+                      className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                        isActive
+                          ? "bg-accent-blue text-white shadow-xs shadow-accent-blue/30"
+                          : "text-muted hover:text-primary"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="text-[11px] text-muted">Comfortable shows full task titles; compact tightens spacing and truncates.</span>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted">Task shape</span>
+              <div className="inline-flex items-center gap-1 rounded-xl bg-silver-200 dark:bg-(--surface-card) p-1">
+                {([
+                  { id: "bubbly", label: "Bubbly" },
+                  { id: "blocky", label: "Blocky" },
+                ] as const).map(({ id, label }) => {
+                  const isActive = (appState?.taskShape ?? "bubbly") === id;
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => setTaskShape(id)}
+                      className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                        isActive
+                          ? "bg-accent-blue text-white shadow-xs shadow-accent-blue/30"
+                          : "text-muted hover:text-primary"
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           </div>
           )}
         </div>
@@ -995,9 +1056,11 @@ export default function SettingsPage() {
         </div>
 
         <DeveloperSettings>
-          <ControllerUser />
-          <AnnouncementManager />
-          <DeveloperNotificationSender />
+          <AdminPanel />
+          <div className="flex flex-col gap-5 pt-1 border-t border-(--surface-border)">
+            <AnnouncementManager />
+            <DeveloperNotificationSender />
+          </div>
         </DeveloperSettings>
       </div>
     </div>

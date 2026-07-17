@@ -1,4 +1,5 @@
 import { CheckIcon, XMarkIcon } from "@heroicons/react/24/solid";
+import { useApp } from "@/hooks/app";
 
 interface TaskItemCheckBoxProps {
   checked?: boolean;
@@ -7,9 +8,17 @@ interface TaskItemCheckBoxProps {
 }
 
 export default function TaskItemCheckBox({ checked, ...props }: TaskItemCheckBoxProps) {
+  const [appData] = useApp();
+  const isCompact = appData.taskDensity === "compact";
+  const isBlocky = appData.taskShape === "blocky";
+  const sizeClass = isCompact ? "h-5 w-5" : "h-7 w-7";
+  const innerSizeClass = isCompact ? "h-3.5 w-3.5" : "h-5 w-5";
+  const roundedClass = isBlocky ? "rounded-sm" : "rounded-lg";
+  const innerRoundedClass = isBlocky ? "rounded-xs" : "rounded-md";
+
   return (
     <label
-      className={`group relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-lg border-2 px-0.5 py-0.5 transition ${
+      className={`group relative flex ${sizeClass} cursor-pointer items-center justify-center ${roundedClass} border-2 px-0.5 py-0.5 transition ${
         checked
           ? "border-accent-blue bg-linear-to-br from-accent-blue-600 to-accent-blue-500 shadow-xs shadow-accent-blue/30 md:hover:from-accent-blue-700 md:hover:to-accent-blue-600 md:hover:shadow-accent-blue/50"
           : "border-accent-blue/50 bg-white hover:border-accent-blue dark:bg-[rgba(15,23,42,0.7)]"
@@ -26,7 +35,7 @@ export default function TaskItemCheckBox({ checked, ...props }: TaskItemCheckBox
         {...props}
       />
       <div
-        className={`flex h-5 w-5 items-center justify-center rounded-md text-white transition ${
+        className={`flex ${innerSizeClass} items-center justify-center ${innerRoundedClass} text-white transition ${
           checked ? "opacity-100 scale-100" : "opacity-0 scale-75"
         }`}
       >

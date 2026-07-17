@@ -15,7 +15,7 @@ export default function DeveloperSettings({ children }: React.PropsWithChildren)
                 onClick={() => setIsOpen(true)}
                 className="self-start rounded-lg border border-accent-blue/20 px-3 py-1.5 text-xs font-semibold text-muted transition hover:border-accent-blue/50 hover:text-accent-blue"
             >
-                Developer tools
+                Admin
             </button>
 
             {isOpen && (
@@ -23,10 +23,10 @@ export default function DeveloperSettings({ children }: React.PropsWithChildren)
                     className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/40 backdrop-blur-xs px-4 pb-4 sm:pb-0"
                     onClick={(e) => { if (e.target === e.currentTarget) setIsOpen(false); }}
                 >
-                    <div className="w-full max-w-2xl rounded-2xl surface-card border shadow-2xl overflow-y-auto max-h-[85vh]">
+                    <div className="w-full max-w-3xl rounded-2xl surface-card border shadow-2xl overflow-y-auto max-h-[85vh]">
                         <div className="flex items-center justify-between px-5 py-4 border-b border-(--surface-border)">
                             <div>
-                                <h2 className="text-base font-semibold text-primary">Developer Tools</h2>
+                                <h2 className="text-base font-semibold text-primary">Admin</h2>
                                 <p className="text-xs text-muted">Restricted to developer accounts.</p>
                             </div>
                             <button

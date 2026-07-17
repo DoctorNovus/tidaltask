@@ -7,8 +7,24 @@ import { Logger } from "@/utils/logger";
 import { Capacitor } from "@capacitor/core";
 import { SecureToken } from "@/plugins/secureToken";
 import { syncServerNotifications } from "@/utils/notifs";
-import { startRegistration, startAuthentication } from "@simplewebauthn/browser";
+import { startRegistration, startAuthentication, browserSupportsWebAuthn } from "@simplewebauthn/browser";
 import { getSettings, setSettings } from "@/hooks/settings";
+
+/**
+ * WKWebView (used by Capacitor's iOS/iPadOS builds) only exposes the WebAuthn
+ * `PublicKeyCredential` API on real iPhone/iPad hardware — the "iPad app on Mac"
+ * compatibility runtime does not implement it, so `browserSupportsWebAuthn()`
+ * comes back false there even though the same build works fine on a real device.
+ */
+export function passkeysUnsupportedReason(): string | null {
+    if (browserSupportsWebAuthn()) return null;
+
+    if (Capacitor.getPlatform() === "ios") {
+        return "Passkeys aren't available when running the iPad app on a Mac. Try a real iPhone or iPad, or sign in with your password instead.";
+    }
+
+    return "This browser doesn't support passkeys. Try a modern browser, or sign in with your password instead.";
+}
 
 async function storeDeviceToken() {
     if (Capacitor.getPlatform() === "web") return;
@@ -213,6 +229,9 @@ export function usePasskeys() {
 export function useRegisterPasskey() {
     return useMutation({
         mutationFn: async (label: string) => {
+            const unsupported = passkeysUnsupportedReason();
+            if (unsupported) throw new Error(unsupported);
+
             const optRes = await fetchData("/auth/passkeys/register-options", { method: "POST" });
             const optData = await optRes.json();
             if (!optRes.ok) throw new Error(optData?.message || "Failed to start passkey registration.");
@@ -240,6 +259,9 @@ export function useRegisterPasskey() {
 export function usePasskeyLogin() {
     return useMutation({
         mutationFn: async () => {
+            const unsupported = passkeysUnsupportedReason();
+            if (unsupported) throw new Error(unsupported);
+
             const optRes = await fetchData("/auth/passkeys/authenticate-options", { method: "POST" });
             const optData = await optRes.json();
             if (!optRes.ok) throw new Error(optData?.message || "Failed to start passkey authentication.");

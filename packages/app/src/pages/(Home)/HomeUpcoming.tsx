@@ -2,6 +2,7 @@ import { TaskItem } from "@/components/task/TaskItem"
 import { Task, useTasksIncomplete } from "@/hooks/tasks";
 import { useNavigate } from "react-router";
 import { useApp } from "@/hooks/app";
+import { useSettings } from "@/hooks/settings";
 import { sortByDate, sortByPriority } from "@/utils/data";
 
 interface UpcomingParams {
@@ -12,6 +13,7 @@ export default function HomeUpcoming({ skeleton }: UpcomingParams) {
     const incomplete = useTasksIncomplete();
     const navigate = useNavigate();
     const [appData, setAppData] = useApp();
+    const settings = useSettings();
 
     const openTaskInTasks = (task: Task) => {
         setAppData({
@@ -42,7 +44,13 @@ export default function HomeUpcoming({ skeleton }: UpcomingParams) {
                 <span className="text-xs font-semibold uppercase tracking-widest text-muted">Upcoming Tasks</span>
             </div>
             <ul className="w-full flex flex-col gap-2.5">
-                {incomplete.isSuccess && sortByPriority(sortByDate([...incomplete.data])).map((task, key) => {
+                {incomplete.isSuccess && sortByPriority(sortByDate([...incomplete.data]))
+                    .filter((task) => {
+                        const group = (task.group ?? "").trim().toLowerCase();
+                        if (!group) return true;
+                        return !settings.data?.groupConfig?.[group]?.excludeFromUpcoming;
+                    })
+                    .map((task, key) => {
                     return (
                         <li key={key} className="w-full h-full">
                             <TaskItem

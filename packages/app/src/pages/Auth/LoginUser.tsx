@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router";
 import ArrowBack from "../(Login)/ArrowBack";
-import { reloadAuth, useBackupCodeLogin, useCompleteTwoFactorLogin, useLogin, usePasskeyLogin } from "@/hooks/auth";
+import { reloadAuth, useBackupCodeLogin, useCompleteTwoFactorLogin, useLogin, usePasskeyLogin, passkeysUnsupportedReason } from "@/hooks/auth";
 import { useState } from "react";
 import { useApp } from "@/hooks/app";
 
@@ -132,14 +132,18 @@ export default function LoginUser() {
                             <span className="text-xs text-muted">or</span>
                             <div className="flex-1 border-t border-accent-blue/10" />
                         </div>
-                        <button
-                            type="button"
-                            onClick={handlePasskeyLogin}
-                            disabled={isPasskeyPending}
-                            className="w-full rounded-xl border border-accent-blue/20 bg-white/60 py-3 text-base font-semibold text-primary shadow-sm transition hover:-translate-y-px dark:bg-white/5 disabled:opacity-60"
-                        >
-                            {isPasskeyPending ? "Authenticating..." : "Sign in with Passkey"}
-                        </button>
+                        {passkeysUnsupportedReason() ? (
+                            <p className="text-center text-xs text-muted">{passkeysUnsupportedReason()}</p>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={handlePasskeyLogin}
+                                disabled={isPasskeyPending}
+                                className="w-full rounded-xl border border-accent-blue/20 bg-white/60 py-3 text-base font-semibold text-primary shadow-sm transition hover:-translate-y-px dark:bg-white/5 disabled:opacity-60"
+                            >
+                                {isPasskeyPending ? "Authenticating..." : "Sign in with Passkey"}
+                            </button>
+                        )}
                     </div>
                 )}
 

@@ -3,6 +3,7 @@ import { TaskItem } from "../task/TaskItem";
 import { isTaskDone } from "@/utils/data";
 import { ChevronRightIcon, PencilSquareIcon, CheckIcon, XMarkIcon } from "@heroicons/react/20/solid";
 import { Task, useUpdateTask } from "@/hooks/tasks";
+import { useSettings } from "@/hooks/settings";
 
 interface TaskMenuProps {
   skeleton?: string;
@@ -37,6 +38,7 @@ export default function TaskMenu({
   const [editValue, setEditValue] = useState("");
   const editInputRef = useRef<HTMLInputElement>(null);
   const { mutate: updateTask } = useUpdateTask();
+  const settings = useSettings();
 
   if (skeleton) {
     return (
@@ -147,6 +149,8 @@ export default function TaskMenu({
 
   const formatGroupName = (name: string) => {
     if (!name) return "";
+    const custom = settings.data?.groupConfig?.[name]?.displayName;
+    if (custom) return custom;
     return name.replace(/\b\w/g, (ch) => ch.toUpperCase());
   };
 

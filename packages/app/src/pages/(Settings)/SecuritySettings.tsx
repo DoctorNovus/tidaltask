@@ -8,6 +8,7 @@ import {
     usePasskeys,
     useRegisterPasskey,
     useDeletePasskey,
+    passkeysUnsupportedReason,
 } from "@/hooks/auth";
 import { XMarkIcon, KeyIcon, ShieldCheckIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/solid";
 
@@ -292,23 +293,27 @@ function PasskeysSection() {
         <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
                 <p className="text-xs text-muted">Passkeys let you sign in with Face ID, Touch ID, or a hardware key — no password needed.</p>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-                    <input
-                        type="text"
-                        value={labelInput}
-                        onChange={(e) => setLabelInput(e.target.value)}
-                        placeholder="Passkey name (e.g. MacBook)"
-                        className="flex-1 rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
-                    />
-                    <button
-                        type="button"
-                        onClick={handleAdd}
-                        disabled={registerPasskey.isPending}
-                        className="rounded-lg bg-accent-blue px-3 py-2 text-sm font-semibold text-white shadow-xs shadow-accent-blue/30 hover:-translate-y-px transition disabled:opacity-70"
-                    >
-                        {registerPasskey.isPending ? "Registering..." : "Add passkey"}
-                    </button>
-                </div>
+                {passkeysUnsupportedReason() ? (
+                    <p className="text-xs text-muted">{passkeysUnsupportedReason()}</p>
+                ) : (
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+                        <input
+                            type="text"
+                            value={labelInput}
+                            onChange={(e) => setLabelInput(e.target.value)}
+                            placeholder="Passkey name (e.g. MacBook)"
+                            className="flex-1 rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
+                        />
+                        <button
+                            type="button"
+                            onClick={handleAdd}
+                            disabled={registerPasskey.isPending}
+                            className="rounded-lg bg-accent-blue px-3 py-2 text-sm font-semibold text-white shadow-xs shadow-accent-blue/30 hover:-translate-y-px transition disabled:opacity-70"
+                        >
+                            {registerPasskey.isPending ? "Registering..." : "Add passkey"}
+                        </button>
+                    </div>
+                )}
             </div>
 
             {message && <span className="text-sm text-muted">{message}</span>}
