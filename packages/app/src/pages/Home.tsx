@@ -23,7 +23,7 @@ const Home = () => {
         return (
             <div className="w-full flex flex-col pb-24 md:pb-6">
                 <div className="w-full flex flex-col gap-6 xl:grid xl:grid-cols-[1fr_256px] xl:items-start">
-                    <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-6 min-w-0">
                         <HomeIntroduction skeleton={true} />
                         <HomeAgenda skeleton={true} />
                         <HomeUpcoming skeleton={true} />
@@ -37,7 +37,7 @@ const Home = () => {
         <AuthProvider>
             <div className="w-full flex flex-col pb-24 md:pb-6">
                 <div className="w-full flex flex-col gap-6 xl:grid xl:grid-cols-[1fr_256px] xl:items-start">
-                    <div className="flex flex-col gap-6">
+                    <div className="flex flex-col gap-6 min-w-0">
                         <HomeIntroduction user={user} today={today} />
                         <HomeAgenda />
                         <HomeUpcoming />
