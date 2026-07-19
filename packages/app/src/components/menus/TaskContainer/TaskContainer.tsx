@@ -1,7 +1,7 @@
 import { useState } from "react";
 import TaskMenu from "../../tasks/TaskMenu";
 import { ChevronRightIcon, PencilSquareIcon } from "@heroicons/react/20/solid";
-import GroupEditDialog from "@/pages/(Layout)/(TaskInfoMenu)/Shared/GroupEditDialog";
+import GroupEditorModal from "@/pages/(Layout)/(TaskInfoMenu)/Shared/GroupEditorModal";
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItems, MenuItem, Transition } from "@headlessui/react";
 import { matchDate, formatDateTime } from "@/utils/date";
 import { sortByDate, sortByPriority, isTaskDone } from "@/utils/data";
@@ -588,11 +588,11 @@ export default function TaskContainer({
   return (
     <div className="group flex flex-col items-center w-full h-full my-2 px-0 md:px-0">
       {isGroupContainer && groupKey && (
-        <GroupEditDialog
+        <GroupEditorModal
           open={groupEditOpen}
           onClose={() => setGroupEditOpen(false)}
           groupKey={groupKey}
-          tasks={baseTasks}
+          existingGroups={Object.keys(settings.data?.groupConfig ?? {})}
         />
       )}
       {/* Migrate to dynamic loading content */}

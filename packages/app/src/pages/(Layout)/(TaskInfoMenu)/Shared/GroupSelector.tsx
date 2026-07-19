@@ -106,7 +106,7 @@ export default function GroupSelector({ value, groups, onChange }: GroupSelector
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Filter groups…"
-                  className="flex-1 min-w-0 bg-transparent text-sm text-primary placeholder:text-slate-400 focus:outline-none"
+                  className="flex-1 min-w-0 !bg-transparent text-sm text-primary placeholder:text-slate-400 focus:outline-none"
                 />
               </div>
             )}

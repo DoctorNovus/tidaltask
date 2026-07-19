@@ -2,6 +2,9 @@ import { Dialog, DialogPanel, Transition } from "@headlessui/react";
 import { XMarkIcon, StarIcon } from "@heroicons/react/20/solid";
 import { useEffect, useState } from "react";
 import { useSettings, useUpdateSettings, GroupConfig } from "@/hooks/settings";
+import { useTasks, useUpdateTask } from "@/hooks/tasks";
+import { useAlarms, useUpdateAlarm } from "@/hooks/alarms";
+import { reconcileAlarms } from "@/utils/alarmScheduler";
 import GroupAlarmField from "./GroupAlarmField";
 
 interface GroupEditorModalProps {
@@ -15,12 +18,17 @@ interface GroupEditorModalProps {
 
 /**
  * Standalone modal for creating a group or editing all of its settings in one
- * place. Reused by GroupSelector's "New group…" flow and by ManageGroupsDialog's
- * per-row edit action, so create and edit stay on identical logic.
+ * place — the single "edit group" surface reused everywhere a pencil icon
+ * opens group settings, so renaming (which reassigns every task in the group)
+ * and the rest of the config stay on identical logic no matter where it's opened from.
  */
 export default function GroupEditorModal({ open, onClose, groupKey, existingGroups, onSaved }: GroupEditorModalProps) {
   const settings = useSettings();
   const { mutate: updateSettings } = useUpdateSettings();
+  const tasks = useTasks();
+  const { mutateAsync: updateTask } = useUpdateTask();
+  const { data: alarms } = useAlarms();
+  const { mutateAsync: updateAlarm } = useUpdateAlarm();
   const isEditing = !!groupKey;
 
   const [name, setName] = useState("");
@@ -28,6 +36,7 @@ export default function GroupEditorModal({ open, onClose, groupKey, existingGrou
   const [isDefault, setIsDefault] = useState(false);
   const [excludeFromUpcoming, setExcludeFromUpcoming] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -48,33 +57,57 @@ export default function GroupEditorModal({ open, onClose, groupKey, existingGrou
     }
   }, [open, groupKey, settings.data]);
 
-  const save = () => {
+  const save = async () => {
     const trimmed = name.trim();
     if (!trimmed) {
       setError("Enter a group name.");
       return;
     }
 
-    const key = groupKey ?? trimmed.toLowerCase();
-    if (!groupKey && existingGroups.includes(key)) {
+    const newKey = trimmed.toLowerCase();
+    const isRename = isEditing && groupKey !== newKey;
+
+    if ((!isEditing || isRename) && existingGroups.includes(newKey)) {
       setError("A group with that name already exists.");
       return;
     }
 
-    const config: Record<string, GroupConfig> = { ...(settings.data?.groupConfig ?? {}) };
-    const previous = config[key] ?? {};
-    config[key] = {
-      ...previous,
-      displayName: trimmed,
-      visible,
-      isDefault,
-      excludeFromUpcoming,
-      order: previous.order ?? Object.keys(config).length,
-    };
+    setIsSaving(true);
+    try {
+      if (isRename && groupKey) {
+        // Reassign every task in the old group to the new key.
+        const affected = (tasks.data ?? []).filter((t) => (t.group ?? "").trim().toLowerCase() === groupKey);
+        await Promise.all(
+          affected.map((t) => t.id ? updateTask({ id: t.id, data: { ...t, group: newKey } }) : Promise.resolve())
+        );
 
-    updateSettings({ groupConfig: config });
-    onSaved?.(key);
-    onClose();
+        // Re-point the group's alarm (if any) so it doesn't orphan.
+        const groupAlarm = alarms?.find((a) => a.scope === "group" && a.group === groupKey);
+        if (groupAlarm) {
+          await updateAlarm({ id: groupAlarm.id, data: { group: newKey } });
+          await reconcileAlarms();
+        }
+      }
+
+      const config: Record<string, GroupConfig> = { ...(settings.data?.groupConfig ?? {}) };
+      const oldKey = isRename ? groupKey : undefined;
+      const previous = (oldKey ? config[oldKey] : config[newKey]) ?? {};
+      if (oldKey) delete config[oldKey];
+      config[newKey] = {
+        ...previous,
+        displayName: trimmed,
+        visible,
+        isDefault,
+        excludeFromUpcoming,
+        order: previous.order ?? Object.keys(config).length,
+      };
+
+      updateSettings({ groupConfig: config });
+      onSaved?.(newKey);
+      onClose();
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -156,16 +189,18 @@ export default function GroupEditorModal({ open, onClose, groupKey, existingGrou
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-lg text-sm font-semibold text-primary hover:bg-accent-blue/8 transition"
+                disabled={isSaving}
+                className="px-4 py-2 rounded-lg text-sm font-semibold text-primary hover:bg-accent-blue/8 transition disabled:opacity-60"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={save}
-                className="px-4 py-2 rounded-lg text-sm font-semibold bg-accent-blue text-white hover:-translate-y-px transition shadow-xs"
+                disabled={isSaving}
+                className="px-4 py-2 rounded-lg text-sm font-semibold bg-accent-blue text-white hover:-translate-y-px transition shadow-xs disabled:opacity-60"
               >
-                {isEditing ? "Save" : "Create group"}
+                {isSaving ? "Saving..." : isEditing ? "Save" : "Create group"}
               </button>
             </div>
           </DialogPanel>

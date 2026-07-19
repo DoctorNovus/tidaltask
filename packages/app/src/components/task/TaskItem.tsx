@@ -18,12 +18,15 @@ interface TaskItemParams {
   onToggleSelect?: (id: string) => void;
   isAnimating?: boolean;
   onComplete?: (task: Task) => void;
+  /** Overrides the app's global active date for pending/completion checks — e.g. Home's Upcoming Tasks always uses today, regardless of the date selected elsewhere in the app. */
+  activeDate?: Date;
 }
 
-export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectionMode = false, isSelected = false, onToggleSelect, isAnimating = false, onComplete }: TaskItemParams) {
+export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectionMode = false, isSelected = false, onToggleSelect, isAnimating = false, onComplete, activeDate }: TaskItemParams) {
   const { mutate: updateTask } = useUpdateTask();
   const [appData, setAppData] = useApp();
   const [isCompleting, setIsCompleting] = useState(false);
+  const effectiveDate = activeDate ?? appData.activeDate;
 
   if (skeleton) {
     return (
@@ -67,7 +70,7 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
     e.stopPropagation();
     setIsCompleting(true);
 
-    completeTaskOccurrence(item as Task, appData.activeDate!, updateTask);
+    completeTaskOccurrence(item as Task, effectiveDate!, updateTask);
 
     if (onComplete) onComplete(item as Task);
 
@@ -103,7 +106,7 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
       ? "opacity-0 translate-y-1 scale-[0.98] pointer-events-none"
       : "";
 
-  const isPending = isTaskDone(item!, appData.activeDate!);
+  const isPending = isTaskDone(item!, effectiveDate!);
 
   return (
     <div
@@ -114,13 +117,13 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
     >
       <TaskItemShell
         task={item}
-        activeDate={appData.activeDate}
+        activeDate={effectiveDate}
         className={`${fadeClass} ${selectionClass}`}
         onClick={handleInteractive}
       >
         <div className="w-full h-full flex flex-row items-center">
           <TaskItemCheckBox
-            checked={!isTaskDone(item!, appData.activeDate!)}
+            checked={!isTaskDone(item!, effectiveDate!)}
             onChange={(e: React.ChangeEvent) => {
               if (selectionMode) {
                 handleToggleSelect();

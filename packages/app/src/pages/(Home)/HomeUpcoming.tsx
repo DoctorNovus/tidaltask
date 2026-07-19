@@ -14,6 +14,7 @@ export default function HomeUpcoming({ skeleton }: UpcomingParams) {
     const navigate = useNavigate();
     const [appData, setAppData] = useApp();
     const settings = useSettings();
+    const today = new Date();
 
     const openTaskInTasks = (task: Task) => {
         setAppData({
@@ -56,6 +57,7 @@ export default function HomeUpcoming({ skeleton }: UpcomingParams) {
                             <TaskItem
                                 item={task}
                                 taskFilter="all"
+                                activeDate={today}
                                 setIsInspecting={() => openTaskInTasks(task)}
                             />
                         </li>

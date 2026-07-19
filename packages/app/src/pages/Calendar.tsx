@@ -778,7 +778,7 @@ export default function CalendarPage() {
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search tasks…"
-              className="w-32 lg:w-44 bg-transparent text-sm text-primary outline-hidden placeholder:text-slate-400"
+              className="w-32 lg:w-44 !bg-transparent text-sm text-primary outline-hidden placeholder:text-slate-400"
             />
           </div>
 
@@ -816,7 +816,7 @@ export default function CalendarPage() {
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Search tasks…"
-          className="w-full bg-transparent text-sm text-primary outline-hidden placeholder:text-slate-400"
+          className="w-full !bg-transparent text-sm text-primary outline-hidden placeholder:text-slate-400"
         />
       </div>
 

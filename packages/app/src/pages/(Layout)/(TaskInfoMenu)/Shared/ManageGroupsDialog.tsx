@@ -127,7 +127,7 @@ export default function ManageGroupsDialog({ open, onClose, groups }: ManageGrou
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search groups…"
-                  className="flex-1 min-w-0 bg-transparent text-sm text-primary placeholder:text-slate-400 focus:outline-none"
+                  className="flex-1 min-w-0 !bg-transparent text-sm text-primary placeholder:text-slate-400 focus:outline-none"
                 />
               </div>
             )}

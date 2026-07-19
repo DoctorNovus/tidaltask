@@ -229,6 +229,9 @@ export function useTaskById(id: string): UseQueryResult {
 /* Refetches tasks and pushes the fresh list to the device calendar (no-op unless enabled). */
 async function refreshAndSyncCalendar(queryClient: QueryClient): Promise<void> {
   const tasks = await queryClient.fetchQuery({ queryKey: ["tasks"], queryFn: loadTasks, staleTime: 0 });
+  // "incomplete" is a separately-cached query (used by Home's Upcoming Tasks) — invalidate it too so
+  // completion changes show up there immediately instead of waiting out its own staleTime.
+  await queryClient.invalidateQueries({ queryKey: ["tasks", "incomplete"] });
   await reconcileDeviceCalendarSync(tasks);
   await reconcileTaskDueNotifications(tasks);
   await reconcileAlarms();
