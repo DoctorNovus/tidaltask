@@ -434,7 +434,7 @@ export default function CalendarPage() {
     <>
       {/* ── Desktop: 7-column strip with vertical dividers ── */}
       <div className="hidden md:grid md:grid-cols-7 md:grid-rows-1 md:flex-1 md:min-h-0 divide-x divide-(--surface-border) border border-(--surface-border) rounded-2xl overflow-hidden">
-        {weekDays.map((day) => {
+        {weekDays.map((day, dayIdx) => {
           const key = dayKey(day);
           const dayTasks = sortByTime(grouped[key] || []);
           const dayEvents = sortEventsByTime(eventsGrouped[key] || []);
@@ -443,6 +443,7 @@ export default function CalendarPage() {
           const overflow = dayTasks.length - MAX_WEEK_TASKS;
           const visibleEvents = dayEvents.slice(0, MAX_WEEK_EVENTS);
           const eventOverflow = dayEvents.length - MAX_WEEK_EVENTS;
+          const cornerClass = dayIdx === 0 ? "rounded-tl-2xl" : dayIdx === weekDays.length - 1 ? "rounded-tr-2xl" : "";
 
           return (
             <div key={key} className="flex flex-col">
@@ -451,7 +452,7 @@ export default function CalendarPage() {
                 type="button"
                 onClick={() => selectDate(day)}
                 title={`Set active date to ${formatLabel(day, { month: "long", day: "numeric" })}`}
-                className={`flex flex-col shrink-0 items-center gap-1 w-full px-2 py-3 border-b border-(--surface-border) transition hover:bg-(--accent-subtle) ${isToday ? "bg-(--accent-subtle)" : ""} ${isActiveDay(day) ? "ring-2 ring-inset ring-accent-blue/50" : ""}`}
+                className={`flex flex-col shrink-0 items-center gap-1 w-full px-2 py-3 border-b border-(--surface-border) transition hover:bg-(--accent-subtle) ${cornerClass} ${isToday ? "bg-(--accent-subtle)" : ""} ${isActiveDay(day) ? "ring-2 ring-inset ring-accent-blue/50" : ""}`}
               >
                 <span className={`text-[11px] font-semibold uppercase tracking-wider ${isToday ? "text-accent-blue" : "text-muted"}`}>
                   {formatLabel(day, { weekday: "short" })}

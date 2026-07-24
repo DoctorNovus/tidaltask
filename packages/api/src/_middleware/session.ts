@@ -6,6 +6,15 @@ import crypto from "crypto";
 
 export async function session(req: Request, _res: Response, next: NextFunction) {
     if (req.session.user) {
+        // The session may outlive the user it points to (account deleted/recreated,
+        // data reset, etc.) — without this check requests silently no-op against a
+        // ghost id instead of forcing a fresh login.
+        const exists = await User.exists({ _id: req.session.user.id });
+        if (!exists) {
+            req.session.user = undefined;
+            throw new Unauthorized("Session expired.");
+        }
+
         next();
         return;
     }
