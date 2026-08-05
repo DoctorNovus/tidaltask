@@ -200,13 +200,23 @@ export default function MenuFields({
                                 <label className="text-sm font-semibold text-primary px-1 opacity-0 select-none">Due Date</label>
                                 <button
                                     onClick={() => {
-                                        const restoredDate = appData.storedDate ?? new Date(Date.now() + 1000 * 60 * 60 * 24);
-                                        setAppData({ ...appData, activeDate: restoredDate, storedDate: undefined });
-                                        setTempData({ ...tempData, date: restoredDate });
+                                        if (appData.storedDate) {
+                                            const restoredDate = appData.storedDate;
+                                            setAppData({ ...appData, activeDate: restoredDate, storedDate: undefined });
+                                            setTempData({ ...tempData, date: restoredDate });
+                                            return;
+                                        }
+
+                                        const now = new Date();
+                                        const nextDate = appData.activeDate
+                                            ? new Date(appData.activeDate)
+                                            : new Date(now.getTime() + 1000 * 60 * 60 * 24);
+                                        nextDate.setHours(now.getHours(), now.getMinutes(), 0, 0);
+                                        setTempData({ ...tempData, date: nextDate });
                                     }}
                                     className="h-10 w-full text-center rounded-lg px-3 py-2 text-sm font-semibold shadow-xs transition bg-accent-blue text-white hover:-translate-y-px"
                                 >
-                                    Add Due Date (+24h)
+                                    Add Due Date
                                 </button>
                             </div>
                         )}
