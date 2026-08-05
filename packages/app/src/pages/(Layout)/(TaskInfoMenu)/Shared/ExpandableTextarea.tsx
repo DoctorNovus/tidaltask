@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "@heroicons/react/20/solid";
+import { ArrowsPointingOutIcon, ArrowsPointingInIcon } from "@heroicons/react/16/solid";
 
 interface ExpandableTextareaProps {
     name: string;
@@ -32,7 +32,21 @@ export default function ExpandableTextarea({ name, value, onChange, placeholder 
 
     return (
         <div className="flex flex-col gap-1">
-            <label className="text-sm font-semibold text-primary px-1">{name}</label>
+            <div className="flex items-center justify-between px-1">
+                <label className="text-sm font-semibold text-primary">{name}</label>
+                {overflows && (
+                    <button
+                        type="button"
+                        onClick={() => setExpanded((v) => !v)}
+                        className="flex items-center gap-1 text-xs font-semibold text-accent-blue hover:text-accent-blue-700 transition"
+                    >
+                        {expanded
+                            ? <><ArrowsPointingInIcon className="h-3.5 w-3.5" /> Collapse</>
+                            : <><ArrowsPointingOutIcon className="h-3.5 w-3.5" /> Expand</>
+                        }
+                    </button>
+                )}
+            </div>
             <div className="relative">
                 <textarea
                     ref={ref}
@@ -45,18 +59,6 @@ export default function ExpandableTextarea({ name, value, onChange, placeholder 
                     <div className="absolute bottom-0 left-0 right-0 h-8 rounded-b-xl bg-linear-to-t from-silver-200 to-transparent dark:from-vulcan-950 pointer-events-none" />
                 )}
             </div>
-            {overflows && (
-                <button
-                    type="button"
-                    onClick={() => setExpanded((v) => !v)}
-                    className="flex items-center gap-1 self-start px-1 text-xs font-semibold text-accent-blue hover:text-accent-blue-700 transition"
-                >
-                    {expanded
-                        ? <><ChevronUpIcon className="h-3.5 w-3.5" /> Show less</>
-                        : <><ChevronDownIcon className="h-3.5 w-3.5" /> Show more</>
-                    }
-                </button>
-            )}
         </div>
     );
 }

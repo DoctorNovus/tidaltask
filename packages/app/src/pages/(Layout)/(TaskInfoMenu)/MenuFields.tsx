@@ -5,6 +5,7 @@ import TaskInfoMenuUser from "./Shared/TaskInfoUser/TaskInfoMenuUser";
 import TaskInfoMenuTags from "./Shared/TaskInfoMenuTags";
 import TaskInfoMenuSelect from "./Shared/TaskInfoMenuSelect";
 import ExpandableTextarea from "./Shared/ExpandableTextarea";
+import ExpandableTitleInput from "./Shared/ExpandableTitleInput";
 import { useTasks } from "@/hooks/tasks";
 import { useSettings } from "@/hooks/settings";
 import { useMemo, useState } from "react";
@@ -145,12 +146,10 @@ export default function MenuFields({
             {!isQuickAdd && (
                 <>
                     {/* Name — full width, prominent */}
-                    <TaskInfoMenuItem
+                    <ExpandableTitleInput
                         name="Name"
-                        value={tempData?.title}
-                        onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            setTempData({ ...tempData, title: e.target.value })
-                        }
+                        value={tempData?.title ?? ""}
+                        onChange={(val) => setTempData({ ...tempData, title: val })}
                     />
 
                     {!isQuickAdd && validationError && (
