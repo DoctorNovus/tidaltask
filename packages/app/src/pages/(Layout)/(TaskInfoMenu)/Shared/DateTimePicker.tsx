@@ -22,6 +22,19 @@ function toLocal(d: Date) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}T${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 }
 
+/** Parses "YYYY-MM-DD" and "YYYY-MM-DDTHH:mm" as LOCAL time. The native Date constructor
+ *  parses date-only strings as UTC midnight, which silently shifts back a day for anyone
+ *  west of UTC — so date-only values need to be split apart and built manually. */
+function parseLocal(value: string): Date | null {
+  if (!value) return null;
+  const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+  if (dateOnlyMatch) {
+    const [, y, m, d] = dateOnlyMatch;
+    return new Date(Number(y), Number(m) - 1, Number(d));
+  }
+  return new Date(value);
+}
+
 interface DateTimePickerProps {
   value: string;
   onChange: (value: string) => void;
@@ -35,7 +48,7 @@ export default function DateTimePicker({ value, onChange, dateOnly = false, inli
   const buttonRef = useRef<HTMLButtonElement>(null);
   const [overlayStyle, setOverlayStyle] = useState<React.CSSProperties>({});
 
-  const parsed = value ? new Date(value) : null;
+  const parsed = parseLocal(value);
   const isValid = !!parsed && !isNaN(parsed.getTime());
 
   const now = new Date();
