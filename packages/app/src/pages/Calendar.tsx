@@ -489,7 +489,7 @@ export default function CalendarPage() {
                           {formatTime(task)}
                         </span>
                       )}
-                      <span className="text-xs font-semibold text-primary leading-snug line-clamp-2 pr-3">
+                      <span className="w-full text-xs font-semibold text-primary leading-snug line-clamp-2 pr-6 break-words">
                         {task.title}
                       </span>
                     </button>
