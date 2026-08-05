@@ -1,6 +1,7 @@
 import { BellAlertIcon } from "@heroicons/react/24/solid";
 import { useAlarms, useAddAlarm, useUpdateAlarm, useDeleteAlarm } from "@/hooks/alarms";
 import { reconcileAlarms } from "@/utils/alarmScheduler";
+import TimePicker from "./TimePicker";
 
 const WEEKDAYS = [
   { label: "S", value: 0 },
@@ -73,12 +74,7 @@ export default function GroupAlarmField({ group }: GroupAlarmFieldProps) {
 
       {enabled && alarm && (
         <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="time"
-            value={alarm.time}
-            onChange={(e) => handleTimeChange(e.target.value)}
-            className="px-2 py-1 rounded-lg border border-accent-blue/20 bg-silver-200 dark:bg-[#253350] text-xs text-primary shadow-inner focus:border-accent-blue focus:outline-none"
-          />
+          <TimePicker value={alarm.time} onChange={handleTimeChange} />
           <div className="flex gap-1">
             {WEEKDAYS.map((day) => (
               <button
