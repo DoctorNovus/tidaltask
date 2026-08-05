@@ -16,6 +16,16 @@ export class TaskService {
         return normalized;
     }
 
+    /** Parses "YYYY-MM-DD" as a local calendar day — the plain Date constructor parses
+     *  date-only strings as UTC midnight, which can land on the wrong day depending on
+     *  the server's timezone. Returns null for anything else. */
+    private parseDateOnly(value: string): Date | null {
+        const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+        if (!match) return null;
+        const [, y, m, d] = match;
+        return new Date(Number(y), Number(m) - 1, Number(d));
+    }
+
     private matchDay(a: string | Date | undefined, b: Date): boolean {
         if (!a) return false;
         const dayA = this.normalizeDay(new Date(a));
@@ -33,6 +43,11 @@ export class TaskService {
         if (targetDay < startDay) return false;
 
         if (!task.repeater) return startDay.getTime() === targetDay.getTime();
+
+        if (task.repeatEnd) {
+            const endDay = this.parseDateOnly(task.repeatEnd);
+            if (endDay && targetDay > endDay) return false;
+        }
 
         switch (task.repeater) {
             case "daily":

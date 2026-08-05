@@ -337,6 +337,16 @@ export class NotificationService {
             return occurrences;
         }
 
+        let effectiveTo = to;
+        if (task.repeatEnd) {
+            const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(task.repeatEnd);
+            if (match) {
+                const [, y, m, d] = match;
+                const endOfDay = new Date(Number(y), Number(m) - 1, Number(d), 23, 59, 59, 999);
+                if (endOfDay < effectiveTo) effectiveTo = endOfDay;
+            }
+        }
+
         let cursor = new Date(start);
         let attempts = 0;
 
@@ -345,7 +355,7 @@ export class NotificationService {
             attempts++;
         }
 
-        while (cursor <= to && occurrences.length < max) {
+        while (cursor <= effectiveTo && occurrences.length < max) {
             if (cursor >= from) occurrences.push(new Date(cursor));
             cursor = this.nextOccurrence(cursor, task.repeater || "");
         }

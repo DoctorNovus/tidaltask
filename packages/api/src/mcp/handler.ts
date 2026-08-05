@@ -29,6 +29,9 @@ const ListTasksSchema = z.object({
 
 const REPEATER = z.enum(["", "daily", "weekly", "bi-weekly", "monthly", "6-monthly", "yearly"]);
 
+// Empty string clears a previously-set end date; otherwise must be "YYYY-MM-DD".
+const REPEAT_END = z.string().regex(/^(\d{4}-\d{2}-\d{2})?$/).max(10);
+
 const CreateTaskSchema = z.object({
     title: z.string().min(1).max(500),
     description: z.string().max(5000).optional(),
@@ -37,6 +40,7 @@ const CreateTaskSchema = z.object({
     group: z.string().max(200).optional(),
     tags: z.array(z.string().max(100)).max(50).optional(),
     repeater: REPEATER.optional(),
+    repeatEnd: REPEAT_END.optional(),
 }).strict();
 
 const UpdateTaskSchema = z.object({
@@ -48,6 +52,7 @@ const UpdateTaskSchema = z.object({
     group: z.string().max(200).optional(),
     tags: z.array(z.string().max(100)).max(50).optional(),
     repeater: REPEATER.optional(),
+    repeatEnd: REPEAT_END.optional(),
     done: z.union([z.boolean(), z.array(z.string().max(100)).max(3650)]).optional(),
 }).strict();
 
@@ -118,7 +123,7 @@ function buildServer(userId: string): Server {
             {
                 name: "create_task",
                 description:
-                    "Creates a new task for the user. Requires at minimum a title. Optionally set date (ISO 8601), priority (0=none 1=low 2=medium 3=high), group, tags, and repeater cadence.",
+                    "Creates a new task for the user. Requires at minimum a title. Optionally set date (ISO 8601), priority (0=none 1=low 2=medium 3=high), group, tags, repeater cadence, and repeatEnd.",
                 inputSchema: {
                     type: "object" as const,
                     required: ["title"],
@@ -132,6 +137,11 @@ function buildServer(userId: string): Server {
                         repeater: {
                             type: "string",
                             enum: ["", "daily", "weekly", "bi-weekly", "monthly", "6-monthly", "yearly"],
+                        },
+                        repeatEnd: {
+                            type: "string",
+                            description: "Last date (YYYY-MM-DD) the repeater occurs on, inclusive. Omit or leave empty for no end.",
+                            pattern: "^(\\d{4}-\\d{2}-\\d{2})?$",
                         },
                     },
                     additionalProperties: false,
@@ -155,6 +165,11 @@ function buildServer(userId: string): Server {
                         repeater: {
                             type: "string",
                             enum: ["", "daily", "weekly", "bi-weekly", "monthly", "6-monthly", "yearly"],
+                        },
+                        repeatEnd: {
+                            type: "string",
+                            description: "Last date (YYYY-MM-DD) the repeater occurs on, inclusive. Empty string clears it.",
+                            pattern: "^(\\d{4}-\\d{2}-\\d{2})?$",
                         },
                         done: {
                             description: "true/false for one-time tasks; array of ISO date strings for repeating tasks.",

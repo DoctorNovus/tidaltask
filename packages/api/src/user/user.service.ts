@@ -150,7 +150,7 @@ export class UserService {
             .exec();
 
         const tasks = await Task.find({ users: id })
-            .select("title description date done repeater reminder type priority group tags createdAt updatedAt")
+            .select("title description date done repeater repeatEnd reminder type priority group tags createdAt updatedAt")
             .lean()
             .exec();
 

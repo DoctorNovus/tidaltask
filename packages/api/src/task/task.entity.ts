@@ -23,6 +23,10 @@ export class Task extends Model {
     @Prop({ type: String, default: "" })
     repeater: string;
 
+    /** "YYYY-MM-DD", inclusive last day the repeater occurs on. Empty string means it never ends. */
+    @Prop({ type: String, default: "" })
+    repeatEnd: string;
+
     @Prop({ type: String, default: "" })
     reminder: string;
 

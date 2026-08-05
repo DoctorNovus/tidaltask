@@ -58,6 +58,17 @@ export function occursOnDate(task: Task, target: Date): boolean {
   if (start.getFullYear() < 2000) return false;
   if (day < start) return false;
 
+  if (task.repeater && task.repeatEnd) {
+    // Parse "YYYY-MM-DD" as a local calendar day — new Date("YYYY-MM-DD") parses as
+    // UTC midnight, which silently rolls back a day west of UTC.
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(task.repeatEnd);
+    if (match) {
+      const [, y, m, d] = match;
+      const end = new Date(Number(y), Number(m) - 1, Number(d));
+      if (day > end) return false;
+    }
+  }
+
   switch (task.repeater) {
     case "daily":
       return true;

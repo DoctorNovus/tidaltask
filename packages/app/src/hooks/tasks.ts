@@ -26,6 +26,8 @@ export interface Task {
   date: string | Date;
   done: boolean | string[];
   repeater?: string;
+  /** "YYYY-MM-DD", inclusive last day the repeater occurs on. Empty/undefined means it never ends. */
+  repeatEnd?: string;
   reminder?: string;
   type?: string;
   accordion?: boolean;
@@ -81,6 +83,7 @@ export function createInitialTaskData(): Task {
     date: new Date(),
     done: false,
     repeater: "",
+    repeatEnd: "",
     reminder: "",
     priority: 0,
     tags: [],

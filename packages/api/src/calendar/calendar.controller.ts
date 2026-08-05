@@ -75,16 +75,28 @@ function nextIcsDateTime(dateStr: string): string | null {
     return `${y}${mo}${day}T${h}${mi}${s}`;
 }
 
-function repeaterToRrule(repeater: string): string | null {
+function repeaterToRrule(repeater: string, repeatEnd?: string, timed?: boolean): string | null {
+    let rule: string;
     switch (repeater) {
-        case "daily":      return "RRULE:FREQ=DAILY";
-        case "weekly":     return "RRULE:FREQ=WEEKLY";
-        case "bi-weekly":  return "RRULE:FREQ=WEEKLY;INTERVAL=2";
-        case "monthly":    return "RRULE:FREQ=MONTHLY";
-        case "6-monthly":  return "RRULE:FREQ=MONTHLY;INTERVAL=6";
-        case "yearly":     return "RRULE:FREQ=YEARLY";
+        case "daily":      rule = "RRULE:FREQ=DAILY"; break;
+        case "weekly":     rule = "RRULE:FREQ=WEEKLY"; break;
+        case "bi-weekly":  rule = "RRULE:FREQ=WEEKLY;INTERVAL=2"; break;
+        case "monthly":    rule = "RRULE:FREQ=MONTHLY"; break;
+        case "6-monthly":  rule = "RRULE:FREQ=MONTHLY;INTERVAL=6"; break;
+        case "yearly":     rule = "RRULE:FREQ=YEARLY"; break;
         default:           return null;
     }
+
+    if (repeatEnd) {
+        // UNTIL must match DTSTART's value type: a bare DATE for all-day events,
+        // a UTC DATE-TIME (trailing Z) when the task has a specific time.
+        const until = timed
+            ? formatIcsDateTime(`${repeatEnd}T23:59:59`)
+            : formatIcsDate(repeatEnd);
+        if (until) rule += `;UNTIL=${until}${timed ? "Z" : ""}`;
+    }
+
+    return rule;
 }
 
 function generateIcs(tasks: Task[], calName: string): string {
@@ -102,7 +114,7 @@ function generateIcs(tasks: Task[], calName: string): string {
             if (!taskId) return null;
 
             const timed = taskHasTime(task.date as string);
-            const rrule = task.repeater ? repeaterToRrule(task.repeater) : null;
+            const rrule = task.repeater ? repeaterToRrule(task.repeater, task.repeatEnd, timed) : null;
 
             const alarms = timed ? [
                 "BEGIN:VALARM",

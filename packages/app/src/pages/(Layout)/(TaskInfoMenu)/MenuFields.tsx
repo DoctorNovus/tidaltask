@@ -1,4 +1,4 @@
-import { formatDateTime } from "@/utils/date";
+import { formatDate, formatDateTime } from "@/utils/date";
 import TaskInfoMenuItem from "./Shared/TaskInfoMenuItem";
 import DateTimePicker from "./Shared/DateTimePicker";
 import TaskInfoMenuUser from "./Shared/TaskInfoUser/TaskInfoMenuUser";
@@ -228,7 +228,7 @@ export default function MenuFields({
                             name="Repeating"
                             value={tempData.repeater}
                             onChange={(value) => {
-                                setTempData({ repeater: value });
+                                setTempData({ repeater: value, ...(value ? {} : { repeatEnd: "" }) });
                             }}
                             options={[
                                 { name: "Do Not Repeat", value: "" },
@@ -260,6 +260,38 @@ export default function MenuFields({
                     <span className="text-xs text-muted px-1 -mt-2">
                         Repeating tasks can be completed once per due day; completion is tracked per occurrence.
                     </span>
+
+                    {/* End Repeat */}
+                    {tempData.repeater && (
+                        <div className="flex flex-col gap-3">
+                            <div className="flex items-center justify-between px-1">
+                                <span className="text-sm font-semibold text-primary">End Repeat</span>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        const next = tempData.repeatEnd
+                                            ? ""
+                                            : formatDate(new Date(Date.now() + 1000 * 60 * 60 * 24 * 30));
+                                        setTempData({ repeatEnd: next });
+                                    }}
+                                    className={`rounded-full px-3 py-1 text-xs font-semibold transition ${
+                                        tempData.repeatEnd
+                                            ? "bg-accent-blue text-white"
+                                            : "bg-silver-200 text-primary ring-1 ring-accent-blue/20 hover:ring-accent-blue/40 dark:bg-[#253350]"
+                                    }`}
+                                >
+                                    {tempData.repeatEnd ? "On" : "Off"}
+                                </button>
+                            </div>
+                            {tempData.repeatEnd && (
+                                <DateTimePicker
+                                    value={tempData.repeatEnd}
+                                    onChange={(val) => setTempData({ repeatEnd: val })}
+                                    dateOnly
+                                />
+                            )}
+                        </div>
+                    )}
 
                     {/* Alarm */}
                     <TaskAlarmField
