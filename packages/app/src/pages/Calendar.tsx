@@ -301,6 +301,14 @@ export default function CalendarPage() {
     navigate(`/calendar?scope=week&view=week&week=${dayKey(next)}`, { replace: true });
   };
 
+  const shiftWeekStartByDay = (delta: number) => {
+    const next = new Date(weekStart);
+    next.setDate(weekStart.getDate() + delta);
+    setWeekStart(next);
+    setScope("week");
+    navigate(`/calendar?scope=week&view=week&week=${dayKey(next)}`, { replace: true });
+  };
+
   const changeMonth = (delta: number) => {
     const next = new Date(monthAnchor);
     next.setMonth(monthAnchor.getMonth() + delta);
@@ -381,6 +389,114 @@ export default function CalendarPage() {
 
     window.setTimeout(() => { wheelCooldown.current = false; }, 450);
   };
+
+  // Touch swipe: the range visually tracks the finger in real time (with
+  // rubber-band resistance, so it gets progressively harder to drag further).
+  // Releasing past a distance/velocity threshold slides the range fully off
+  // and commits the change (a full swipe advances the week/month, a shorter
+  // "half" swipe just nudges the week's first day by one); releasing early
+  // springs back to where it started.
+  const swipeContainerRef = useRef<HTMLDivElement | null>(null);
+  const swipeStateRef = useRef<{ x: number; y: number; t: number; active: boolean | null } | null>(null);
+  const [dragX, setDragX] = useState(0);
+  const [dragPhase, setDragPhase] = useState<"idle" | "dragging" | "settling">("idle");
+
+  useEffect(() => {
+    const el = swipeContainerRef.current;
+    if (!el) return;
+
+    const ACTIVATE_PX = 10; // min movement before we decide this is a horizontal drag
+    const RESISTANCE = 0.55; // lower = more rubber-band resistance
+    const RATIO_RANGE = 0.4; // raw drag distance (as a fraction of width) that commits a full week/month
+    const RATIO_DAY = 0.15; // raw drag distance that commits a 1-day nudge (week view only)
+    const VELOCITY_FAST = 0.6; // px/ms — a deliberate flick
+    const VELOCITY_VERY_FAST = 1.1; // px/ms — a hard flick commits a full range jump outright
+
+    const onStart = (e: TouchEvent) => {
+      const t = e.touches[0];
+      swipeStateRef.current = { x: t.screenX, y: t.screenY, t: e.timeStamp, active: null };
+    };
+
+    const onMove = (e: TouchEvent) => {
+      const drag = swipeStateRef.current;
+      if (!drag) return;
+      const t = e.touches[0];
+      const dx = t.screenX - drag.x;
+      const dy = t.screenY - drag.y;
+
+      if (drag.active === null) {
+        if (Math.abs(dx) < ACTIVATE_PX && Math.abs(dy) < ACTIVATE_PX) return;
+        drag.active = Math.abs(dx) > Math.abs(dy);
+        if (drag.active) setDragPhase("dragging");
+      }
+      if (!drag.active) return; // vertical intent — let the page scroll normally
+
+      e.preventDefault();
+      const width = el.clientWidth || window.innerWidth;
+      const damped = Math.sign(dx) * width * (1 - Math.exp(-Math.abs(dx) / (width * RESISTANCE)));
+      setDragX(damped);
+    };
+
+    const onEnd = (e: TouchEvent) => {
+      const drag = swipeStateRef.current;
+      swipeStateRef.current = null;
+      if (!drag || !drag.active) {
+        setDragPhase("idle");
+        setDragX(0);
+        return;
+      }
+
+      const t = e.changedTouches[0] ?? e.touches[0];
+      const dx = t.screenX - drag.x;
+      const dt = Math.max(1, e.timeStamp - drag.t);
+      const velocity = dx / dt;
+      const width = el.clientWidth || window.innerWidth;
+      const ratio = Math.abs(dx) / width;
+      const direction = dx < 0 ? 1 : -1;
+      const fastFlick = Math.abs(velocity) >= VELOCITY_FAST;
+      const veryFastFlick = Math.abs(velocity) >= VELOCITY_VERY_FAST;
+
+      let tier: "range" | "day" | null = null;
+      if (ratio >= RATIO_RANGE || veryFastFlick) {
+        tier = "range";
+      } else if (view === "week" && (ratio >= RATIO_DAY || fastFlick)) {
+        tier = "day";
+      } else if (view !== "week" && fastFlick && ratio >= RATIO_DAY) {
+        tier = "range";
+      }
+
+      setDragPhase("settling");
+      if (!tier) {
+        setDragX(0);
+        window.setTimeout(() => setDragPhase("idle"), 260);
+        return;
+      }
+
+      setDragX(direction * width);
+      window.setTimeout(() => {
+        if (view === "week") {
+          if (tier === "range") changeWeek(direction);
+          else shiftWeekStartByDay(direction);
+        } else {
+          changeMonth(direction);
+        }
+        setDragPhase("idle");
+        setDragX(0);
+      }, 220);
+    };
+
+    el.addEventListener("touchstart", onStart, { passive: true });
+    el.addEventListener("touchmove", onMove, { passive: false });
+    el.addEventListener("touchend", onEnd, { passive: true });
+    el.addEventListener("touchcancel", onEnd, { passive: true });
+
+    return () => {
+      el.removeEventListener("touchstart", onStart);
+      el.removeEventListener("touchmove", onMove);
+      el.removeEventListener("touchend", onEnd);
+      el.removeEventListener("touchcancel", onEnd);
+    };
+  }, [view, weekStart, monthAnchor]);
 
   const renderTask = (task: Task, day?: Date) => {
     const effectiveDay = day ?? normalizeDay(new Date(task.date));
@@ -872,10 +988,20 @@ export default function CalendarPage() {
       {tasks.isSuccess && (
         <div
           key={view === "week" ? `week-${dayKey(weekStart)}` : `month-${monthAnchor.getFullYear()}-${monthAnchor.getMonth()}`}
-          onWheel={handleWheelNav}
           className="flex flex-col flex-1 min-h-0 calendar-range-shift"
         >
-          {view === "week" ? renderWeek() : renderMonth()}
+          <div
+            ref={swipeContainerRef}
+            onWheel={handleWheelNav}
+            style={{
+              transform: `translateX(${dragX}px)`,
+              transition: dragPhase === "dragging" ? "none" : "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
+              touchAction: "pan-y",
+            }}
+            className="flex flex-col flex-1 min-h-0"
+          >
+            {view === "week" ? renderWeek() : renderMonth()}
+          </div>
           <TaskInfoMenu type="edit" isOpen={isTaskMenuOpen} setIsOpen={setIsTaskMenuOpen} />
         </div>
       )}
