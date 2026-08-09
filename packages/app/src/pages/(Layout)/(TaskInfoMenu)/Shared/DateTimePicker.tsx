@@ -79,10 +79,12 @@ export default function DateTimePicker({ value, onChange, dateOnly = false, inli
   const openPicker = () => {
     if (!inline && buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
+      const GAP = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16; // 1em
       const PICKER_H = dateOnly ? 280 : 560;
-      const spaceBelow = window.innerHeight - rect.bottom - 8;
-      const top = spaceBelow >= PICKER_H ? rect.bottom + 4 : rect.top - PICKER_H - 4;
-      const left = Math.min(rect.left, window.innerWidth - 288 - 8);
+      const spaceBelow = window.innerHeight - rect.bottom - GAP;
+      const top = spaceBelow >= PICKER_H ? rect.bottom + GAP : rect.top - PICKER_H - GAP;
+      const PICKER_W = 288;
+      const left = Math.min(Math.max(rect.right - PICKER_W, 8), window.innerWidth - PICKER_W - 8);
       setOverlayStyle({ position: "fixed", top, left, zIndex: 9999, width: 288 });
     }
     setOpen(v => !v);
