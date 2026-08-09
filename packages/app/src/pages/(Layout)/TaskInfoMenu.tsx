@@ -401,6 +401,7 @@ export default function TaskInfoMenu({
                 <MenuHeader
                   type={type!}
                   isDeleting={isDeleting}
+                  tempData={tempData as Task}
                 />
                 <MenuFields
                   type={type}
