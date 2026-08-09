@@ -17,6 +17,7 @@ import RegisterUser from "@/pages/Auth/RegisterUser";
 import ForgotPassword from "@/pages/Auth/ForgotPassword";
 import AuthBootstrap from "@/components/AuthBootstrap";
 import AlarmBridge from "@/components/AlarmBridge";
+import UniversalLinkBridge from "@/components/UniversalLinkBridge";
 import AnnouncementCenter from "@/components/announcements/AnnouncementCenter";
 import { useWidgetSync } from "@/hooks/widgetSync";
 import "./index.css";
@@ -117,6 +118,7 @@ export default function App() {
                 <WidgetSyncBridge />
                 <AppContext.Provider value={reducer}>
                     <BrowserRouter>
+                        <UniversalLinkBridge />
                         <AnnouncementCenter />
                         <Routes>
                             <Route path="/" element={<Layout />}>

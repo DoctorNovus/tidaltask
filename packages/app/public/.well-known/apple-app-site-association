@@ -1,0 +1,15 @@
+{
+  "applinks": {
+    "details": [
+      {
+        "appIDs": ["B9UMLF8BH7.com.ottegi.sequenced-app"],
+        "components": [
+          { "/": "/*" }
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["B9UMLF8BH7.com.ottegi.sequenced-app"]
+  }
+}

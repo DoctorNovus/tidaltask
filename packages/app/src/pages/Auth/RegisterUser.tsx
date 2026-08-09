@@ -60,19 +60,19 @@ export default function RegisterUser() {
                     <div className="w-full flex flex-col gap-4">
                         <label className="flex flex-col text-left text-sm font-semibold text-muted">
                             First Name
-                            <input required className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="First Name" />
+                            <input required autoComplete="given-name" className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="First Name" />
                         </label>
                         <label className="flex flex-col text-left text-sm font-semibold text-muted">
                             Last Name
-                            <input required className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="Last Name" />
+                            <input required autoComplete="family-name" className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="Last Name" />
                         </label>
                         <label className="flex flex-col text-left text-sm font-semibold text-muted">
                             Email
-                            <input required className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="Email Address" />
+                            <input required type="email" autoComplete="username" className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="Email Address" />
                         </label>
                         <label className="flex flex-col text-left text-sm font-semibold text-muted">
                             Password
-                            <input required type="password" className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="Password" />
+                            <input required type="password" autoComplete="new-password" className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="Password" />
                         </label>
                     </div>
                     <label htmlFor="terms-policy" className="w-full flex items-center text-left gap-2 rounded-md text-sm text-muted">
