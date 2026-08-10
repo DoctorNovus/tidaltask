@@ -64,7 +64,7 @@ jobs:
         uses: appleboy/ssh-action@v1.0.0
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_PAT }}
-          GHCR_USER: DoctorNovus
+          GHCR_USER: ${{ github.actor }}
         with:
           host: dashboard.tidaltask.app
           username: root
