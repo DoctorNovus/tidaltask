@@ -1,6 +1,6 @@
 import { useState } from "react";
 import TaskMenu from "../../tasks/TaskMenu";
-import { ChevronRightIcon, PencilSquareIcon } from "@heroicons/react/20/solid";
+import { ChevronRightIcon, PencilSquareIcon, ClipboardDocumentIcon, CheckIcon } from "@heroicons/react/20/solid";
 import GroupEditorModal from "@/pages/(Layout)/(TaskInfoMenu)/Shared/GroupEditorModal";
 import { Disclosure, DisclosureButton, DisclosurePanel, Menu, MenuButton, MenuItems, MenuItem, Transition } from "@headlessui/react";
 import { matchDate, formatDateTime } from "@/utils/date";
@@ -45,6 +45,7 @@ export default function TaskContainer({
   const [bulkAction, setBulkAction] = useState<"" | "group" | "tags" | "date" | "priority">("");
   const [completionToast, setCompletionToast] = useState<string | null>(null);
   const [groupEditOpen, setGroupEditOpen] = useState(false);
+  const [tasksCopied, setTasksCopied] = useState(false);
   const { mutate: setSettings } = useUpdateSettings();
   const settings = useSettings();
   const { mutateAsync: updateTask } = useUpdateTask();
@@ -323,6 +324,25 @@ export default function TaskContainer({
   const visibleTasks = baseTasks.filter((task) =>
     taskFilter === "incomplete" ? isTaskDone(task, appData.activeDate ?? new Date()) : true
   );
+
+  const copyTasksToClipboard = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (visibleTasks.length === 0) return;
+
+    // Matches TaskMenu's own display order (priority descending) so the copied
+    // text lines up with what's actually visible on screen.
+    const ordered = [...visibleTasks].sort((a, b) => Number(b.priority ?? 0) - Number(a.priority ?? 0));
+
+    const lines = [title ?? "", ""];
+    ordered.forEach((task) => {
+      lines.push(`- ${task.title}`);
+      if (task.description?.trim()) lines.push(task.description.trim());
+    });
+
+    await navigator.clipboard.writeText(lines.join("\n"));
+    setTasksCopied(true);
+    setTimeout(() => setTasksCopied(false), 1500);
+  };
 
   const renderBulkActionCard = () => {
     if (!selectionMode || !bulkAction) return null;
@@ -628,6 +648,19 @@ export default function TaskContainer({
                           </h1>
                         )}
                       </div>
+                      {visibleTasks.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={copyTasksToClipboard}
+                          className="shrink-0 text-slate-300 dark:text-slate-600 hover:text-accent-blue opacity-0 group-hover/card:opacity-100 transition-all"
+                          title="Copy tasks"
+                        >
+                          {tasksCopied
+                            ? <CheckIcon className="h-4 w-4 text-emerald-500" />
+                            : <ClipboardDocumentIcon className="h-4 w-4" />
+                          }
+                        </button>
+                      )}
                       {isGroupContainer && (
                         <button
                           type="button"
