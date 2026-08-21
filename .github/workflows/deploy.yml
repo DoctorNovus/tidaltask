@@ -65,6 +65,19 @@ jobs:
         env:
           GHCR_TOKEN: ${{ secrets.GHCR_PAT }}
           GHCR_USER: ${{ github.actor }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TOTP_ENCRYPTION_KEY: ${{ secrets.TOTP_ENCRYPTION_KEY }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          UPDATES_WEBHOOK_URL: ${{ secrets.UPDATES_WEBHOOK_URL }}
+          APP_URL: ${{ vars.APP_URL }}
+          FRONTEND_URL: ${{ vars.FRONTEND_URL }}
+          PORT: ${{ vars.PORT }}
+          RESET_FROM_EMAIL: ${{ vars.RESET_FROM_EMAIL }}
+          WELCOME_FROM_EMAIL: ${{ vars.WELCOME_FROM_EMAIL }}
+          WELCOME_EMAIL_SUBJECT: ${{ vars.WELCOME_EMAIL_SUBJECT }}
+          WEBAUTHN_RP_ID: ${{ vars.WEBAUTHN_RP_ID }}
+          WEBAUTHN_RP_NAME: ${{ vars.WEBAUTHN_RP_NAME }}
         with:
           host: dashboard.tidaltask.app
           username: root
@@ -72,7 +85,7 @@ jobs:
           port: 22
           command_timeout: 30m
           script_stop: true
-          envs: GHCR_TOKEN,GHCR_USER
+          envs: GHCR_TOKEN,GHCR_USER,SESSION_SECRET,DATABASE_URL,TOTP_ENCRYPTION_KEY,RESEND_API_KEY,UPDATES_WEBHOOK_URL,APP_URL,FRONTEND_URL,PORT,RESET_FROM_EMAIL,WELCOME_FROM_EMAIL,WELCOME_EMAIL_SUBJECT,WEBAUTHN_RP_ID,WEBAUTHN_RP_NAME
           script: |
             set -euo pipefail
             cd /root/sequenced
@@ -80,6 +93,28 @@ jobs:
             git fetch origin main
             git checkout main
             git pull --rebase origin main
+
+            # Regenerate .env from GitHub Actions secrets/variables on every deploy,
+            # so config lives in GitHub instead of drifting from whatever was last
+            # hand-typed on this box. Secrets stay encrypted in Actions; only this
+            # script ever sees the plaintext, and only in the remote SSH session.
+            cat > .env <<ENVFILE
+            SESSION_SECRET="$SESSION_SECRET"
+            DATABASE_URL="$DATABASE_URL"
+            TOTP_ENCRYPTION_KEY="$TOTP_ENCRYPTION_KEY"
+            RESEND_API_KEY="$RESEND_API_KEY"
+            UPDATES_WEBHOOK_URL="$UPDATES_WEBHOOK_URL"
+            APP_URL="$APP_URL"
+            FRONTEND_URL="$FRONTEND_URL"
+            PORT="$PORT"
+            RESET_FROM_EMAIL="$RESET_FROM_EMAIL"
+            WELCOME_FROM_EMAIL="$WELCOME_FROM_EMAIL"
+            WELCOME_EMAIL_SUBJECT="$WELCOME_EMAIL_SUBJECT"
+            WEBAUTHN_RP_ID="$WEBAUTHN_RP_ID"
+            WEBAUTHN_RP_NAME="$WEBAUTHN_RP_NAME"
+            ENVFILE
+            chmod 600 .env
+
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
             docker compose pull
             docker compose up -d --remove-orphans

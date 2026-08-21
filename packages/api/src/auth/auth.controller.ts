@@ -34,7 +34,7 @@ const CONFIGURED_RP_IDS = (process.env.WEBAUTHN_RP_ID || "")
     .filter(Boolean);
 const ALLOWED_RP_IDS = CONFIGURED_RP_IDS.length > 0
     ? CONFIGURED_RP_IDS
-    : ["dashboard.tidaltask.app", "tidaltask.app", "localhost"];
+    : ["dashboard.tidaltask.app", "tidaltask.app", "sequenced.ottegi.com", "localhost"];
 
 function getRpConfig(req: Request) {
     const origin = req.headers.origin || process.env.FRONTEND_URL || "https://dashboard.tidaltask.app";
