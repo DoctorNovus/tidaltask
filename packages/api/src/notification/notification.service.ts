@@ -256,7 +256,7 @@ export class NotificationService {
         if (prefs.summaryCadence === "daily") {
             const localNow = this.toLocalTime(nowUtc, prefs.utcOffsetMinutes ?? 0);
             const key = `daily:${userId}:${this.formatDateKey(localNow)}`;
-            const todayCount = (await this.taskService.getTasksToday(userId)).length;
+            const todayCount = (await this.taskService.getTasksToday(userId, localNow)).length;
 
             await this.upsertMessageByDedupe({
                 dedupeKey: key,
@@ -276,7 +276,7 @@ export class NotificationService {
         const localNow = this.toLocalTime(nowUtc, prefs.utcOffsetMinutes ?? 0);
         const weekStart = this.getWeekStart(localNow, prefs.weeklyDay ?? 1);
         const key = `weekly:${userId}:${this.formatDateKey(weekStart)}`;
-        const weekCount = (await this.taskService.getTasksWeek(userId)).length;
+        const weekCount = (await this.taskService.getTasksWeek(userId, localNow)).length;
 
         await this.upsertMessageByDedupe({
             dedupeKey: key,

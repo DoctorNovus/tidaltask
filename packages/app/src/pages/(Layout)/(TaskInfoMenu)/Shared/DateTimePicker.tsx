@@ -82,10 +82,21 @@ export default function DateTimePicker({ value, onChange, dateOnly = false, inli
       const GAP = parseFloat(getComputedStyle(document.documentElement).fontSize) || 16; // 1em
       const PICKER_H = dateOnly ? 280 : 560;
       const spaceBelow = window.innerHeight - rect.bottom - GAP;
-      const top = spaceBelow >= PICKER_H ? rect.bottom + GAP : rect.top - PICKER_H - GAP;
+      const rawTop = spaceBelow >= PICKER_H ? rect.bottom + GAP : rect.top - PICKER_H - GAP;
+      // Flipping above/below the trigger isn't enough on a short mobile viewport where the
+      // picker doesn't fully fit on either side — clamp so it never renders off-screen.
+      const top = Math.min(Math.max(rawTop, 8), Math.max(8, window.innerHeight - PICKER_H - 8));
       const PICKER_W = 288;
       const left = Math.min(Math.max(rect.right - PICKER_W, 8), window.innerWidth - PICKER_W - 8);
-      setOverlayStyle({ position: "fixed", top, left, zIndex: 9999, width: 288 });
+      setOverlayStyle({
+        position: "fixed",
+        top,
+        left,
+        zIndex: 9999,
+        width: 288,
+        maxHeight: window.innerHeight - 16,
+        overflowY: "auto",
+      });
     }
     setOpen(v => !v);
   };

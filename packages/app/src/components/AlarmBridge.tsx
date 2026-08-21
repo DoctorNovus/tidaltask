@@ -7,6 +7,8 @@ import {
   setAlarmRingingHandler,
   initNativeAlarmListener,
 } from "@/utils/alarmScheduler";
+import { reconcileTaskDueNotifications } from "@/utils/notifs";
+import { loadTasks } from "@/hooks/tasks";
 import { Logger } from "@/utils/logger";
 import AlarmRingingOverlay from "./alarm/AlarmRingingOverlay";
 
@@ -17,7 +19,20 @@ const ALARM_RECONCILE_INTERVAL_MS = 60 * 1000;
  * (packages/app/src/hooks/auth.ts), but for alarms: reconciles native/web alarm
  * schedules on an interval, catches up on any alarm missed while the app wasn't
  * open/foregrounded, and renders the ringing overlay when one fires.
+ *
+ * Also reconciles per-task due-time notifications here, not just after local task
+ * mutations (hooks/tasks.ts) — otherwise a task created elsewhere (another device,
+ * voice command, MCP tool) never gets an on-device notification scheduled, since
+ * this device only learns about it once it happens to sync, not when it's due.
  */
+async function reconcileDueNotifications(): Promise<void> {
+  try {
+    const tasks = await loadTasks();
+    await reconcileTaskDueNotifications(tasks);
+  } catch (err) {
+    Logger.logWarning(String(err));
+  }
+}
 export default function AlarmBridge() {
   const query = useQuery<AuthStatus>({
     queryKey: ["auth"],
@@ -36,16 +51,19 @@ export default function AlarmBridge() {
 
     reconcileAlarms().catch((err) => Logger.logWarning(String(err)));
     checkForMissedAlarms().catch((err) => Logger.logWarning(String(err)));
+    reconcileDueNotifications();
 
     const removeNativeListener = initNativeAlarmListener();
 
     const interval = window.setInterval(() => {
       reconcileAlarms().catch((err) => Logger.logWarning(String(err)));
+      reconcileDueNotifications();
     }, ALARM_RECONCILE_INTERVAL_MS);
 
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
         checkForMissedAlarms().catch((err) => Logger.logWarning(String(err)));
+        reconcileDueNotifications();
       }
     };
     document.addEventListener("visibilitychange", handleVisibility);

@@ -8,6 +8,11 @@ interface TaskItemShellProps {
   task?: Task;
   activeDate?: Date;
   onClick?: (e: React.MouseEvent) => void;
+  onContextMenu?: (e: React.MouseEvent) => void;
+  onPointerDown?: (e: React.PointerEvent) => void;
+  onPointerUp?: (e: React.PointerEvent) => void;
+  onPointerMove?: (e: React.PointerEvent) => void;
+  onPointerCancel?: (e: React.PointerEvent) => void;
 }
 
 export default function TaskItemShell({ skeleton, children, task, activeDate, className = "", ...props }: React.PropsWithChildren<TaskItemShellProps>) {

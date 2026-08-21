@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { XMarkIcon } from "@heroicons/react/20/solid";
 import { useApp } from "@/hooks/app";
 import { Task } from "@/hooks/tasks";
 import { isTaskDone } from "@/utils/data";
@@ -76,14 +77,22 @@ export default function TagFilterBar({ tasks }: TagFilterBarProps) {
               key={name}
               type="button"
               onClick={() => toggleTag(name)}
-              className={`flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition ${
+              title={isActive ? `Remove #${name} filter` : `Filter by #${name}`}
+              className={`group flex items-center gap-1 rounded-full px-3 py-1 text-xs font-semibold transition ${
                 isActive
                   ? "bg-accent-blue text-white shadow-xs shadow-accent-blue/30"
                   : "bg-white text-primary ring-1 ring-accent-blue/20 hover:ring-accent-blue/40"
               }`}
             >
               <span>#{name}</span>
-              <span className={isActive ? "text-white/90" : "text-muted"}>{count}</span>
+              {isActive ? (
+                <span className="relative flex h-3.5 w-3.5 items-center justify-center text-white/90">
+                  <span className="group-hover:opacity-0 transition-opacity">{count}</span>
+                  <XMarkIcon className="absolute inset-0 h-3.5 w-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </span>
+              ) : (
+                <span className="text-muted">{count}</span>
+              )}
             </button>
           );
         })}

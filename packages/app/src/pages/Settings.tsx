@@ -667,6 +667,48 @@ export default function SettingsPage() {
               <span className="text-[11px] text-muted">Comfortable shows full task titles; compact tightens spacing and truncates.</span>
             </div>
 
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col">
+                <span className="text-sm text-primary">Show dates on task cards</span>
+                <span className="text-xs text-muted">Display each task's due date/time badge in task lists.</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => UpdateSettings({ showTaskDates: tempSettings.showTaskDates === false })}
+                className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold shadow-xs transition ${
+                  tempSettings.showTaskDates !== false
+                    ? "bg-accent-blue text-white shadow-accent-blue/30"
+                    : "border border-(--surface-border) text-primary hover:-translate-y-px"
+                }`}
+              >
+                {tempSettings.showTaskDates !== false ? "On" : "Off"}
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <span className="text-xs font-semibold uppercase tracking-widest text-muted">Task page columns</span>
+              <div className="inline-flex items-center gap-1 rounded-xl bg-silver-200 dark:bg-(--surface-card) p-1">
+                {([1, 2, 3] as const).map((count) => {
+                  const isActive = (tempSettings.taskColumnCount ?? 1) === count;
+                  return (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => UpdateSettings({ taskColumnCount: count })}
+                      className={`flex-1 rounded-lg px-3 py-2 text-xs font-semibold transition ${
+                        isActive
+                          ? "bg-accent-blue text-white shadow-xs shadow-accent-blue/30"
+                          : "text-muted hover:text-primary"
+                      }`}
+                    >
+                      {count}
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="text-[11px] text-muted">How many columns of group/task cards to lay out side by side on wide screens.</span>
+            </div>
+
             <div className="flex flex-col gap-2">
               <span className="text-xs font-semibold uppercase tracking-widest text-muted">Task shape</span>
               <div className="inline-flex items-center gap-1 rounded-xl bg-silver-200 dark:bg-(--surface-card) p-1">

@@ -207,8 +207,8 @@ export class TaskService {
         return new RegExp(dates);
     }
 
-    async getTasksToday(userId: string): Promise<Task[]> {
-        const today = this.normalizeDay(new Date());
+    async getTasksToday(userId: string, referenceDate?: Date): Promise<Task[]> {
+        const today = this.normalizeDay(referenceDate ?? new Date());
 
         const tasks = await Task.find({ users: userId })
             .populate({ path: "users", select: "first last email id" })
@@ -218,8 +218,8 @@ export class TaskService {
         return tasks.filter((task) => this.isPendingOnDate(task, today));
     }
 
-    async getTasksTomorrow(userId: string): Promise<Task[]> {
-        const tomorrow = this.normalizeDay(new Date());
+    async getTasksTomorrow(userId: string, referenceDate?: Date): Promise<Task[]> {
+        const tomorrow = this.normalizeDay(referenceDate ?? new Date());
         tomorrow.setDate(tomorrow.getDate() + 1);
 
         const tasks = await Task.find({ users: userId })
@@ -230,8 +230,8 @@ export class TaskService {
         return tasks.filter((task) => this.isPendingOnDate(task, tomorrow));
     }
 
-    async getTasksWeek(userId: string): Promise<Task[]> {
-        const startDay = this.normalizeDay(new Date());
+    async getTasksWeek(userId: string, referenceDate?: Date): Promise<Task[]> {
+        const startDay = this.normalizeDay(referenceDate ?? new Date());
 
         const tasks = await Task.find({ users: userId })
             .populate({ path: "users", select: "first last email id" })

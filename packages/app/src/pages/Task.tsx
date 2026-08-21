@@ -221,8 +221,10 @@ export default function Task() {
 
           if (visibleGroups.length === 0) return null;
 
+          const columnClass = { 1: "md:grid-cols-1", 2: "md:grid-cols-2", 3: "md:grid-cols-3" }[settings.data?.taskColumnCount ?? 1] ?? "md:grid-cols-1";
+
           return (
-            <div className="grid gap-6 md:grid-cols-1">
+            <div className={`grid gap-6 ${columnClass}`}>
               {visibleGroups.map(([groupName, groupTasks]) => {
                 const cfg = groupConfig[groupName];
                 const displayName = cfg?.displayName || capitalize(groupName);

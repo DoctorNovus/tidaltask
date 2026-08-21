@@ -9,6 +9,7 @@ export interface GroupConfig {
   visibleWhenEmpty?: boolean;
   isDefault?: boolean;
   excludeFromUpcoming?: boolean;
+  excludeFromCalendar?: boolean;
 }
 
 export interface Settings {
@@ -28,6 +29,8 @@ export interface Settings {
   deviceCalendarSyncEnabled?: boolean;
   notifyAtTaskTime?: boolean;
   scheduledDueNotificationTaskIds?: string[];
+  showTaskDates?: boolean;
+  taskColumnCount?: 1 | 2 | 3;
 }
 
 /* Gets the settings from the database */

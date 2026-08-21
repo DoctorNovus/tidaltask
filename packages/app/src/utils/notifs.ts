@@ -7,6 +7,7 @@ import {
   ScheduleResult,
 } from "@capacitor/local-notifications";
 import { Capacitor } from "@capacitor/core";
+import { App as CapacitorApp } from "@capacitor/app";
 import { getSettings, setSettings } from "@/hooks/settings";
 import { Logger } from "./logger";
 import { fetchData } from "./data";
@@ -19,6 +20,23 @@ const NO_TASKS_DUE_SUPPRESSION_MS = 24 * 60 * 60 * 1000;
 
 const isWeb = () => Capacitor.getPlatform() === "web";
 const supportsWebNotifications = () => typeof Notification !== "undefined";
+
+/**
+ * Server-pushed reminders exist to catch a user's attention when they're not
+ * looking at the app. Firing them as native banners while the app is already
+ * open in the foreground just spams the user with a popup for something
+ * they're already looking at, so callers use this to skip that case.
+ */
+async function isAppInForeground(): Promise<boolean> {
+  if (isWeb()) return document.visibilityState === "visible";
+
+  try {
+    const state = await CapacitorApp.getState();
+    return state.isActive;
+  } catch {
+    return document.visibilityState === "visible";
+  }
+}
 
 function isNoTasksDueBody(body?: string): boolean {
   if (!body) return false;
@@ -370,6 +388,12 @@ async function _doSyncServerNotifications(): Promise<SyncResult> {
     const permission = await checkPermissions();
     if (permission.display !== "granted") {
       Logger.logWarning("Notification permission is not granted; pending notifications were not acknowledged.");
+      return { pending: pending.length, delivered: 0, permission: permission.display };
+    }
+
+    // Leave foreground-arriving reminders undelivered/unacknowledged so they still
+    // pop up as a real notification the next time the app is backgrounded.
+    if (await isAppInForeground()) {
       return { pending: pending.length, delivered: 0, permission: permission.display };
     }
 

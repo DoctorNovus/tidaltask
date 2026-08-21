@@ -20,10 +20,35 @@ import {
 } from "@simplewebauthn/server";
 import type { AuthenticatorTransportFuture, RegistrationResponseJSON, AuthenticationResponseJSON } from "@simplewebauthn/server";
 
+// WebAuthn requires the RP ID to equal, or be a registrable parent domain of, the
+// calling page's origin — a single fixed WEBAUTHN_RP_ID can't satisfy that for every
+// client (browser on the production domain, the native app whose requests carry no
+// Origin header at all since CapacitorHttp bypasses the WebView's fetch, and local
+// dev on localhost) simultaneously. "localhost" is included by default because
+// browsers special-case it as always valid for WebAuthn during local development —
+// the native app's associated domain is dashboard.tidaltask.app, which must stay
+// first so it's also the default when there's no Origin header to match against.
+const CONFIGURED_RP_IDS = (process.env.WEBAUTHN_RP_ID || "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter(Boolean);
+const ALLOWED_RP_IDS = CONFIGURED_RP_IDS.length > 0
+    ? CONFIGURED_RP_IDS
+    : ["dashboard.tidaltask.app", "tidaltask.app", "localhost"];
+
 function getRpConfig(req: Request) {
-    const rpID = process.env.WEBAUTHN_RP_ID || "tidaltask.app";
     const origin = req.headers.origin || process.env.FRONTEND_URL || "https://dashboard.tidaltask.app";
     const rpName = process.env.WEBAUTHN_RP_NAME || "TidalTask";
+
+    let hostname = ALLOWED_RP_IDS[0];
+    try {
+        hostname = new URL(origin).hostname;
+    } catch {
+        // origin isn't a parseable URL (shouldn't happen) — fall back to the default RP ID below.
+    }
+
+    const rpID = ALLOWED_RP_IDS.find((id) => hostname === id || hostname.endsWith(`.${id}`)) ?? ALLOWED_RP_IDS[0];
+
     return { rpID, origin, rpName };
 }
 

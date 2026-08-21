@@ -189,6 +189,7 @@ export default function CalendarPage() {
 
   const [scope, setScope] = useState<Scope>(initialScope);
   const [view, setView] = useState<ViewMode>(initialView);
+  const [itemFilter, setItemFilter] = useState<"all" | "tasks" | "events">("all");
   const [weekStart, setWeekStart] = useState<Date>(
     initialWeekParam ? normalizeDay(new Date(initialWeekParam)) : resolveWeekStart(initialScope)
   );
@@ -217,7 +218,11 @@ export default function CalendarPage() {
   const [searchTerm, setSearchTerm] = useState("");
 
   const searchedTasks = useMemo(() => {
-    const all = tasks.data || [];
+    const groupConfig = settings.data?.groupConfig ?? {};
+    const all = (tasks.data || []).filter((task) => {
+      const group = (task.group ?? "").trim().toLowerCase();
+      return !group || !groupConfig[group]?.excludeFromCalendar;
+    });
     const term = searchTerm.trim().toLowerCase();
     if (!term) return all;
 
@@ -238,14 +243,17 @@ export default function CalendarPage() {
         tags.includes(term)
       );
     });
-  }, [tasks.data, searchTerm]);
+  }, [tasks.data, searchTerm, settings.data]);
 
-  const grouped = useMemo(() => groupTasksByDay(searchedTasks, start, end), [searchedTasks, start, end]);
+  const grouped = useMemo(
+    () => (itemFilter === "events" ? {} : groupTasksByDay(searchedTasks, start, end)),
+    [searchedTasks, start, end, itemFilter]
+  );
 
   const deviceEvents = useDeviceCalendarEvents(start, end, showDeviceCalendarEvents);
   const eventsGrouped = useMemo(
-    () => groupEventsByDay(deviceEvents.data || [], start, end),
-    [deviceEvents.data, start, end]
+    () => (itemFilter === "tasks" ? {} : groupEventsByDay(deviceEvents.data || [], start, end)),
+    [deviceEvents.data, start, end, itemFilter]
   );
 
   const weekDays = useMemo(() => buildWeekDays(weekStart), [weekStart]);
@@ -559,7 +567,11 @@ export default function CalendarPage() {
           const overflow = dayTasks.length - MAX_WEEK_TASKS;
           const visibleEvents = dayEvents.slice(0, MAX_WEEK_EVENTS);
           const eventOverflow = dayEvents.length - MAX_WEEK_EVENTS;
-          const cornerClass = dayIdx === 0 ? "rounded-tl-2xl" : dayIdx === weekDays.length - 1 ? "rounded-tr-2xl" : "";
+          // Nested inside a container with rounded-2xl (16px) + a 1px border, so this needs
+          // a 1px-smaller radius (15px) to nest cleanly — matching the outer curve exactly
+          // (16px from a point offset by the 1px border) clips the active-day ring/highlight
+          // at the corner instead of following it, which reads as the border getting cut off.
+          const cornerClass = dayIdx === 0 ? "rounded-tl-[15px]" : dayIdx === weekDays.length - 1 ? "rounded-tr-[15px]" : "";
 
           return (
             <div key={key} className="flex flex-col">
@@ -910,6 +922,22 @@ export default function CalendarPage() {
             </button>
           ))}
         </div>
+
+        {/* Tasks vs. device calendar events — only meaningful once events can appear at all. */}
+        {showDeviceCalendarEvents && (
+          <div className="inline-flex items-center gap-1 rounded-full surface-card border p-1 shadow-xs">
+            {(["all", "tasks", "events"] as const).map((mode) => (
+              <button
+                key={mode}
+                type="button"
+                onClick={() => setItemFilter(mode)}
+                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${itemFilter === mode ? "bg-accent-blue text-white shadow-xs shadow-accent-blue/30" : "text-muted hover:text-primary"}`}
+              >
+                {mode === "all" ? "All" : mode === "tasks" ? "Tasks" : "Events"}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Mobile search — full width below the header */}

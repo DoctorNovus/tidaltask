@@ -1,12 +1,16 @@
 import { Task, useUpdateTask } from "@/hooks/tasks";
 import { completeTaskOccurrence } from "@/utils/taskCompletion";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import TaskItemShell from "./TaskItemShell";
 import TaskItemCheckBox from "./TaskItemCheckbox";
 import TaskItemTitle from "./TaskItemTitle";
 import TaskItemDate from "./TaskItemDate";
+import TaskItemQuickActions from "./TaskItemQuickActions";
 import { isTaskDone } from "@/utils/data";
 import { useApp } from "@/hooks/app";
+import { useSettings } from "@/hooks/settings";
+
+const LONG_PRESS_MS = 500;
 
 interface TaskItemParams {
   skeleton?: boolean;
@@ -25,7 +29,11 @@ interface TaskItemParams {
 export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectionMode = false, isSelected = false, onToggleSelect, isAnimating = false, onComplete, activeDate }: TaskItemParams) {
   const { mutate: updateTask } = useUpdateTask();
   const [appData, setAppData] = useApp();
+  const settings = useSettings();
+  const showDates = settings.data?.showTaskDates !== false;
   const [isCompleting, setIsCompleting] = useState(false);
+  const [quickActions, setQuickActions] = useState<{ x: number; y: number } | null>(null);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const effectiveDate = activeDate ?? appData.activeDate;
 
   if (skeleton) {
@@ -78,6 +86,45 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
     setTimeout(() => setIsCompleting(false), 600);
   };
 
+  const openEdit = () => {
+    setAppData({
+      ...appData,
+      activeTask: item,
+    });
+    setIsInspecting!(true);
+  };
+
+  const toggleComplete = () => {
+    completeTaskOccurrence(item as Task, effectiveDate!, updateTask);
+    if (onComplete) onComplete(item as Task);
+  };
+
+  const clearLongPressTimer = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+  };
+
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (selectionMode) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setQuickActions({ x: e.clientX, y: e.clientY });
+  };
+
+  const handlePointerDown = (e: React.PointerEvent) => {
+    if (selectionMode || e.pointerType !== "touch") return;
+    const { clientX, clientY } = e;
+    clearLongPressTimer();
+    longPressTimer.current = setTimeout(() => {
+      setQuickActions({ x: clientX, y: clientY });
+    }, LONG_PRESS_MS);
+  };
+
+  const handlePointerUp = () => clearLongPressTimer();
+  const handlePointerMove = () => clearLongPressTimer();
+
   const handleInteractive = (e: React.MouseEvent) => {
     if (selectionMode) {
       e.stopPropagation();
@@ -120,6 +167,11 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
         activeDate={effectiveDate}
         className={`${fadeClass} ${selectionClass}`}
         onClick={handleInteractive}
+        onContextMenu={handleContextMenu}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        onPointerMove={handlePointerMove}
+        onPointerCancel={handlePointerUp}
       >
         <div className="w-full h-full flex flex-row items-center">
           <TaskItemCheckBox
@@ -141,9 +193,11 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
               <div className="flex flex-row items-center min-w-0 flex-1 overflow-hidden">
                 <TaskItemTitle text={item.title} />
               </div>
-              <div className="shrink-0 w-20 overflow-hidden">
-                <TaskItemDate task={item} />
-              </div>
+              {showDates && (
+                <div className="shrink-0 w-20 overflow-hidden">
+                  <TaskItemDate task={item} />
+                </div>
+              )}
               {!!item.priority && item.priority > 0 && (() => {
                 const badge: Record<number, { label: string; cls: string }> = {
                   1: { label: "Low",  cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400" },
@@ -161,6 +215,16 @@ export function TaskItem({ skeleton, item, setIsInspecting, taskFilter, selectio
           </div>
         </div>
       </TaskItemShell>
+      {quickActions && (
+        <TaskItemQuickActions
+          x={quickActions.x}
+          y={quickActions.y}
+          isPending={isPending}
+          onEdit={openEdit}
+          onToggleComplete={toggleComplete}
+          onClose={() => setQuickActions(null)}
+        />
+      )}
     </div>
   );
 }

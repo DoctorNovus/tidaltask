@@ -35,6 +35,7 @@ export default function GroupEditorModal({ open, onClose, groupKey, existingGrou
   const [visible, setVisible] = useState(true);
   const [isDefault, setIsDefault] = useState(false);
   const [excludeFromUpcoming, setExcludeFromUpcoming] = useState(false);
+  const [excludeFromCalendar, setExcludeFromCalendar] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -49,11 +50,13 @@ export default function GroupEditorModal({ open, onClose, groupKey, existingGrou
       setVisible(c.visible !== false);
       setIsDefault(!!c.isDefault);
       setExcludeFromUpcoming(!!c.excludeFromUpcoming);
+      setExcludeFromCalendar(!!c.excludeFromCalendar);
     } else {
       setName("");
       setVisible(true);
       setIsDefault(false);
       setExcludeFromUpcoming(false);
+      setExcludeFromCalendar(false);
     }
   }, [open, groupKey, settings.data]);
 
@@ -99,6 +102,7 @@ export default function GroupEditorModal({ open, onClose, groupKey, existingGrou
         visible,
         isDefault,
         excludeFromUpcoming,
+        excludeFromCalendar,
         order: previous.order ?? Object.keys(config).length,
       };
 
@@ -166,6 +170,16 @@ export default function GroupEditorModal({ open, onClose, groupKey, existingGrou
                   <div className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${excludeFromUpcoming ? "translate-x-4" : "translate-x-0"}`} />
                 </div>
                 <span className="text-xs text-muted select-none">Hide from Upcoming Tasks on Home</span>
+              </label>
+
+              <label className="flex items-center gap-2 cursor-pointer w-fit">
+                <div
+                  onClick={() => setExcludeFromCalendar((v) => !v)}
+                  className={`relative w-8 h-4 rounded-full transition cursor-pointer ${excludeFromCalendar ? "bg-accent-blue" : "bg-slate-300 dark:bg-slate-600"}`}
+                >
+                  <div className={`absolute top-0.5 left-0.5 h-3 w-3 rounded-full bg-white shadow transition-transform ${excludeFromCalendar ? "translate-x-4" : "translate-x-0"}`} />
+                </div>
+                <span className="text-xs text-muted select-none">Hide from Calendar</span>
               </label>
 
               <label className="flex items-center gap-2 cursor-pointer w-fit">

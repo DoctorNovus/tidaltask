@@ -114,6 +114,9 @@ export default function TaskContainer({
 
   if (activeTags.length > 0) {
     baseTasks = baseTasks.filter(matchesTags);
+    // An active tag filter that matches nothing in this group/day is a different
+    // case from a naturally empty one — don't clutter the page with an empty container.
+    if (baseTasks.length === 0) return null;
   }
 
   const toggleSelection = (taskId: string) => {
@@ -637,7 +640,11 @@ export default function TaskContainer({
                       )}
                     </div>
                   </div>
-                  <div className="flex flex-row items-center sm:justify-end">
+                  {/* min-w-0 overrides the flex-item default of min-width:auto — without it, WebKit
+                      (Safari/iPad) sizes this by the widest wrapped line of the nested flex-wrap
+                      button row below, which grows once selection mode adds more buttons and can
+                      squeeze the title on the other side of the row down to nothing. */}
+                  <div className="flex flex-row items-center min-w-0 sm:justify-end">
                     <div className="flex w-full flex-wrap items-center justify-start sm:justify-end gap-2">
                       <div className="flex rounded-full bg-white/70 dark:bg-(--surface-raised) border border-accent-blue/20 overflow-hidden">
                         <button
