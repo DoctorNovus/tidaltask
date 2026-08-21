@@ -196,18 +196,33 @@ Push to `main` to trigger the `deploy.yml` workflow:
 2. **`deploy-server`** — SSHs into the server, pulls the new images from GHCR, and restarts containers
 3. **`ios-release`** — builds the iOS app and submits to App Store (runs in parallel with the server deploy)
 
+The `deploy-server` job also regenerates `.env` on the server from GitHub secrets/variables on every deploy (see the `script:` step in `deploy.yml`), so production config lives in GitHub instead of drifting from whatever was last hand-typed over SSH.
+
 Required GitHub secrets:
 
 | Secret | Description |
 |---|---|
 | `DEPLOY_SSH_KEY` | Private SSH key for the server |
 | `GHCR_PAT` | GitHub PAT with `read:packages` scope — used by the server to pull images from GHCR |
+| `SESSION_SECRET` | Session cookie signing secret |
+| `DATABASE_URL` | MongoDB connection string (contains credentials) |
+| `TOTP_ENCRYPTION_KEY` | 2FA secret-at-rest encryption key |
+| `RESEND_API_KEY` | Resend API key for transactional email |
+| `UPDATES_WEBHOOK_URL` | Discord webhook URL (functions as a bearer credential — treat as a secret, not a variable) |
 
-Required GitHub variable:
+Required GitHub variables:
 
 | Variable | Description |
 |---|---|
 | `VITE_API_URL` | API base URL baked into the frontend at build time (e.g. `https://api.tidaltask.app`) |
+| `APP_URL` | Frontend origin, e.g. `https://dashboard.tidaltask.app` |
+| `FRONTEND_URL` | Same as `APP_URL` |
+| `PORT` | API port, e.g. `8080` |
+| `RESET_FROM_EMAIL` | From-address for password reset emails |
+| `WELCOME_FROM_EMAIL` | From-address for welcome emails |
+| `WELCOME_EMAIL_SUBJECT` | Subject line for welcome emails |
+| `WEBAUTHN_RP_ID` | Comma-separated list of valid passkey RP IDs, e.g. `dashboard.tidaltask.app,tidaltask.app` |
+| `WEBAUTHN_RP_NAME` | Display name shown in passkey prompts |
 
 ---
 
