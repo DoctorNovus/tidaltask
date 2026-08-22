@@ -68,11 +68,11 @@ export default function RegisterUser() {
                         </label>
                         <label className="flex flex-col text-left text-sm font-semibold text-muted">
                             Email
-                            <input required type="email" autoComplete="username" className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="Email Address" />
+                            <input required type="email" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="Email Address" />
                         </label>
                         <label className="flex flex-col text-left text-sm font-semibold text-muted">
                             Password
-                            <input required type="password" autoComplete="new-password" className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="Password" />
+                            <input required type="password" autoComplete="new-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="Password" />
                         </label>
                     </div>
                     <label htmlFor="terms-policy" className="w-full flex items-center text-left gap-2 rounded-md text-sm text-muted">

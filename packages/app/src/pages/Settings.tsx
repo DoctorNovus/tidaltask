@@ -443,6 +443,9 @@ export default function SettingsPage() {
               Email
               <input
                 type="email"
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
                 value={profileForm.email}
                 onChange={(e) => setProfileForm({ ...profileForm, email: e.target.value })}
                 className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
@@ -488,6 +491,9 @@ export default function SettingsPage() {
                     Current password
                     <input
                       type="password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       value={passwordForm.current}
                       onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
                       className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
@@ -497,6 +503,9 @@ export default function SettingsPage() {
                     New password
                     <input
                       type="password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       value={passwordForm.next}
                       onChange={(e) => setPasswordForm({ ...passwordForm, next: e.target.value })}
                       className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"
@@ -506,6 +515,9 @@ export default function SettingsPage() {
                     Confirm new password
                     <input
                       type="password"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
                       value={passwordForm.confirm}
                       onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
                       className="rounded-lg border border-(--surface-border) bg-silver-200 dark:bg-(--surface-raised) px-3 py-2 text-sm text-primary focus:border-accent-blue focus:outline-hidden"

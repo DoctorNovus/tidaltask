@@ -108,11 +108,11 @@ export default function LoginUser() {
                             <div className="flex flex-col gap-4">
                                 <label className="flex flex-col text-left text-sm font-semibold text-muted">
                                     Email
-                                    <input required type="email" name="email" autoComplete="username" className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="you@example.com" />
+                                    <input required type="email" name="email" autoComplete="username" autoCapitalize="none" autoCorrect="off" spellCheck={false} className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="you@example.com" />
                                 </label>
                                 <label className="flex flex-col text-left text-sm font-semibold text-muted">
                                     Password
-                                    <input required type="password" name="password" autoComplete="current-password" className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="••••••••" />
+                                    <input required type="password" name="password" autoComplete="current-password" autoCapitalize="none" autoCorrect="off" spellCheck={false} className="mt-1 w-full rounded-xl border border-accent-blue/20 bg-white px-3 py-2 text-base shadow-inner focus:border-accent-blue focus:outline-hidden dark:bg-[rgba(15,23,42,0.7)]" placeholder="••••••••" />
                                 </label>
                             </div>
                             {status.length > 0 && <span className="text-red-500 text-sm">{status}</span>}
