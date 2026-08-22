@@ -154,6 +154,8 @@ export default function Task() {
     </div>
   );
 
+  const columnClass = { 1: "md:grid-cols-1", 2: "md:grid-cols-2", 3: "md:grid-cols-3" }[settings.data?.taskColumnCount ?? 1] ?? "md:grid-cols-1";
+
   if (tasks.isLoading) {
     return (
       <div className="w-full text-accent-black">
@@ -182,7 +184,7 @@ export default function Task() {
           </div>
         )}
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className={`grid gap-6 ${columnClass}`}>
           <div className="min-w-0">
             <DayTasks
               setIsInspecting={setIsInspecting}
@@ -220,8 +222,6 @@ export default function Task() {
             });
 
           if (visibleGroups.length === 0) return null;
-
-          const columnClass = { 1: "md:grid-cols-1", 2: "md:grid-cols-2", 3: "md:grid-cols-3" }[settings.data?.taskColumnCount ?? 1] ?? "md:grid-cols-1";
 
           return (
             <div className={`grid gap-6 ${columnClass}`}>
