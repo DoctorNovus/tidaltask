@@ -27,7 +27,6 @@ export interface Settings {
   lastAutoDeleteAt?: number;
   showDeviceCalendarEvents?: boolean;
   deviceCalendarSyncEnabled?: boolean;
-  notifyAtTaskTime?: boolean;
   scheduledDueNotificationTaskIds?: string[];
   showTaskDates?: boolean;
   taskColumnCount?: 1 | 2 | 3;

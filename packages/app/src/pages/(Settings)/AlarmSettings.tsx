@@ -1,8 +1,10 @@
+import { useEffect, useState } from "react";
 import { Capacitor } from "@capacitor/core";
-import { TrashIcon, BellAlertIcon } from "@heroicons/react/24/solid";
+import { TrashIcon, BellAlertIcon, ExclamationTriangleIcon } from "@heroicons/react/24/solid";
 import { useAlarms, useUpdateAlarm, useDeleteAlarm, Alarm } from "@/hooks/alarms";
 import { useTasks } from "@/hooks/tasks";
 import { reconcileAlarms } from "@/utils/alarmScheduler";
+import { checkAlarmAuthorization, openAlarmSettings, AlarmAuthorizationState } from "@/plugins/alarm";
 
 const WEEKDAY_LABELS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -17,6 +19,11 @@ export default function AlarmSettings() {
   const { data: tasks } = useTasks();
   const { mutateAsync: updateAlarm } = useUpdateAlarm();
   const { mutateAsync: deleteAlarm } = useDeleteAlarm();
+  const [authState, setAuthState] = useState<AlarmAuthorizationState>("authorized");
+
+  useEffect(() => {
+    checkAlarmAuthorization().then(setAuthState);
+  }, []);
 
   const label = (alarm: Alarm): string => {
     if (alarm.label) return alarm.label;
@@ -43,6 +50,24 @@ export default function AlarmSettings() {
         <p className="text-xs text-muted">
           On the web, alarms only sound while TidalTask is open in this browser tab. Install the app or keep a tab open to make sure you don't miss one.
         </p>
+      )}
+
+      {authState === "denied" && (
+        <div className="flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 bg-accent-red-500/10 text-accent-red-500">
+          <div className="flex items-start gap-2 min-w-0">
+            <ExclamationTriangleIcon className="h-5 w-5 shrink-0 mt-0.5" />
+            <p className="text-xs">
+              Alarms are turned off in iOS Settings, so none of your alarms below will actually ring. Enable "Alarms" for TidalTask to fix this.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => openAlarmSettings()}
+            className="shrink-0 rounded-lg px-2.5 py-1.5 text-xs font-semibold bg-accent-red-500 text-white"
+          >
+            Open Settings
+          </button>
+        </div>
       )}
 
       {isLoading && <p className="text-sm text-muted">Loading alarms…</p>}

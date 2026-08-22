@@ -2,7 +2,6 @@ import {
   cancelNotification,
   getPending,
   setDailyReminders,
-  reconcileTaskDueNotifications,
 } from "@/utils/notifs";
 import { Settings, getSettings, setSettings } from "@/hooks/settings";
 import { useEffect, useState, FormEvent } from "react";
@@ -19,7 +18,7 @@ import AlarmSettings from "./(Settings)/AlarmSettings";
 import ThemeSettings from "./(Settings)/ThemeSettings";
 import CalendarSyncSettings from "./(Settings)/CalendarSyncSettings";
 import DeveloperNotificationSender from "./(Settings)/DeveloperNotificationSender";
-import { useDeleteCompletedTasks, useTasks } from "@/hooks/tasks";
+import { useDeleteCompletedTasks } from "@/hooks/tasks";
 import xIcon from "@/assets/social_icons/x.svg";
 import instagramIcon from "@/assets/social_icons/instagram.svg";
 import facebookIcon from "@/assets/social_icons/facebook.svg";
@@ -37,7 +36,6 @@ export default function SettingsPage() {
   const queryClient = useQueryClient();
   const [tempSettings, setTempSettings] = useState<Settings>({});
   const { mutateAsync: deleteCompletedTasks, isPending: isCleanupPending } = useDeleteCompletedTasks();
-  const tasksQuery = useTasks();
   const [cleanupInterval, setCleanupInterval] = useState<string>("30");
   const [cleanupStatus, setCleanupStatus] = useState<string>("");
   const [appState, setAppState] = useApp();
@@ -180,12 +178,6 @@ export default function SettingsPage() {
 
   const setTaskShape = (next: TaskShape) => {
     setAppState({ ...appState, taskShape: next });
-  };
-
-  const handleToggleTaskDueNotifications = async () => {
-    const next = !tempSettings.notifyAtTaskTime;
-    await UpdateSettings({ notifyAtTaskTime: next });
-    await reconcileTaskDueNotifications(tasksQuery.data || []);
   };
 
   const handleProfileSubmit = async (e: FormEvent) => {
@@ -768,27 +760,6 @@ export default function SettingsPage() {
           {!isClosed("notifications") && (
           <div className="px-4 py-4 border-t border-(--surface-border) flex flex-col gap-4">
             <ServerNotificationSettings />
-            {Capacitor.getPlatform() !== "web" && (
-              <div className="pt-4 border-t border-(--surface-border) flex items-center justify-between gap-4">
-                <div className="flex flex-col">
-                  <span className="text-sm text-primary">Local due-time reminders</span>
-                  <span className="text-xs text-muted">
-                    Notify on this device at each task's exact due time, without waiting on the server. Only non-repeating tasks with a specific time are included.
-                  </span>
-                </div>
-                <button
-                  type="button"
-                  onClick={handleToggleTaskDueNotifications}
-                  className={`shrink-0 rounded-lg px-3 py-2 text-xs font-semibold shadow-xs transition ${
-                    tempSettings.notifyAtTaskTime
-                      ? "bg-accent-blue text-white shadow-accent-blue/30"
-                      : "border border-(--surface-border) text-primary hover:-translate-y-px"
-                  }`}
-                >
-                  {tempSettings.notifyAtTaskTime ? "On" : "Off"}
-                </button>
-              </div>
-            )}
           </div>
           )}
         </div>

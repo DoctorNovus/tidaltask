@@ -34,7 +34,10 @@ public class AlarmKitPlugin: CAPPlugin, CAPBridgedPlugin {
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "schedule", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "cancel", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "stopRinging", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "stopRinging", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "checkAuthorization", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "requestAuthorization", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "openSettings", returnType: CAPPluginReturnPromise)
     ]
 
     private let isoFormatter: ISO8601DateFormatter = {
@@ -45,8 +48,51 @@ public class AlarmKitPlugin: CAPPlugin, CAPBridgedPlugin {
 
     override public func load() {
         Task {
-            // Prompts once; subsequent calls are no-ops if already authorized/denied.
+            // Prompts once; subsequent calls are no-ops if already authorized/denied. This is
+            // fire-and-forget so the very first schedule() call after a cold launch can race
+            // ahead of it and fail — JS should also call requestAuthorization() explicitly
+            // (e.g. the first time the user enables an alarm) rather than relying on this alone.
             _ = try? await AlarmManager.shared.requestAuthorization()
+        }
+    }
+
+    private func authorizationStateString(_ state: AlarmManager.AuthorizationState) -> String {
+        switch state {
+        case .authorized: return "authorized"
+        case .denied: return "denied"
+        case .notDetermined: return "notDetermined"
+        @unknown default: return "notDetermined"
+        }
+    }
+
+    @objc func checkAuthorization(_ call: CAPPluginCall) {
+        call.resolve(["state": authorizationStateString(AlarmManager.shared.authorizationState)])
+    }
+
+    @objc func requestAuthorization(_ call: CAPPluginCall) {
+        Task {
+            do {
+                let state = try await AlarmManager.shared.requestAuthorization()
+                call.resolve(["state": authorizationStateString(state)])
+            } catch {
+                call.reject("Unable to request alarm authorization: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    @objc func openSettings(_ call: CAPPluginCall) {
+        DispatchQueue.main.async {
+            guard let url = URL(string: UIApplication.openSettingsURLString) else {
+                call.reject("Unable to build settings URL.")
+                return
+            }
+            UIApplication.shared.open(url, options: [:]) { success in
+                if success {
+                    call.resolve()
+                } else {
+                    call.reject("Unable to open Settings.")
+                }
+            }
         }
     }
 
@@ -71,7 +117,12 @@ public class AlarmKitPlugin: CAPPlugin, CAPBridgedPlugin {
 
         Task {
             do {
-                try await AlarmManager.shared.cancel(id: alarmId)
+                // cancel(id:) is synchronous (not async, despite the earlier `try await` here) and
+                // may throw for an id that was never scheduled. This call exists purely to clear
+                // any prior occurrence before rescheduling, so a throw here must not abort the
+                // schedule() call below the way it did previously — that turned every *first-time*
+                // schedule (cancelling a nonexistent alarm) into a silent no-op.
+                try? AlarmManager.shared.cancel(id: alarmId)
 
                 let alertPresentation = AlarmPresentation.Alert(
                     title: LocalizedStringResource(stringLiteral: displayTitle),

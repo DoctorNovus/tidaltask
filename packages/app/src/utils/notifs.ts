@@ -312,15 +312,6 @@ export async function reconcileTaskDueNotifications(tasks: Task[]): Promise<void
   const settings = await getSettings();
   const previousIds = settings.scheduledDueNotificationTaskIds || [];
 
-  if (!settings.notifyAtTaskTime) {
-    if (previousIds.length) {
-      await cancelNotifications(previousIds.map((id) => ({ id: taskDueNotificationId(id) } as LocalNotificationSchema)));
-      settings.scheduledDueNotificationTaskIds = [];
-      await setSettings(settings);
-    }
-    return;
-  }
-
   const eligible = tasks.filter((task) => task.id && hasTimedFutureDueDate(task));
   const eligibleIds = eligible.map((task) => task.id!);
 

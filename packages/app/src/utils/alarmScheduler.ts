@@ -1,7 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { Alarm, loadAlarms } from "@/hooks/alarms";
 import { loadTasks } from "@/hooks/tasks";
-import { scheduleNativeAlarm, cancelNativeAlarm, onNativeAlarmFired } from "@/plugins/alarm";
+import { scheduleNativeAlarm, cancelNativeAlarm, onNativeAlarmFired, requestAlarmAuthorization } from "@/plugins/alarm";
 import { matchDate } from "./date";
 import { Logger } from "./logger";
 
@@ -128,9 +128,17 @@ export async function reconcileAlarms(preloaded?: Alarm[]): Promise<void> {
   }
 
   const now = new Date();
-  for (const alarm of alarms) {
-    const nextFire = computeNextFire(alarm, now);
+  const withNextFire = alarms.map((alarm) => ({ alarm, nextFire: computeNextFire(alarm, now) }));
 
+  // AlarmKitPlugin.load() fires its own authorization request on cold launch, but that's
+  // fire-and-forget — a schedule() call arriving here right after launch can race ahead of
+  // it and silently fail (see AlarmKitPlugin.swift). Requesting again right before actually
+  // scheduling anything closes that race; it's a no-op once already authorized/denied.
+  if (withNextFire.some(({ nextFire }) => nextFire)) {
+    await requestAlarmAuthorization();
+  }
+
+  for (const { alarm, nextFire } of withNextFire) {
     if (!nextFire) {
       await cancelNativeAlarm(alarm.id);
       continue;
