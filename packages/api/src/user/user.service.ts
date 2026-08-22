@@ -83,10 +83,10 @@ export class UserService {
         if (typeof nextData.email === "string") {
             nextData.email = this.normalizeEmail(nextData.email);
         }
-        if (typeof nextData.password === "string") {
-            nextData.password = bcrypt.hashSync(nextData.password, 10);
-        }
 
+        // The password schema path already has a `set` transform that hashes on
+        // findByIdAndUpdate (Mongoose applies setters when casting update payloads),
+        // so hashing it here too would bcrypt an already-bcrypted value.
         return User.findByIdAndUpdate(id, nextData).lean<User>().exec();
     }
 
