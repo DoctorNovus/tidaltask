@@ -330,53 +330,59 @@ export default function ManageGroupsDialog({ open, onClose, groups }: ManageGrou
                 Save
               </button>
             </div>
+
+            {/* Rendered inside this DialogPanel (not as a sibling of it) so a click on
+                its own backdrop is treated as "inside the panel" by Headless UI and
+                only dismisses this confirmation — not the whole Manage Groups dialog.
+                Previously this lived entirely outside the Dialog tree, which trapped
+                its z-index inside the outer TaskInfoMenu dialog's z-50 stacking
+                context and made it render invisibly behind the group list. */}
+            {deletingKey && (() => {
+              const row = rows.find((r) => r.key === deletingKey);
+              const affectedCount = (tasks.data ?? []).filter((t) => (t.group ?? "").trim().toLowerCase() === deletingKey).length;
+              return (
+                <div className="fixed inset-0 z-80 flex items-end justify-center px-3 pb-12 md:items-center md:pb-0">
+                  <div
+                    className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-xs"
+                    onClick={() => !isDeleting && setDeletingKey(null)}
+                  />
+                  <div className="relative z-10 w-full max-w-sm rounded-2xl border p-5 text-center shadow-2xl ring-1 ring-red-300/60
+                    border-red-300/70 bg-red-50/85 text-red-700
+                    dark:border-red-400/50 dark:bg-[rgba(248,113,113,0.12)] dark:text-red-100">
+                    <div className="mb-3 flex flex-col gap-1">
+                      <h1 className="text-lg font-semibold">Delete "{row?.displayName ?? deletingKey}"?</h1>
+                      <p className="text-sm text-red-700 dark:text-red-100">
+                        {affectedCount > 0
+                          ? `${affectedCount} task${affectedCount === 1 ? "" : "s"} in this group will be moved to ungrouped.`
+                          : "This group has no tasks in it."}
+                      </p>
+                    </div>
+                    <div className="flex flex-row gap-3">
+                      <button
+                        type="button"
+                        disabled={isDeleting}
+                        className="h-11 w-full rounded-xl border border-accent-blue/20 bg-white text-sm font-semibold text-primary shadow-xs transition hover:bg-slate-50 dark:bg-[rgba(15,23,42,0.7)] disabled:opacity-60"
+                        onClick={() => setDeletingKey(null)}
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={isDeleting}
+                        className="h-11 w-full rounded-xl bg-linear-to-r from-accent-red-600 to-accent-red-500 text-sm font-semibold text-white shadow-md shadow-red-200/80 ring-1 ring-red-200 transition hover:-translate-y-px disabled:opacity-60"
+                        onClick={confirmDelete}
+                      >
+                        {isDeleting ? "Deleting..." : "Delete"}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
           </DialogPanel>
         </div>
       </Dialog>
     </Transition>
-
-    {deletingKey && (() => {
-      const row = rows.find((r) => r.key === deletingKey);
-      const affectedCount = (tasks.data ?? []).filter((t) => (t.group ?? "").trim().toLowerCase() === deletingKey).length;
-      return (
-        <div className="fixed inset-0 z-80 flex items-end justify-center px-3 pb-12 md:items-center md:pb-0">
-          <div
-            className="absolute inset-0 bg-black/40 dark:bg-black/60 backdrop-blur-xs"
-            onClick={() => !isDeleting && setDeletingKey(null)}
-          />
-          <div className="relative z-10 w-full max-w-sm rounded-2xl border p-5 text-center shadow-2xl ring-1 ring-red-300/60
-            border-red-300/70 bg-red-50/85 text-red-700
-            dark:border-red-400/50 dark:bg-[rgba(248,113,113,0.12)] dark:text-red-100">
-            <div className="mb-3 flex flex-col gap-1">
-              <h1 className="text-lg font-semibold">Delete "{row?.displayName ?? deletingKey}"?</h1>
-              <p className="text-sm text-red-700 dark:text-red-100">
-                {affectedCount > 0
-                  ? `${affectedCount} task${affectedCount === 1 ? "" : "s"} in this group will be moved to ungrouped.`
-                  : "This group has no tasks in it."}
-              </p>
-            </div>
-            <div className="flex flex-row gap-3">
-              <button
-                type="button"
-                disabled={isDeleting}
-                className="h-11 w-full rounded-xl border border-accent-blue/20 bg-white text-sm font-semibold text-primary shadow-xs transition hover:bg-slate-50 dark:bg-[rgba(15,23,42,0.7)] disabled:opacity-60"
-                onClick={() => setDeletingKey(null)}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                disabled={isDeleting}
-                className="h-11 w-full rounded-xl bg-linear-to-r from-accent-red-600 to-accent-red-500 text-sm font-semibold text-white shadow-md shadow-red-200/80 ring-1 ring-red-200 transition hover:-translate-y-px disabled:opacity-60"
-                onClick={confirmDelete}
-              >
-                {isDeleting ? "Deleting..." : "Delete"}
-              </button>
-            </div>
-          </div>
-        </div>
-      );
-    })()}
     </>
   );
 }

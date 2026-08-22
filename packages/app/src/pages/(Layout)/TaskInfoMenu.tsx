@@ -424,7 +424,7 @@ export default function TaskInfoMenu({
                   isDeleting={isDeleting}
                   setIsDeleting={setIsDeleting}
                   tempData={tempData as Task}
-                  setIsOpen={setIsOpen}
+                  closeMenu={resetForm}
                 />
                 <MenuFooter
                   type={type}

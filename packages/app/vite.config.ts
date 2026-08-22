@@ -24,7 +24,7 @@ export default defineConfig({
         react({ babel: { plugins: [["babel-plugin-react-compiler"]] } }),
         tailwindcss(),
         VitePWA({
-            registerType: "prompt",
+            registerType: "autoUpdate",
             includeAssets: ["favicon.ico", "apple-touch-icon.png", "masked-icon.svg"],
             manifest: {
                 name: "TidalTask: ADHD Management",

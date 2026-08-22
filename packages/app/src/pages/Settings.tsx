@@ -6,6 +6,7 @@ import {
 } from "@/utils/notifs";
 import { Settings, getSettings, setSettings } from "@/hooks/settings";
 import { useEffect, useState, FormEvent } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import UserLogin from "./(Settings)/UserLogin";
 import SecuritySettings from "./(Settings)/SecuritySettings";
 import { Logger } from "@/utils/logger";
@@ -33,6 +34,7 @@ import { StarIcon, ChevronDownIcon, SunIcon, MoonIcon, ComputerDesktopIcon, XMar
 const SUPPORT_EMAIL = import.meta.env.VITE_SUPPORT_EMAIL || "support@tidaltask.app";
 
 export default function SettingsPage() {
+  const queryClient = useQueryClient();
   const [tempSettings, setTempSettings] = useState<Settings>({});
   const { mutateAsync: deleteCompletedTasks, isPending: isCleanupPending } = useDeleteCompletedTasks();
   const tasksQuery = useTasks();
@@ -106,16 +108,18 @@ export default function SettingsPage() {
       };
       setTempSettings(nextSettings);
       setSettings(nextSettings);
+      queryClient.invalidateQueries({ queryKey: ["settings"] });
     }
 
     setApiKeysSynced(true);
-  }, [apiKeysQuery.isSuccess, apiKeysQuery.data, apiKeysSynced, tempSettings, updateApiKeys]);
+  }, [apiKeysQuery.isSuccess, apiKeysQuery.data, apiKeysSynced, tempSettings, updateApiKeys, queryClient]);
 
   const UpdateSettings = async (newValue: object) => {
     const settings: Settings = { ...tempSettings, ...newValue };
 
     setTempSettings(settings);
     setSettings(settings);
+    queryClient.invalidateQueries({ queryKey: ["settings"] });
 
     if (tempSettings.sendDailyReminders && !settings.sendDailyReminders)
       HandleDailyChange(false);

@@ -240,6 +240,9 @@ export function useRegisterPasskey() {
             try {
                 attResp = await startRegistration({ optionsJSON: optData });
             } catch (err: any) {
+                if (err?.name === "NotAllowedError") {
+                    throw new Error("Passkey registration was cancelled.");
+                }
                 throw new Error(err?.message || "Passkey registration was cancelled.");
             }
 
@@ -270,6 +273,9 @@ export function usePasskeyLogin() {
             try {
                 authResp = await startAuthentication({ optionsJSON: optData });
             } catch (err: any) {
+                if (err?.name === "NotAllowedError") {
+                    throw new Error("Passkey sign-in was cancelled.");
+                }
                 throw new Error(err?.message || "Passkey authentication was cancelled.");
             }
 

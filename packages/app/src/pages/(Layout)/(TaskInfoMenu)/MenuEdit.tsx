@@ -7,16 +7,10 @@ interface MenuEditProps {
     tempData: Task;
     isDeleting: boolean;
     setIsDeleting: (state: boolean) => void;
-    setIsOpen: (state: boolean) => void;
+    closeMenu: () => void;
 }
 
-export default function MenuEdit({ type, tempData, isDeleting, setIsDeleting, setIsOpen }: MenuEditProps) {
-    const closeMenu = (e?: React.MouseEvent<any>) => {
-        if (e) e.stopPropagation();
-
-        setIsOpen(false);
-    };
-
+export default function MenuEdit({ type, tempData, isDeleting, setIsDeleting, closeMenu }: MenuEditProps) {
     return (
         <>
             {type == "edit" && (

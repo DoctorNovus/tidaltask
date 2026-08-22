@@ -331,7 +331,14 @@ export async function reconcileTaskDueNotifications(tasks: Task[]): Promise<void
 
   // Re-scheduling with the same id replaces any existing pending notification for that
   // task, so tasks that are still eligible don't need an explicit cancel first.
-  if (eligible.length) {
+  //
+  // Skip the actual (re)scheduling while the app is foregrounded — same reasoning as
+  // isAppInForeground()'s doc comment on the server-notification path: presenting a
+  // native banner for a task the user is already looking at in-app just spams them.
+  // AlarmBridge re-runs this reconciliation on every visibility change (including the
+  // transition to backgrounded), so a task that becomes due while the app is open still
+  // gets scheduled for real the moment the user actually leaves the app.
+  if (eligible.length && !(await isAppInForeground())) {
     await scheduleNotification(
       ...eligible.map((task) => ({
         id: taskDueNotificationId(task.id!),

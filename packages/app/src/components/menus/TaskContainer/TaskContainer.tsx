@@ -609,7 +609,7 @@ export default function TaskContainer({
   };
 
   return (
-    <div className="group flex flex-col items-center w-full h-full my-2 px-0 md:px-0">
+    <div className="group flex flex-col items-center min-w-0 w-full h-full my-2 px-0 md:px-0">
       {isGroupContainer && groupKey && (
         <GroupEditorModal
           open={groupEditOpen}
@@ -630,9 +630,9 @@ export default function TaskContainer({
               <DisclosureButton
                 onClick={async () => await handleClick(open)}
                 as="div"
-                className="w-full relative z-10 flex flex-row items-center rounded-2xl bg-white dark:bg-(--surface-card) border border-slate-200 dark:border-(--surface-border) px-3 py-3 text-primary shadow-sm group/card"
+                className="w-full min-w-0 relative z-10 flex flex-row items-center rounded-2xl bg-white dark:bg-(--surface-card) border border-slate-200 dark:border-(--surface-border) px-3 py-3 text-primary shadow-sm group/card"
               >
-                <div className="w-full flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
+                <div className="w-full min-w-0 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                   <div className="flex flex-row items-center min-w-0 sm:min-w-[140px] py-1 gap-2 flex-1">
                     <ChevronRightIcon
                       className={`shrink-0 ${open ? "rotate-90 transform" : ""}`}
@@ -676,9 +676,15 @@ export default function TaskContainer({
                   {/* min-w-0 overrides the flex-item default of min-width:auto — without it, WebKit
                       (Safari/iPad) sizes this by the widest wrapped line of the nested flex-wrap
                       button row below, which grows once selection mode adds more buttons and can
-                      squeeze the title on the other side of the row down to nothing. */}
+                      squeeze the title on the other side of the row down to nothing. That bogus
+                      min-content also propagates up through every ancestor flex/grid item that
+                      still defaults to min-width:auto (the container div above, the Disclosure
+                      button, and this row itself), so min-w-0 is applied at each link in the
+                      chain — otherwise the whole card (including the task list below the header,
+                      since the outer container centers its children) gets shoved wider than its
+                      column and its left edge is clipped by an ancestor's overflow-x-hidden. */}
                   <div className="flex flex-row items-center min-w-0 sm:justify-end">
-                    <div className="flex w-full flex-wrap items-center justify-start sm:justify-end gap-2">
+                    <div className="flex w-full min-w-0 flex-wrap items-center justify-start sm:justify-end gap-2">
                       <div className="flex rounded-full bg-white/70 dark:bg-(--surface-raised) border border-accent-blue/20 overflow-hidden">
                         <button
                           type="button"

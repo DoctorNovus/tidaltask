@@ -63,8 +63,14 @@ export default function AlarmBridge() {
     const handleVisibility = () => {
       if (document.visibilityState === "visible") {
         checkForMissedAlarms().catch((err) => Logger.logWarning(String(err)));
-        reconcileDueNotifications();
       }
+      // Also reconcile on the transition to backgrounded, not just back to
+      // foreground: reconcileTaskDueNotifications() now skips actually scheduling
+      // the native banner while the app is in the foreground (to avoid spamming
+      // the user with a popup for a task they're already looking at in-app), so a
+      // task that became due while the app was open still needs to get scheduled
+      // for real the moment the user actually leaves.
+      reconcileDueNotifications();
     };
     document.addEventListener("visibilitychange", handleVisibility);
 
