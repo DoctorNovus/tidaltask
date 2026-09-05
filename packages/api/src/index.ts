@@ -204,9 +204,14 @@ if (process.env.TOTP_ENCRYPTION_KEY) {
 /* OAuth 2.0 server (discovery, registration, authorize, token, revoke) */
 platform.use(oauthRouter);
 
-/* MCP endpoint — POST /mcp (Streamable HTTP, stateless) */
+/* MCP endpoint — Streamable HTTP, stateless */
 platform.use(async (req, res, next) => {
-    if (req.method === "POST" && req.path === "/mcp") {
+    if (req.path !== "/mcp" && req.path !== "/mcp/") {
+        next();
+        return;
+    }
+
+    if (req.method === "POST") {
         try {
             await mcpHandler(req, res);
         } catch {
@@ -214,6 +219,16 @@ platform.use(async (req, res, next) => {
         }
         return;
     }
+
+    if (req.method === "GET" || req.method === "HEAD") {
+        res.setHeader("Allow", "POST");
+        res.status(405).json({
+            error: "method_not_allowed",
+            message: "This MCP endpoint accepts Streamable HTTP POST requests.",
+        });
+        return;
+    }
+
     next();
 });
 
