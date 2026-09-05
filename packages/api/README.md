@@ -180,6 +180,16 @@ It uses the **Streamable HTTP** transport in stateless / JSON-response mode. Eac
 
 Pass your TidalTask API token as a Bearer token. Generate one in Settings → API Keys.
 
+### ChatGPT
+
+TidalTask can be connected to ChatGPT as a custom MCP app using OAuth — no API key is required.
+
+1. In ChatGPT, enable developer mode and choose **Settings → Apps → Create**.
+2. Enter `https://api.tidaltask.app/mcp` as the MCP server URL and select OAuth authentication.
+3. Scan the tools, sign in to TidalTask, and approve access.
+
+The server publishes OAuth metadata at `/.well-known/oauth-protected-resource` and `/.well-known/oauth-authorization-server`. OAuth access tokens expire after one hour; ChatGPT uses refresh tokens to retain the connection.
+
 ### Available tools
 
 | Tool | Description |

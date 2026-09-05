@@ -13,8 +13,8 @@
 - **Two-factor authentication** — TOTP-based 2FA with AES-256-GCM encrypted secrets at rest
 - **Passkeys** — WebAuthn passkey registration and login
 - **API keys** — per-user API keys (stored as SHA-256 hashes) for programmatic access
-- **OAuth 2.0** — authorization server with PKCE support for third-party integrations
-- **MCP endpoint** — Model Context Protocol endpoint at `POST /mcp` for AI assistant integration
+- **OAuth 2.0** — PKCE and refresh-token authorization server for third-party integrations
+- **MCP endpoint** — Model Context Protocol endpoint at `POST /mcp`, including ChatGPT custom-app support
 - **Data portability** — full GDPR Art. 20 data export
 - **Right to erasure** — GDPR Art. 17 / CCPA-compliant account + data deletion
 - **PWA + native** — installable as a web app or native iOS/Android app

@@ -312,12 +312,15 @@ export async function mcpHandler(req: Request, res: Response): Promise<void> {
     // Authenticate via Bearer token (same logic as session middleware).
     const auth = await resolveBearer(req.headers.authorization);
     if (!auth) {
+        res.setHeader(
+            "WWW-Authenticate",
+            "Bearer resource_metadata=\"https://api.tidaltask.app/.well-known/oauth-protected-resource\"",
+        );
         res.status(401).json({
             jsonrpc: "2.0",
             error: {
                 code: -32001,
-                message:
-                    "Authentication required. Add your TidalTask API token as a Bearer token in your MCP client connector settings.",
+                message: "Authentication required.",
             },
             id: null,
         });

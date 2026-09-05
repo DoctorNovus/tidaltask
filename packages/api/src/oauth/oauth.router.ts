@@ -2,6 +2,7 @@ import { Router } from "express";
 import crypto from "crypto";
 import { OAuthClient } from "./oauthClient.entity";
 import { OAuthCode } from "./oauthCode.entity";
+import { OAuthToken } from "./oauthToken.entity";
 import { User } from "@/user/user.entity";
 import { UserService } from "@/user/user.service";
 import { renderLoginPage, render2FAPage, renderConsentPage, renderErrorPage } from "./oauth.html";
@@ -11,16 +12,56 @@ const userService = new UserService();
 export const oauthRouter = Router();
 
 const BASE_URL = "https://api.tidaltask.app";
+const ACCESS_TOKEN_TTL_MS = 60 * 60 * 1000;
+const REFRESH_TOKEN_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const SUPPORTED_SCOPES = new Set(["mcp", "offline_access"]);
+
+function tokenHash(token: string): string {
+    return crypto.createHash("sha256").update(token).digest("hex");
+}
+
+function normalizeScope(scope: unknown): string | null {
+    const scopes = String(scope ?? "mcp offline_access").split(/\s+/).filter(Boolean);
+    if (!scopes.length || scopes.some((item) => !SUPPORTED_SCOPES.has(item))) return null;
+    return [...new Set(scopes)].join(" ");
+}
+
+function issueTokens(userId: string, clientId: string, scope: string) {
+    const accessToken = crypto.randomBytes(32).toString("base64url");
+    const includeRefreshToken = scope.split(" ").includes("offline_access");
+    const refreshToken = includeRefreshToken ? crypto.randomBytes(32).toString("base64url") : null;
+    const now = Date.now();
+
+    return {
+        accessToken,
+        refreshToken,
+        record: {
+            accessTokenHash: tokenHash(accessToken),
+            refreshTokenHash: refreshToken ? tokenHash(refreshToken) : null,
+            userId,
+            clientId,
+            scope,
+            accessTokenExpiresAt: new Date(now + ACCESS_TOKEN_TTL_MS),
+            refreshTokenExpiresAt: new Date(now + REFRESH_TOKEN_TTL_MS),
+        },
+    };
+}
+
+const protectedResourceMetadata = {
+    resource: BASE_URL,
+    authorization_servers: [BASE_URL],
+    bearer_methods_supported: ["header"],
+    scopes_supported: ["mcp", "offline_access"],
+};
 
 // ─── Well-known discovery ─────────────────────────────────────────────────────
 
 oauthRouter.get("/.well-known/oauth-protected-resource", (_req, res) => {
-    res.json({
-        resource: BASE_URL,
-        authorization_servers: [BASE_URL],
-        bearer_methods_supported: ["header"],
-        scopes_supported: ["mcp"],
-    });
+    res.json(protectedResourceMetadata);
+});
+
+oauthRouter.get("/mcp/.well-known/oauth-protected-resource", (_req, res) => {
+    res.json(protectedResourceMetadata);
 });
 
 oauthRouter.get("/.well-known/oauth-authorization-server", (_req, res) => {
@@ -31,10 +72,10 @@ oauthRouter.get("/.well-known/oauth-authorization-server", (_req, res) => {
         registration_endpoint: `${BASE_URL}/oauth/register`,
         revocation_endpoint: `${BASE_URL}/oauth/revoke`,
         response_types_supported: ["code"],
-        grant_types_supported: ["authorization_code"],
+        grant_types_supported: ["authorization_code", "refresh_token"],
         code_challenge_methods_supported: ["S256"],
         token_endpoint_auth_methods_supported: ["none"],
-        scopes_supported: ["mcp"],
+        scopes_supported: ["mcp", "offline_access"],
     });
 });
 
@@ -56,7 +97,7 @@ oauthRouter.post("/oauth/register", async (req, res) => {
         redirectUris: redirect_uris.slice(0, 20).map(String),
         grantTypes: grant_types ?? ["authorization_code"],
         tokenEndpointAuthMethod: token_endpoint_auth_method ?? "none",
-        scope: "mcp",
+        scope: "mcp offline_access",
     });
 
     res.status(201).json({
@@ -66,7 +107,7 @@ oauthRouter.post("/oauth/register", async (req, res) => {
         grant_types: grant_types ?? ["authorization_code"],
         response_types: response_types ?? ["code"],
         token_endpoint_auth_method: token_endpoint_auth_method ?? "none",
-        scope: "mcp",
+        scope: "mcp offline_access",
     });
 });
 
@@ -89,6 +130,12 @@ oauthRouter.get("/oauth/authorize", async (req, res) => {
         return;
     }
 
+    const normalizedScope = normalizeScope(scope);
+    if (!normalizedScope) {
+        res.status(400).send(renderErrorPage("Unsupported OAuth scope."));
+        return;
+    }
+
     const client = await OAuthClient.findOne({ clientId: client_id }).lean<OAuthClient>().exec();
     if (!client) {
         res.status(400).send(renderErrorPage("Unknown client_id."));
@@ -99,7 +146,7 @@ oauthRouter.get("/oauth/authorize", async (req, res) => {
         return;
     }
 
-    const params = { client_id, redirect_uri, state: state ?? "", code_challenge, code_challenge_method: code_challenge_method ?? "S256", scope: scope ?? "mcp", response_type };
+    const params = { client_id, redirect_uri, state: state ?? "", code_challenge, code_challenge_method: code_challenge_method ?? "S256", scope: normalizedScope, response_type };
 
     if (req.session.user) {
         const user = await User.findById(req.session.user.id).lean<User>().exec();
@@ -204,16 +251,22 @@ oauthRouter.post("/oauth/authorize", async (req, res) => {
         return;
     }
 
+    const client = await OAuthClient.findOne({ clientId: client_id }).lean<OAuthClient>().exec();
+    if (!client || !client.redirectUris.includes(redirect_uri)) {
+        res.status(400).send(renderErrorPage("Invalid client."));
+        return;
+    }
+
+    const normalizedScope = normalizeScope(scope);
+    if (!normalizedScope) {
+        res.status(400).send(renderErrorPage("Unsupported OAuth scope."));
+        return;
+    }
+
     if (action !== "allow") {
         redirectUrl.searchParams.set("error", "access_denied");
         if (state) redirectUrl.searchParams.set("state", state);
         res.redirect(redirectUrl.toString());
-        return;
-    }
-
-    const client = await OAuthClient.findOne({ clientId: client_id }).lean<OAuthClient>().exec();
-    if (!client || !client.redirectUris.includes(redirect_uri)) {
-        res.status(400).send(renderErrorPage("Invalid client."));
         return;
     }
 
@@ -225,7 +278,7 @@ oauthRouter.post("/oauth/authorize", async (req, res) => {
         redirectUri: redirect_uri,
         codeChallenge: code_challenge,
         codeChallengeMethod: code_challenge_method ?? "S256",
-        scope: scope ?? "mcp",
+        scope: normalizedScope,
         expiresAt: new Date(Date.now() + 10 * 60 * 1000),
         used: false,
     });
@@ -240,6 +293,11 @@ oauthRouter.post("/oauth/authorize", async (req, res) => {
 oauthRouter.post("/oauth/token", async (req, res) => {
     const { grant_type, code, code_verifier, client_id, redirect_uri } = req.body;
 
+    if (grant_type === "refresh_token") {
+        await refreshToken(req, res);
+        return;
+    }
+
     if (grant_type !== "authorization_code") {
         res.status(400).json({ error: "unsupported_grant_type" });
         return;
@@ -250,7 +308,11 @@ oauthRouter.post("/oauth/token", async (req, res) => {
         return;
     }
 
-    const authCode = await OAuthCode.findOne({ code, used: false }).lean<OAuthCode>().exec();
+    const authCode = await OAuthCode.findOneAndUpdate(
+        { code, used: false },
+        { used: true },
+        { new: false },
+    ).lean<OAuthCode>().exec();
     if (!authCode || authCode.clientId !== client_id || authCode.redirectUri !== redirect_uri) {
         res.status(400).json({ error: "invalid_grant" });
         return;
@@ -268,19 +330,51 @@ oauthRouter.post("/oauth/token", async (req, res) => {
         return;
     }
 
-    await OAuthCode.updateOne({ code }, { used: true }).exec();
-
-    const client = await OAuthClient.findOne({ clientId: client_id }).lean<OAuthClient>().exec();
-    const keyName = `${client?.clientName ?? "MCP"} (OAuth)`;
-
-    const { value: accessToken } = await userService.generateApiKey(authCode.userId, keyName);
+    const tokens = issueTokens(authCode.userId, client_id, authCode.scope);
+    await OAuthToken.create(tokens.record);
 
     res.json({
-        access_token: accessToken,
+        access_token: tokens.accessToken,
         token_type: "bearer",
         scope: authCode.scope,
+        expires_in: ACCESS_TOKEN_TTL_MS / 1000,
+        ...(tokens.refreshToken ? { refresh_token: tokens.refreshToken } : {}),
     });
 });
+
+async function refreshToken(req: any, res: any): Promise<void> {
+    const { client_id, refresh_token } = req.body;
+    if (!client_id || !refresh_token) {
+        res.status(400).json({ error: "invalid_request", error_description: "client_id and refresh_token are required." });
+        return;
+    }
+
+    const current = await OAuthToken.findOneAndUpdate(
+        {
+            clientId: client_id,
+            refreshTokenHash: tokenHash(refresh_token),
+            refreshTokenExpiresAt: { $gt: new Date() },
+            revokedAt: null,
+        },
+        { revokedAt: new Date() },
+        { new: false },
+    ).lean<OAuthToken>().exec();
+
+    if (!current) {
+        res.status(400).json({ error: "invalid_grant" });
+        return;
+    }
+
+    const tokens = issueTokens(current.userId, client_id, current.scope);
+    await OAuthToken.create(tokens.record);
+    res.json({
+        access_token: tokens.accessToken,
+        token_type: "bearer",
+        scope: current.scope,
+        expires_in: ACCESS_TOKEN_TTL_MS / 1000,
+        ...(tokens.refreshToken ? { refresh_token: tokens.refreshToken } : {}),
+    });
+}
 
 // ─── Token revocation (RFC 7009) ─────────────────────────────────────────────
 
@@ -289,21 +383,11 @@ oauthRouter.post("/oauth/revoke", async (req, res) => {
 
     if (token) {
         try {
-            const user = await User.findOne({
-                $expr: {
-                    $in: [
-                        token,
-                        { $map: { input: { $objectToArray: { $ifNull: ["$apiKeys", {}] } }, as: "kv", in: "$$kv.v" } },
-                    ],
-                },
-            }).select("apiKeys").lean<User>().exec();
-
-            if (user?.apiKeys) {
-                const filtered = Object.fromEntries(
-                    Object.entries(user.apiKeys).filter(([, v]) => v !== token)
-                );
-                await User.updateOne({ _id: (user as any)._id }, { apiKeys: filtered }).exec();
-            }
+            const hash = tokenHash(token);
+            await OAuthToken.updateMany(
+                { $or: [{ accessTokenHash: hash }, { refreshTokenHash: hash }], revokedAt: null },
+                { revokedAt: new Date() },
+            ).exec();
         } catch {
             // Ignore — always return 200 per RFC 7009
         }
